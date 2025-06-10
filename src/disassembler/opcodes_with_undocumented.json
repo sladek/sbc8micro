@@ -1,0 +1,512 @@
+[
+  {
+    "opcode": "A9",
+    "mnemonic": "LDA",
+    "mode": "immediate",
+    "bytes": 2
+  },
+  {
+    "opcode": "A5",
+    "mnemonic": "LDA",
+    "mode": "zero_page",
+    "bytes": 2
+  },
+  {
+    "opcode": "B5",
+    "mnemonic": "LDA",
+    "mode": "zero_page_x",
+    "bytes": 2
+  },
+  {
+    "opcode": "AD",
+    "mnemonic": "LDA",
+    "mode": "absolute",
+    "bytes": 3
+  },
+  {
+    "opcode": "BD",
+    "mnemonic": "LDA",
+    "mode": "absolute_x",
+    "bytes": 3
+  },
+  {
+    "opcode": "B9",
+    "mnemonic": "LDA",
+    "mode": "absolute_y",
+    "bytes": 3
+  },
+  {
+    "opcode": "A1",
+    "mnemonic": "LDA",
+    "mode": "indexed_indirect",
+    "bytes": 2
+  },
+  {
+    "opcode": "B1",
+    "mnemonic": "LDA",
+    "mode": "indirect_indexed",
+    "bytes": 2
+  },
+  {
+    "opcode": "85",
+    "mnemonic": "STA",
+    "mode": "zero_page",
+    "bytes": 2
+  },
+  {
+    "opcode": "95",
+    "mnemonic": "STA",
+    "mode": "zero_page_x",
+    "bytes": 2
+  },
+  {
+    "opcode": "8D",
+    "mnemonic": "STA",
+    "mode": "absolute",
+    "bytes": 3
+  },
+  {
+    "opcode": "9D",
+    "mnemonic": "STA",
+    "mode": "absolute_x",
+    "bytes": 3
+  },
+  {
+    "opcode": "99",
+    "mnemonic": "STA",
+    "mode": "absolute_y",
+    "bytes": 3
+  },
+  {
+    "opcode": "81",
+    "mnemonic": "STA",
+    "mode": "indexed_indirect",
+    "bytes": 2
+  },
+  {
+    "opcode": "91",
+    "mnemonic": "STA",
+    "mode": "indirect_indexed",
+    "bytes": 2
+  },
+  {
+    "opcode": "4C",
+    "mnemonic": "JMP",
+    "mode": "absolute",
+    "bytes": 3
+  },
+  {
+    "opcode": "6C",
+    "mnemonic": "JMP",
+    "mode": "indirect",
+    "bytes": 3
+  },
+  {
+    "opcode": "20",
+    "mnemonic": "JSR",
+    "mode": "absolute",
+    "bytes": 3
+  },
+  {
+    "opcode": "60",
+    "mnemonic": "RTS",
+    "mode": "implied",
+    "bytes": 1
+  },
+  {
+    "opcode": "90",
+    "mnemonic": "BCC",
+    "mode": "relative",
+    "bytes": 2
+  },
+  {
+    "opcode": "B0",
+    "mnemonic": "BCS",
+    "mode": "relative",
+    "bytes": 2
+  },
+  {
+    "opcode": "F0",
+    "mnemonic": "BEQ",
+    "mode": "relative",
+    "bytes": 2
+  },
+  {
+    "opcode": "30",
+    "mnemonic": "BMI",
+    "mode": "relative",
+    "bytes": 2
+  },
+  {
+    "opcode": "D0",
+    "mnemonic": "BNE",
+    "mode": "relative",
+    "bytes": 2
+  },
+  {
+    "opcode": "10",
+    "mnemonic": "BPL",
+    "mode": "relative",
+    "bytes": 2
+  },
+  {
+    "opcode": "50",
+    "mnemonic": "BVC",
+    "mode": "relative",
+    "bytes": 2
+  },
+  {
+    "opcode": "70",
+    "mnemonic": "BVS",
+    "mode": "relative",
+    "bytes": 2
+  },
+  {
+    "opcode": "E8",
+    "mnemonic": "INX",
+    "mode": "implied",
+    "bytes": 1
+  },
+  {
+    "opcode": "CA",
+    "mnemonic": "DEX",
+    "mode": "implied",
+    "bytes": 1
+  },
+  {
+    "opcode": "C8",
+    "mnemonic": "INY",
+    "mode": "implied",
+    "bytes": 1
+  },
+  {
+    "opcode": "88",
+    "mnemonic": "DEY",
+    "mode": "implied",
+    "bytes": 1
+  },
+  {
+    "opcode": "E6",
+    "mnemonic": "INC",
+    "mode": "zero_page",
+    "bytes": 2
+  },
+  {
+    "opcode": "F6",
+    "mnemonic": "INC",
+    "mode": "zero_page_x",
+    "bytes": 2
+  },
+  {
+    "opcode": "EE",
+    "mnemonic": "INC",
+    "mode": "absolute",
+    "bytes": 3
+  },
+  {
+    "opcode": "FE",
+    "mnemonic": "INC",
+    "mode": "absolute_x",
+    "bytes": 3
+  },
+  {
+    "opcode": "C6",
+    "mnemonic": "DEC",
+    "mode": "zero_page",
+    "bytes": 2
+  },
+  {
+    "opcode": "D6",
+    "mnemonic": "DEC",
+    "mode": "zero_page_x",
+    "bytes": 2
+  },
+  {
+    "opcode": "CE",
+    "mnemonic": "DEC",
+    "mode": "absolute",
+    "bytes": 3
+  },
+  {
+    "opcode": "DE",
+    "mnemonic": "DEC",
+    "mode": "absolute_x",
+    "bytes": 3
+  },
+  {
+    "opcode": "49",
+    "mnemonic": "EOR",
+    "mode": "immediate",
+    "bytes": 2
+  },
+  {
+    "opcode": "45",
+    "mnemonic": "EOR",
+    "mode": "zero_page",
+    "bytes": 2
+  },
+  {
+    "opcode": "55",
+    "mnemonic": "EOR",
+    "mode": "zero_page_x",
+    "bytes": 2
+  },
+  {
+    "opcode": "4D",
+    "mnemonic": "EOR",
+    "mode": "absolute",
+    "bytes": 3
+  },
+  {
+    "opcode": "5D",
+    "mnemonic": "EOR",
+    "mode": "absolute_x",
+    "bytes": 3
+  },
+  {
+    "opcode": "59",
+    "mnemonic": "EOR",
+    "mode": "absolute_y",
+    "bytes": 3
+  },
+  {
+    "opcode": "41",
+    "mnemonic": "EOR",
+    "mode": "indexed_indirect",
+    "bytes": 2
+  },
+  {
+    "opcode": "51",
+    "mnemonic": "EOR",
+    "mode": "indirect_indexed",
+    "bytes": 2
+  },
+  {
+    "opcode": "24",
+    "mnemonic": "BIT",
+    "mode": "zero_page",
+    "bytes": 2
+  },
+  {
+    "opcode": "2C",
+    "mnemonic": "BIT",
+    "mode": "absolute",
+    "bytes": 3
+  },
+  {
+    "opcode": "18",
+    "mnemonic": "CLC",
+    "mode": "implied",
+    "bytes": 1
+  },
+  {
+    "opcode": "38",
+    "mnemonic": "SEC",
+    "mode": "implied",
+    "bytes": 1
+  },
+  {
+    "opcode": "58",
+    "mnemonic": "CLI",
+    "mode": "implied",
+    "bytes": 1
+  },
+  {
+    "opcode": "78",
+    "mnemonic": "SEI",
+    "mode": "implied",
+    "bytes": 1
+  },
+  {
+    "opcode": "B8",
+    "mnemonic": "CLV",
+    "mode": "implied",
+    "bytes": 1
+  },
+  {
+    "opcode": "D8",
+    "mnemonic": "CLD",
+    "mode": "implied",
+    "bytes": 1
+  },
+  {
+    "opcode": "F8",
+    "mnemonic": "SED",
+    "mode": "implied",
+    "bytes": 1
+  },
+  {
+    "opcode": "00",
+    "mnemonic": "BRK",
+    "mode": "implied",
+    "bytes": 1
+  },
+  {
+    "opcode": "0B",
+    "mnemonic": "ANC",
+    "mode": "immediate",
+    "bytes": 2
+  },
+  {
+    "opcode": "8B",
+    "mnemonic": "XAA",
+    "mode": "immediate",
+    "bytes": 2
+  },
+  {
+    "opcode": "AB",
+    "mnemonic": "LAX",
+    "mode": "immediate",
+    "bytes": 2
+  },
+  {
+    "opcode": "A7",
+    "mnemonic": "LAX",
+    "mode": "zero_page",
+    "bytes": 2
+  },
+  {
+    "opcode": "B7",
+    "mnemonic": "LAX",
+    "mode": "zero_page_y",
+    "bytes": 2
+  },
+  {
+    "opcode": "AF",
+    "mnemonic": "LAX",
+    "mode": "absolute",
+    "bytes": 3
+  },
+  {
+    "opcode": "BF",
+    "mnemonic": "LAX",
+    "mode": "absolute_y",
+    "bytes": 3
+  },
+  {
+    "opcode": "A3",
+    "mnemonic": "LAX",
+    "mode": "indexed_indirect",
+    "bytes": 2
+  },
+  {
+    "opcode": "B3",
+    "mnemonic": "LAX",
+    "mode": "indirect_indexed",
+    "bytes": 2
+  },
+  {
+    "opcode": "87",
+    "mnemonic": "SAX",
+    "mode": "zero_page",
+    "bytes": 2
+  },
+  {
+    "opcode": "97",
+    "mnemonic": "SAX",
+    "mode": "zero_page_y",
+    "bytes": 2
+  },
+  {
+    "opcode": "8F",
+    "mnemonic": "SAX",
+    "mode": "absolute",
+    "bytes": 3
+  },
+  {
+    "opcode": "83",
+    "mnemonic": "SAX",
+    "mode": "indexed_indirect",
+    "bytes": 2
+  },
+  {
+    "opcode": "EB",
+    "mnemonic": "SBC",
+    "mode": "immediate",
+    "bytes": 2
+  },
+  {
+    "opcode": "C7",
+    "mnemonic": "DCP",
+    "mode": "zero_page",
+    "bytes": 2
+  },
+  {
+    "opcode": "D7",
+    "mnemonic": "DCP",
+    "mode": "zero_page_x",
+    "bytes": 2
+  },
+  {
+    "opcode": "CF",
+    "mnemonic": "DCP",
+    "mode": "absolute",
+    "bytes": 3
+  },
+  {
+    "opcode": "DF",
+    "mnemonic": "DCP",
+    "mode": "absolute_x",
+    "bytes": 3
+  },
+  {
+    "opcode": "DB",
+    "mnemonic": "DCP",
+    "mode": "absolute_y",
+    "bytes": 3
+  },
+  {
+    "opcode": "C3",
+    "mnemonic": "DCP",
+    "mode": "indexed_indirect",
+    "bytes": 2
+  },
+  {
+    "opcode": "D3",
+    "mnemonic": "DCP",
+    "mode": "indirect_indexed",
+    "bytes": 2
+  },
+  {
+    "opcode": "E7",
+    "mnemonic": "ISC",
+    "mode": "zero_page",
+    "bytes": 2
+  },
+  {
+    "opcode": "F7",
+    "mnemonic": "ISC",
+    "mode": "zero_page_x",
+    "bytes": 2
+  },
+  {
+    "opcode": "EF",
+    "mnemonic": "ISC",
+    "mode": "absolute",
+    "bytes": 3
+  },
+  {
+    "opcode": "FF",
+    "mnemonic": "ISC",
+    "mode": "absolute_x",
+    "bytes": 3
+  },
+  {
+    "opcode": "FB",
+    "mnemonic": "ISC",
+    "mode": "absolute_y",
+    "bytes": 3
+  },
+  {
+    "opcode": "E3",
+    "mnemonic": "ISC",
+    "mode": "indexed_indirect",
+    "bytes": 2
+  },
+  {
+    "opcode": "F3",
+    "mnemonic": "ISC",
+    "mode": "indirect_indexed",
+    "bytes": 2
+  }
+]
