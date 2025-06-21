@@ -1,11 +1,11 @@
 /////////////////////////////
+/// ```
 /// mod disassembler;
 /// mod memory;
 ///
 /// use disassembler::mos6502::disassemble;
 ///
-/// ```
-/// fn main() {
+/// fn disassemble() {
 ///     let mut memory = memory::Memory::new();
 ///
 ///    let program = vec![
@@ -25,6 +25,7 @@
 ///     }
 /// }
 /// ```
+///
 /// The result should be:
 /// 0600  A9 01       LDA #$01
 /// 0602  8D 00       STA $0200
@@ -45,8 +46,6 @@ pub struct OpcodeDef {
     mnemonic: String,
     mode: String,
     bytes: u8,
-    cycles: u8,
-    description: Option<String>,
 }
 
 pub fn load_opcodes_table() -> HashMap<u8, OpcodeDef> {
@@ -70,22 +69,19 @@ pub fn disassemble(
         let memory_data = memory.get_data();
         let opcode_byte = memory_data[pc as usize];
         if let Some(def) = opcodes.get(&opcode_byte) {
-            let mut operand_str = String::new();
             let args = &memory_data[(pc + 1) as usize..];
-            match def.mode.as_str() {
-                "immediate" => operand_str = format!("#${:02X}", args[0]),
-                "zero_page" => operand_str = format!("${:02X}", args[0]),
-                "absolute" => {
-                    operand_str = format!("${:04X}", u16::from_le_bytes([args[0], args[1]]))
-                }
+            let operand_str = match def.mode.as_str() {
+                "immediate" => format!("#${:02X}", args[0]),
+                "zero_page" => format!("${:02X}", args[0]),
+                "absolute" => format!("${:04X}", u16::from_le_bytes([args[0], args[1]])),
                 "relative" => {
                     let offset = args[0] as i8;
                     let target = (pc as i16 + 2 + offset as i16) as u16;
-                    operand_str = format!("${:04X}", target);
+                    format!("${:04X}", target)
                 }
-                "implied" => operand_str = "".to_string(),
-                _ => operand_str = format!("?? {}", def.mode),
-            }
+                "implied" => "".to_string(),
+                _ => format!("?? {}", def.mode),
+            };
 
             output.push(format!(
                 "{:04X}  {:02X} {:<8} {} {}",
@@ -97,6 +93,5 @@ pub fn disassemble(
             pc += 1;
         }
     }
-
     output
 }

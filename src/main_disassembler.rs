@@ -1,10 +1,10 @@
 mod disassembler;
 mod memory;
 
-use disassembler::mos6502::{disassemble, load_opcode_table};
+use disassembler::mos6502::{load_opcodes_table, disassemble};
 
 fn main() {
-    let opcodes = load_opcodes_table("src/disassembler/opcodes_with_undocumented.json");
+    let opcodes = load_opcodes_table();
 
     let mut memory = memory::Memory::new();
     let program = vec![
