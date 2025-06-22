@@ -1,5 +1,6 @@
 #[cfg(test)]
 use crate::mos6502;
+use crate::status;
 
 #[test]
 ///
@@ -299,7 +300,7 @@ fn and_direct() {
     let mut cpu = mos6502::Cpu::new();
     let program = vec![
         0xA9, 0x42u8, // LDA #$42
-        0x29, 0x55u8, // AND #imm
+        0x29, 0x55u8, // AND #$55
         0x00,   // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -386,7 +387,7 @@ fn and_zero_page() {
 }
 #[test]
 ///
-/// Tests AND zero page
+/// Tests AND zp,X
 ///
 fn and_zero_page_x() {
     let mut cpu = mos6502::Cpu::new();
@@ -627,7 +628,7 @@ fn asl_zerro_page_x() {
     cpu.memory.write_byte_zero_page(z_addr, 0x42);
     cpu.x = 0x0Fu8;
     let program = vec![
-        0x16, 0x10, // ASL $10
+        0x16, 0x10, // ASL $10,X
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -670,7 +671,7 @@ fn asl_absolute() {
 }
 #[test]
 ///
-/// Tests ASL absolute
+/// Tests ASL absolute,X
 ///
 fn asl_absolute_x() {
     let mut cpu = mos6502::Cpu::new();
@@ -900,7 +901,7 @@ fn bit_zero_page_z() {
 ///
 /// Tests BIT zero page set status bits V and N
 ///
-fn bit_zero_page_vn() {
+fn bit_zero_page_v_n() {
     let mut cpu = mos6502::Cpu::new();
     cpu.memory.write_byte(0x0010, 0xC5);
     let program = vec![
@@ -1266,8 +1267,10 @@ fn cld() {
 fn cli() {
     let mut cpu = mos6502::Cpu::new();
     cpu.p.set_interrupt_disable(true);
+    cpu.sp = 0xff;
     let program = vec![
-        0x58, // CLC
+        0x58, // CLI
+        0x08, // PHP; push status to stack as break will set it to 1
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -1278,7 +1281,8 @@ fn cli() {
             break;
         }
     }
-    assert_eq!(cpu.p.is_interrupt_disable(), false);
+    let status = cpu.memory.read_byte(0x1ff);
+    assert_eq!(status, status::mos6502::BREAK | status::mos6502::UNUSED);
 }
 #[test]
 ///////////////////////////////////////////////
@@ -1336,7 +1340,7 @@ fn cmp_bigger() {
     cpu.p.set_overflow(true);
     let program = vec![
         0xA9, 0x40, // LDA #$40
-        0xC9, 0x20, // CMP #$040
+        0xC9, 0x20, // CMP #$40
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -1361,7 +1365,7 @@ fn cmp_smaller() {
     cpu.p.set_overflow(true);
     let program = vec![
         0xA9, 0x20, // LDA #$40
-        0xC9, 0x40, // CMP #$040
+        0xC9, 0x40, // CMP #$40
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -1386,7 +1390,7 @@ fn cmp_zp() {
     cpu.memory.write_byte_zero_page(0x10, 0x40);
     let program = vec![
         0xA9, 0x20, // LDA #$40
-        0xC5, 0x10, // CMP #$040
+        0xC5, 0x10, // CMP #$10
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -1412,7 +1416,7 @@ fn cmp_zp_x() {
     cpu.memory.write_byte_zero_page(0x10 + cpu.x, 0x40);
     let program = vec![
         0xA9, 0x20, // LDA #$40
-        0xD5, 0x10, // CMP #$040
+        0xD5, 0x10, // CMP #$10,X
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -1463,7 +1467,7 @@ fn cmp_abs_x() {
     cpu.memory.write_byte(0x1234 + cpu.x as u16, 0x40);
     let program = vec![
         0xA9, 0x20, // LDA #$40
-        0xDD, 0x34, 0x12, // CMP #$040
+        0xDD, 0x34, 0x12, // CMP #$1234
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -1489,7 +1493,7 @@ fn cmp_abs_y() {
     cpu.memory.write_byte(0x1234 + cpu.y as u16, 0x40);
     let program = vec![
         0xA9, 0x20, // LDA #$40
-        0xD9, 0x34, 0x12, // CMP #$040
+        0xD9, 0x34, 0x12, // CMP #$1234
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -1509,7 +1513,7 @@ fn cmp_abs_y() {
 /// Tests CMP indexed indirect
 /// A < (abs,X)
 ///
-fn cmp_indexed_x() {
+fn cmp_indirect_x() {
     let mut cpu = mos6502::Cpu::new();
     let addr = 0x001Fu16;
     let value = 0x40u8;
@@ -1518,7 +1522,7 @@ fn cmp_indexed_x() {
     cpu.memory.write_byte(0x1234 as u16, value);
     let program = vec![
         0xA9, 0x20, // LDA #$40
-        0xC1, 0x10, // CMP ($040,x)
+        0xC1, 0x10, // CMP ($10,x)
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -1717,7 +1721,7 @@ fn cpy_zp() {
     cpu.y = 0x20u8;
     cpu.memory.write_byte_zero_page(addr, value);
     let program = vec![
-        0xC4, 0x10, // CPY $40
+        0xC4, 0x10, // CPY $10
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -1906,7 +1910,7 @@ fn dec_abs_wrapping_ff() {
     cpu.memory
         .write_byte(addr.wrapping_add(cpu.x as u16), value);
     let program = vec![
-        0xDE, 0xff, 0xff, // DEC $1234,X
+        0xDE, 0xff, 0xff, // DEC $FFFF,X
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -2026,7 +2030,7 @@ fn eor_imm() {
     let mut cpu = mos6502::Cpu::new();
     let program = vec![
         0xA9, 0xF0, // LDA #$F0
-        0x49, 0xF0, // EOR #$f0
+        0x49, 0xF0, // EOR #$F0
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -2126,7 +2130,7 @@ fn eor_zp_abs() {
     cpu.memory.write_byte(addr, value);
     let program = vec![
         0xA9, 0xF0, // LDA #$f0
-        0x4D, 0x34, 0x12, // EOR abs
+        0x4D, 0x34, 0x12, // EOR $1234
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -2153,7 +2157,7 @@ fn eor_zp_abs_x() {
         .write_byte(addr.wrapping_add(cpu.x as u16), value);
     let program = vec![
         0xA9, 0xF0, // LDA #$f0
-        0x5D, 0x34, 0x12, // EOR abs,X
+        0x5D, 0x34, 0x12, // EOR #1234,X
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -2208,7 +2212,7 @@ fn eor_indirect_x() {
     cpu.memory.write_byte(0x1234 as u16, value);
     let program = vec![
         0xA9, 0xF0, // LDA #$f0
-        0x41, 0x10, // EOR (zp,X)
+        0x41, 0x10, // EOR ($10,X)
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -2261,7 +2265,7 @@ fn inc_zp() {
     let value = 0x40u8;
     cpu.memory.write_byte_zero_page(addr, value);
     let program = vec![
-        0xE6, 0x10, // INC $40
+        0xE6, 0x10, // INC $10
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -2317,7 +2321,7 @@ fn inc_zp_x_wrapping_ff() {
     cpu.memory
         .write_byte_zero_page(addr.wrapping_add(cpu.x), value);
     let program = vec![
-        0xF6, 0xff, // DEC $FF,X
+        0xF6, 0xff, // INC $FF,X
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -2343,7 +2347,7 @@ fn inc_abs() {
     let value = 0x40u8;
     cpu.memory.write_byte(addr, value);
     let program = vec![
-        0xEE, 0x34, 0x12, // DEC $1234
+        0xEE, 0x34, 0x12, // INC $1234
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -2371,7 +2375,7 @@ fn inc_abs_x() {
     cpu.memory
         .write_byte(addr.wrapping_add(cpu.x as u16), value);
     let program = vec![
-        0xFE, 0x34, 0x12, // DEC $1234,X
+        0xFE, 0x34, 0x12, // INC $1234,X
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -2399,7 +2403,7 @@ fn inc_abs_wrapping_ff() {
     cpu.memory
         .write_byte(addr.wrapping_add(cpu.x as u16), value);
     let program = vec![
-        0xFE, 0xff, 0xff, // DEC $1234,X
+        0xFE, 0xff, 0xff, // INC $1234,X
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -2424,7 +2428,7 @@ fn inx() {
     let value = 0x05u8;
     cpu.x = value;
     let program = vec![
-        0xE8, // DEX
+        0xE8, // INX
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -2532,10 +2536,10 @@ fn jmp_absolute() {
             break;
         }
     }
-    assert_eq!(cpu.a, 0x0F);
+    assert_eq!(cpu.a, 0x0Fu8);
 }
 #[test]
-///////////////////////////////////////////////
+///
 /// Tests JMP indirectabs
 ///
 fn jmp_indirect() {
@@ -2544,7 +2548,7 @@ fn jmp_indirect() {
         0xA9, 0x55, // LDA #$55
         0x6C, 0x06, 0x06, // JMP ($0606)
         0x00, // BRK
-        0x09, 0x06, // Indirec address $0609
+        0x09, 0x06, // Indirect address $0609
         0x00, // BRK
         0x0A, 0xAA, // LDA #$AA
         0x00, // BRK
@@ -2557,13 +2561,13 @@ fn jmp_indirect() {
             break;
         }
     }
-    assert_eq!(cpu.a, 0xAA);
+    assert_eq!(cpu.a, 0xAAu8);
 }
 #[test]
 ///////////////////////////////////////////////
 /// Tests JMP indirectabs
 ///
-///  if address $3000 contains $40, $30FF contains $80, and $3100 contains $50,
+/// if address $3000 contains $40, $30FF contains $80, and $3100 contains $50,
 /// the result of JMP ($30FF) will be a transfer of control to $4080 rather than $5080 as you intended
 /// i.e. the 6502 took the low byte of the address from $30FF and the high byte from $3000.
 ///
@@ -2574,24 +2578,24 @@ fn jmp_indirect_30ff() {
     cpu.memory.write_byte(0x3100, 0x50);
     let program = vec![
         0xA9, 0x55, // LDA #$55
-        0x6C, 0xff, 0x30, // JMP ($0606)
+        0x6C, 0xff, 0x30, // JMP ($30FF)
         0x00, // BRK
     ];
     let program_jmp = vec![
         0xA9, 0xAA, // LDA #$FF
         0x00, // BRK
     ];
-    cpu.load_program(&program, 0x0600);
     cpu.load_program(&program_jmp, 0x4080);
+    cpu.load_program(&program, 0x0600);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
-        cpu.step();
         if opcode == 0x00 {
             break;
         }
+        cpu.step();
     }
     assert_eq!(cpu.a, 0xAA);
-    assert_eq!(cpu.pc, 0x4083);
+    assert_eq!(cpu.pc, 0x4082);
 }
 #[test]
 ///////////////////////////////////////////////
@@ -2615,16 +2619,16 @@ fn jsr() {
     cpu.load_program(&program, 0x0600); // This also sets PC to start address: 0x600
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
-        cpu.step();
         if opcode == 0x00 {
             break;
         }
+        cpu.step();
     }
     let addr_instack = cpu
         .memory
         .read_word((cpu.sp as u16).wrapping_add(0x100u16).wrapping_add(1));
-    assert_eq!(cpu.a, 0xAA);
-    assert_eq!(cpu.pc, 0x1237);
+    assert_eq!(cpu.a, 0xAAu8);
+    assert_eq!(cpu.pc, 0x1236);
     assert_eq!(cpu.sp, 0xfd);
     assert_eq!(addr_instack, 0x0604);
 }
@@ -2657,7 +2661,7 @@ fn lda_direct() {
 fn lda_direct_zero() {
     let mut cpu = mos6502::Cpu::new();
     let program = vec![
-        0xA9, 0x00u8, // LDA #$42
+        0xA9, 0x00u8, // LDA #$00
         0x00,   // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -2679,7 +2683,7 @@ fn lda_direct_zero() {
 fn lda_direct_negative() {
     let mut cpu = mos6502::Cpu::new();
     let program = vec![
-        0xA9, 0x80u8, // LDA #$42
+        0xA9, 0x80u8, // LDA #$80
         0x00,   // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -2726,7 +2730,7 @@ fn lda_zero_page_x() {
     cpu.x = 0x0Fu8;
     cpu.memory.write_byte_zero_page(0x10 + cpu.x, 0x55);
     let program = vec![
-        0xB5, 0x10u8, // LDA $10
+        0xB5, 0x10u8, // LDA $10,X
         0x00,   // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -2943,7 +2947,7 @@ fn ldx_zero_page() {
     let value = 0x55u8;
     cpu.memory.write_byte(0x10, value);
     let program = vec![
-        0xA6, 0x10u8, // LDX #$80
+        0xA6, 0x10u8, // LDX $10
         0x00,   // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -3285,7 +3289,7 @@ fn lsr_zerro_page_x() {
     cpu.memory.write_byte_zero_page(z_addr, 0x42);
     cpu.x = 0x0Fu8;
     let program = vec![
-        0x56, 0x10, // LSR $10
+        0x56, 0x10, // LSR $10,X
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -3336,7 +3340,7 @@ fn lsr_absolute_x() {
     cpu.x = 0x0Fu8;
     cpu.memory.write_byte(addr.wrapping_add(cpu.x as u16), 0x42);
     let program = vec![
-        0x5E, 0x34, 0x12, // ASL $1234
+        0x5E, 0x34, 0x12, // ASL $1234,X
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -3370,13 +3374,13 @@ fn nop() {
     cpu.load_program(&program, 0x0600);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
-        cpu.step();
         if opcode == 0x00 {
             break;
         }
+        cpu.step();
     }
     assert_eq!(cpu.a, 0x55u8);
-    assert_eq!(cpu.memory.read_byte(cpu.pc - 0x04), 0x0ea);
+    assert_eq!(cpu.memory.read_byte(cpu.pc - 0x03), 0x0EA);
     assert_eq!(cpu.p.is_zero(), false);
     assert_eq!(cpu.p.is_negative(), false);
     assert_eq!(cpu.p.is_carry(), false);
@@ -3558,7 +3562,7 @@ fn ora_absolute_y() {
     cpu.memory.write_byte(0x1234 + cpu.y as u16, 0x55);
     let program = vec![
         0xA9, 0x42u8, // LDA #$42
-        0x19, 0x34u8, 0x12, // AND $1234
+        0x19, 0x34u8, 0x12, // ORA $1234,Y
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -3646,10 +3650,10 @@ fn pha() {
     cpu.load_program(&program, 0x0600);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
-        cpu.step();
         if opcode == 0x00 {
             break;
         }
+        cpu.step();
     }
     assert_eq!(cpu.a, 0xAAu8);
     assert_eq!(cpu.memory.read_byte(0x01ff), 0xAAu8);
@@ -3665,16 +3669,16 @@ fn php() {
     cpu.p.set_carry(true);
     cpu.p.set_negative(true);
     let program = vec![
-        0x08, // PHA
+        0x08, // PHP
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
-        cpu.step();
         if opcode == 0x00 {
             break;
         }
+        cpu.step();
     }
     assert_eq!(cpu.memory.read_byte(0x01ff), 0xB1u8);
     assert_eq!(cpu.sp, 0xFE);
@@ -3697,10 +3701,10 @@ fn pla() {
     cpu.load_program(&program, 0x0600);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
-        cpu.step();
         if opcode == 0x00 {
             break;
         }
+        cpu.step();
     }
     assert_eq!(cpu.a, 0xAAu8);
     assert_eq!(cpu.memory.read_byte(0x01ff), 0xAAu8);
@@ -3724,10 +3728,10 @@ fn plp() {
     cpu.load_program(&program, 0x0600);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
-        cpu.step();
         if opcode == 0x00 {
             break;
         }
+        cpu.step();
     }
     assert_eq!(cpu.memory.read_byte(0x01ff), 0xB1u8);
     assert_eq!(cpu.sp, 0xFF);
@@ -3947,7 +3951,7 @@ fn ror_accumulator_c() {
     cpu.p.set_carry(true);
     let program = vec![
         0xA9, 0x03u8, // LDA #$00
-        0x6A,   // ROL A
+        0x6A,   // ROR A
         0x00,   // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -3971,7 +3975,7 @@ fn ror_accumulator_z() {
     let mut cpu = mos6502::Cpu::new();
     let program = vec![
         0xA9, 0x00u8, // LDA #$00
-        0x2a,   // ROL A
+        0x6a,   // ROR A
         0x00,   // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -3997,7 +4001,7 @@ fn ror_zerro_page_x() {
     cpu.memory.write_byte_zero_page(z_addr, 0x42);
     cpu.x = 0x0Fu8;
     let program = vec![
-        0x76, 0x10, // ROR $10
+        0x76, 0x10, // ROR $10,X
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
@@ -4066,4 +4070,1094 @@ fn ror_absolute_x() {
     assert_eq!(cpu.p.is_zero(), false);
     assert_eq!(cpu.p.is_negative(), false);
     assert_eq!(cpu.p.is_carry(), false);
+}
+#[test]
+///////////////////////////////////////////////
+/// Tests RTI
+///
+fn rti() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.sp = 0xff;
+    let program = vec![
+        0xA9, 0x12u8, // LDA #$12
+        0x48,   // PHA ;push $12 to stack
+        0xA9, 0x34u8, // LDA #$34
+        0x48,   // PHA ;push $34 to stack
+        0x08,   // PHP
+        0x40,   // RTI
+        0x00,   // BRK
+    ];
+    cpu.p.set_carry(true);
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    let status = cpu.memory.read_byte(0x1fd);
+    assert_eq!(
+        status,
+        status::mos6502::CARRY | status::mos6502::UNUSED | status::mos6502::BREAK
+    );
+    assert_eq!(cpu.pc, 0x1234);
+    assert_eq!(cpu.p.value, status::mos6502::CARRY);
+}
+#[test]
+///////////////////////////////////////////////
+/// Tests RTS
+///
+fn rts() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.sp = 0xff;
+    let program = vec![
+        0xA9, 0x12u8, // LDA #$12
+        0x48,   // PHA ;push $12 to stack
+        0xA9, 0x34u8, // LDA #$34
+        0x48,   // PHA ;push $34 to stack
+        0x60,   // RTS
+        0x00,   // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.pc, 0x1235);
+}
+#[test]
+///////////////////////////////////////////////
+/// Tests SBC
+///
+fn sbc_imm() {
+    let mut cpu = mos6502::Cpu::new();
+    let program = vec![
+        0xA9, 0x55u8, // LDA #$55
+        0x18,   // CLC
+        0xE9, 0x50, // SBC #$50
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.a, 0x05u8);
+    assert_eq!(cpu.p.is_negative(), false);
+    assert_eq!(cpu.p.is_zero(), false);
+    assert_eq!(cpu.p.is_carry(), true);
+    assert_eq!(cpu.p.is_overflow(), false);
+}
+#[test]
+///
+/// Tests SBC with carry
+///
+fn sbc_imm_c() {
+    let mut cpu = mos6502::Cpu::new();
+    let program = vec![
+        0xA9, 0x55u8, // LDA #$55
+        0x38,   // SEC
+        0xE9, 0x50, // SBC #$50
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.a, 0x04u8);
+    assert_eq!(cpu.p.is_negative(), false);
+    assert_eq!(cpu.p.is_zero(), false);
+    assert_eq!(cpu.p.is_carry(), true);
+    assert_eq!(cpu.p.is_overflow(), false);
+}
+#[test]
+///
+/// Tests SBC with zero
+///
+fn sbc_imm_z() {
+    let mut cpu = mos6502::Cpu::new();
+    let program = vec![
+        0xA9, 0x55u8, // LDA #$55
+        0x18,   // CLC
+        0xE9, 0x55, // SBC #$55
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.a, 0x00u8);
+    assert_eq!(cpu.p.is_negative(), false);
+    assert_eq!(cpu.p.is_zero(), true);
+    assert_eq!(cpu.p.is_carry(), true);
+    assert_eq!(cpu.p.is_overflow(), false);
+}
+#[test]
+///
+/// Tests SBC with negative and carry
+///
+fn sbc_imm_n_c() {
+    let mut cpu = mos6502::Cpu::new();
+    let program = vec![
+        0xA9, 0x55u8, // LDA #$55
+        0x38,   // SEC
+        0xE9, 0xAA, // SBC #$AA
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.a, 0xAAu8);
+    assert_eq!(cpu.p.is_negative(), true);
+    assert_eq!(cpu.p.is_zero(), false);
+    assert_eq!(cpu.p.is_carry(), false);
+    assert_eq!(cpu.p.is_overflow(), true);
+}
+#[test]
+///
+/// Tests SBC with negative and carry
+///
+fn sbc_imm_c_v() {
+    let mut cpu = mos6502::Cpu::new();
+    let program = vec![
+        0xA9, 0x80u8, // LDA #$80
+        0x18,   // CEC
+        0xE9, 0x40, // SBC #$40
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.a, 0x40u8);
+    assert_eq!(cpu.p.is_negative(), false);
+    assert_eq!(cpu.p.is_zero(), false);
+    assert_eq!(cpu.p.is_carry(), true);
+    assert_eq!(cpu.p.is_overflow(), true);
+}
+#[test]
+///
+/// Tests SBC zp
+///
+fn sbc_zp() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.memory.write_byte_zero_page(0x10, 0x50);
+    let program = vec![
+        0xA9, 0x80u8, // LDA #$80
+        0x18,   // CEC
+        0xE5, 0x10, // SBC #$10
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.a, 0x30u8);
+    assert_eq!(cpu.p.is_negative(), false);
+    assert_eq!(cpu.p.is_zero(), false);
+    assert_eq!(cpu.p.is_carry(), true);
+    assert_eq!(cpu.p.is_overflow(), true);
+}
+#[test]
+///
+/// Tests SBC zp,X
+///
+fn sbc_zp_x() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.memory.write_byte_zero_page(0x20, 0x50);
+    cpu.x = 0x10u8;
+    let program = vec![
+        0xA9, 0x80u8, // LDA #$80
+        0x18,   // CEC
+        0xF5, 0x10, // SBC #$10,X
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.a, 0x30u8);
+    assert_eq!(cpu.p.is_negative(), false);
+    assert_eq!(cpu.p.is_zero(), false);
+    assert_eq!(cpu.p.is_carry(), true);
+    assert_eq!(cpu.p.is_overflow(), true);
+}
+#[test]
+///
+/// Tests SBC absolute
+///
+fn sbc_abs() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.memory.write_byte(0x1234, 0x50);
+    cpu.x = 0x10u8;
+    let program = vec![
+        0xA9, 0x80, // LDA #$80
+        0x18, // CEC
+        0xED, 0x34, 0x12, // SBC $1234
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.a, 0x30u8);
+    assert_eq!(cpu.p.is_negative(), false);
+    assert_eq!(cpu.p.is_zero(), false);
+    assert_eq!(cpu.p.is_carry(), true);
+    assert_eq!(cpu.p.is_overflow(), true);
+}
+#[test]
+///
+/// Tests SBC absolute
+///
+fn sbc_abs_x() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.x = 0x10u8;
+    cpu.memory
+        .write_byte(0x1234u16.wrapping_add(cpu.x as u16), 0x50u8);
+    let program = vec![
+        0xA9, 0x80, // LDA #$80
+        0x18, // CEC
+        0xFD, 0x34, 0x12, // SBC $1234,X
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.a, 0x30u8);
+    assert_eq!(cpu.p.is_negative(), false);
+    assert_eq!(cpu.p.is_zero(), false);
+    assert_eq!(cpu.p.is_carry(), true);
+    assert_eq!(cpu.p.is_overflow(), true);
+}
+#[test]
+///
+/// Tests SBC absolute
+///
+fn sbc_abs_y() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.y = 0x10u8;
+    cpu.memory
+        .write_byte(0x1234u16.wrapping_add(cpu.y as u16), 0x50u8);
+    let program = vec![
+        0xA9, 0x80, // LDA #$80
+        0x18, // CEC
+        0xF9, 0x34, 0x12, // SBC $1234,Y
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.a, 0x30u8);
+    assert_eq!(cpu.p.is_negative(), false);
+    assert_eq!(cpu.p.is_zero(), false);
+    assert_eq!(cpu.p.is_carry(), true);
+    assert_eq!(cpu.p.is_overflow(), true);
+}
+#[test]
+///
+/// Tests SBC (indirect,X)
+///
+fn sbc_abs_indirect_x() {
+    let mut cpu = mos6502::Cpu::new();
+    let addr = 0x001Fu16;
+    let value = 0x50u8;
+    cpu.x = 0x0F;
+    cpu.memory.write_word(addr, 0x1234);
+    cpu.memory.write_byte(0x1234 as u16, value);
+    let program = vec![
+        0xA9, 0x80, // LDA #$80
+        0x18, // CEC
+        0xE1, 0x10, // SBC ($10,X)
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.a, 0x30u8);
+    assert_eq!(cpu.p.is_negative(), false);
+    assert_eq!(cpu.p.is_zero(), false);
+    assert_eq!(cpu.p.is_carry(), true);
+    assert_eq!(cpu.p.is_overflow(), true);
+}
+#[test]
+///
+/// Tests SBC (indirect),Y
+///
+fn sbc_abs_indirect_y() {
+    let mut cpu = mos6502::Cpu::new();
+    let addr = 0x0010u16;
+    let value = 0x50u8;
+    cpu.y = 0x0F;
+    cpu.memory.write_word(addr, 0x1234);
+    cpu.memory.write_byte(0x1234 + cpu.y as u16, value);
+    let program = vec![
+        0xA9, 0x80, // LDA #$80
+        0x18, // CEC
+        0xF1, 0x10, // SBC $10,X
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.a, 0x30u8);
+    assert_eq!(cpu.p.is_negative(), false);
+    assert_eq!(cpu.p.is_zero(), false);
+    assert_eq!(cpu.p.is_carry(), true);
+    assert_eq!(cpu.p.is_overflow(), true);
+}
+#[test]
+///////////////////////////////////////////////
+/// Tests SEC
+///
+fn sec() {
+    let mut cpu = mos6502::Cpu::new();
+    let program = vec![
+        0x18, // CLC
+        0x38, // SEC
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.p.is_negative(), false);
+    assert_eq!(cpu.p.is_zero(), false);
+    assert_eq!(cpu.p.is_carry(), true);
+    assert_eq!(cpu.p.is_overflow(), false);
+    assert_eq!(cpu.p.is_decimal_mode(), false);
+}
+#[test]
+///////////////////////////////////////////////
+/// Tests SED
+///
+fn sed() {
+    let mut cpu = mos6502::Cpu::new();
+    let program = vec![
+        0xD8, // CLD
+        0xF8, // SEd
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.p.is_negative(), false);
+    assert_eq!(cpu.p.is_zero(), false);
+    assert_eq!(cpu.p.is_carry(), false);
+    assert_eq!(cpu.p.is_decimal_mode(), true);
+}
+#[test]
+///////////////////////////////////////////////
+/// Tests SEI
+///
+fn sei() {
+    let mut cpu = mos6502::Cpu::new();
+    let program = vec![
+        0x58, // CLI
+        0x78, // SEI
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.p.is_negative(), false);
+    assert_eq!(cpu.p.is_zero(), false);
+    assert_eq!(cpu.p.is_carry(), false);
+    assert_eq!(cpu.p.is_decimal_mode(), false);
+    assert_eq!(cpu.p.is_interrupt_disable(), true);
+}
+#[test]
+///////////////////////////////////////////////
+/// Tests STA zp
+///
+fn sta_zp() {
+    let mut cpu = mos6502::Cpu::new();
+    let program = vec![
+        0xA9, 0x55, // LDA #$55
+        0x85, 0x10, // STA zp
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.memory.read_byte_zero_page(0x10u8), 0x55u8);
+}
+#[test]
+///
+/// Tests STA zp,X
+///
+fn sta_zp_x() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.x = 0x0fu8;
+    let program = vec![
+        0xA9, 0x55, // LDA #$55
+        0x95, 0x10, // STA $10,X
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.memory.read_byte_zero_page(0x1fu8), 0x55u8);
+}
+#[test]
+///
+/// Tests STA absolute
+///
+fn sta_abs() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.x = 0x0fu8;
+    let program = vec![
+        0xA9, 0x55, // LDA #$55
+        0x8D, 0x34, 0x12, // STA $1234
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.memory.read_byte(0x1234u16), 0x55u8);
+}
+#[test]
+///
+/// Tests STA absolute,X
+///
+fn sta_abs_x() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.x = 0x0fu8;
+    let program = vec![
+        0xA9, 0x55, // LDA #$55
+        0x9D, 0x34, 0x12, // STA a$1234,X
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(
+        cpu.memory.read_byte(0x1234u16.wrapping_add(cpu.x as u16)),
+        0x55u8
+    );
+}
+#[test]
+///
+/// Tests STA absolute,Y
+///
+fn sta_abs_y() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.y = 0x0fu8;
+    let program = vec![
+        0xA9, 0x55, // LDA #$55
+        0x99, 0x34, 0x12, // STA $1234,Y
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(
+        cpu.memory.read_byte(0x1234u16.wrapping_add(cpu.y as u16)),
+        0x55u8
+    );
+}
+#[test]
+///
+/// Tests STA (indirect,X)
+///
+fn sta_indirect_x() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.x = 0x0fu8;
+    let program = vec![
+        0xA9, 0x55, // LDA #$55
+        0x81, 0x10, // STA ($10,X)
+        0x00, // BRK
+    ];
+    cpu.memory.write_word_zero_page(0x1f, 0x1234u16);
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.memory.read_byte(0x1234u16), 0x55u8);
+}
+#[test]
+///
+/// Tests STA (indirect),Y
+///
+fn sta_indirect_y() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.y = 0x0fu8;
+    let program = vec![
+        0xA9, 0x55, // LDA #$55
+        0x91, 0x10, // STA ($10),Y
+        0x00, // BRK
+    ];
+    cpu.memory.write_word_zero_page(0x10, 0x1234u16);
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(
+        cpu.memory.read_byte(0x1234u16.wrapping_add(cpu.y as u16)),
+        0x55u8
+    );
+}
+#[test]
+///////////////////////////////////////////////
+/// Tests STX zp
+///
+fn stx_zp() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.x = 0x55u8;
+    let program = vec![
+        0x86, 0x10, // STX zp
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.memory.read_byte_zero_page(0x10u8), 0x55u8);
+}
+#[test]
+///
+/// Tests STX zp,Y
+///
+fn stx_zp_y() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.x = 0x55u8;
+    cpu.y = 0x0fu8;
+    let program = vec![
+        0x96, 0x10, // STX $10,Y
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(
+        cpu.memory.read_byte_zero_page(0x10u8.wrapping_add(cpu.y)),
+        0x55u8
+    );
+}
+#[test]
+///
+/// Tests STX abs
+///
+fn stx_abs() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.x = 0x55u8;
+    let program = vec![
+        0x8E, 0x34, 0x12, // STX abs
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.memory.read_byte(0x1234u16), 0x55u8);
+}
+#[test]
+///////////////////////////////////////////////
+/// Tests STY zp
+///
+fn sty_zp() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.y = 0x55u8;
+    let program = vec![
+        0x84, 0x10, // STY $10
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.memory.read_byte_zero_page(0x10u8), 0x55u8);
+}
+#[test]
+///
+/// Tests STY zp,X
+///
+fn sty_zp_x() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.y = 0x55u8;
+    cpu.x = 0x0fu8;
+    let program = vec![
+        0x94, 0x10, // STY $10,X
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(
+        cpu.memory.read_byte_zero_page(0x10u8.wrapping_add(cpu.x)),
+        0x55u8
+    );
+}
+#[test]
+///
+/// Tests STY abs
+///
+fn sty_abs() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.y = 0x55u8;
+    let program = vec![
+        0x8C, 0x34, 0x12, // STY abs
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.memory.read_byte(0x1234u16), 0x55u8);
+}
+#[test]
+///////////////////////////////////////////////
+/// Tests TAX
+fn tax() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.a = 0x55u8;
+    cpu.x = 0xaau8;
+    let program = vec![
+        0xAA, // TAX
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.x, 0x55);
+    assert_eq!(cpu.p.is_negative(), false);
+    assert_eq!(cpu.p.is_zero(), false);
+}
+#[test]
+///
+/// Tests TAX with zero flag
+///
+fn tax_z() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.a = 0x00u8;
+    cpu.x = 0xaau8;
+    let program = vec![
+        0xAA, // TAX
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.x, 0x00);
+    assert_eq!(cpu.p.is_negative(), false);
+    assert_eq!(cpu.p.is_zero(), true);
+}
+#[test]
+///
+/// Tests TAX with negative  flag
+///
+fn tax_n() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.a = 0x80u8;
+    cpu.x = 0xaau8;
+    let program = vec![
+        0xAA, // TAX
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.x, 0x80);
+    assert_eq!(cpu.p.is_negative(), true);
+    assert_eq!(cpu.p.is_zero(), false);
+}
+#[test]
+///////////////////////////////////////////////
+/// Tests TAY
+fn tay() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.a = 0x55u8;
+    cpu.y = 0xaau8;
+    let program = vec![
+        0xA8, // TAY
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.y, 0x55);
+    assert_eq!(cpu.p.is_negative(), false);
+    assert_eq!(cpu.p.is_zero(), false);
+}
+#[test]
+///
+/// Tests TAY with zero flag
+fn tay_z() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.a = 0x00u8;
+    cpu.y = 0xaau8;
+    let program = vec![
+        0xA8, // TAY
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.y, 0x00);
+    assert_eq!(cpu.p.is_negative(), false);
+    assert_eq!(cpu.p.is_zero(), true);
+}
+#[test]
+///
+/// Tests TAY with negative flag
+fn tay_n() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.a = 0x80u8;
+    cpu.y = 0xaau8;
+    let program = vec![
+        0xA8, // TAY
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.y, 0x80);
+    assert_eq!(cpu.p.is_negative(), true);
+    assert_eq!(cpu.p.is_zero(), false);
+}
+#[test]
+///////////////////////////////////////////////
+/// Tests TSX
+fn tsx() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.sp = 0x55u8;
+    cpu.x = 0xaau8;
+    let program = vec![
+        0xBA, // TSX
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.sp, 0x55);
+    assert_eq!(cpu.p.is_negative(), false);
+    assert_eq!(cpu.p.is_zero(), false);
+}
+#[test]
+///
+/// Tests TSX with zero flag
+fn tsx_z() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.sp = 0x00u8;
+    cpu.x = 0xaau8;
+    let program = vec![
+        0xBA, // TSX
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.sp, 0x00);
+    assert_eq!(cpu.p.is_negative(), false);
+    assert_eq!(cpu.p.is_zero(), true);
+}
+#[test]
+///
+/// Tests TSX with negative flag
+fn tsx_n() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.sp = 0x80u8;
+    cpu.x = 0xaau8;
+    let program = vec![
+        0xBA, // TSX
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.sp, 0x80);
+    assert_eq!(cpu.p.is_negative(), true);
+    assert_eq!(cpu.p.is_zero(), false);
+}
+#[test]
+///////////////////////////////////////////////
+/// Tests TXA
+///
+fn txa() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.a = 0x55u8;
+    cpu.x = 0xaau8;
+    let program = vec![
+        0x8A, // TXA
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.a, 0xaau8);
+    assert_eq!(cpu.p.is_negative(), true);
+    assert_eq!(cpu.p.is_zero(), false);
+}
+#[test]
+///
+/// Tests TXA with zero flag
+///
+fn txa_z() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.a = 0x55u8;
+    cpu.x = 0x00u8;
+    let program = vec![
+        0x8A, // TXA
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.a, 0x00u8);
+    assert_eq!(cpu.p.is_negative(), false);
+    assert_eq!(cpu.p.is_zero(), true);
+}
+#[test]
+///////////////////////////////////////////////
+/// Tests TXS
+///
+fn txs() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.sp = 0x55u8;
+    cpu.x = 0xAAu8;
+    let program = vec![
+        0x9A, // TXS
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.sp, 0xAAu8);
+}
+#[test]
+///////////////////////////////////////////////
+/// Tests TYA with zero flag
+///
+fn tya_z() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.a = 0x55u8;
+    cpu.y = 0x00u8;
+    let program = vec![
+        0x98, // TYA
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.a, 0x00u8);
+    assert_eq!(cpu.p.is_negative(), false);
+    assert_eq!(cpu.p.is_zero(), true);
+}
+#[test]
+///
+/// Tests TYA with negative flag
+///
+fn tya_n() {
+    let mut cpu = mos6502::Cpu::new();
+    cpu.a = 0x55u8;
+    cpu.y = 0x80u8;
+    let program = vec![
+        0x98, // TYA
+        0x00, // BRK
+    ];
+    cpu.load_program(&program, 0x0600);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        if opcode == 0x00 {
+            break;
+        }
+        cpu.step();
+    }
+    assert_eq!(cpu.a, 0x80u8);
+    assert_eq!(cpu.p.is_negative(), true);
+    assert_eq!(cpu.p.is_zero(), false);
 }

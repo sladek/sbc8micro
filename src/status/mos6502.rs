@@ -1,11 +1,11 @@
-const CARRY: u8 = 0b0000_0001;
-const ZERO: u8 = 0b0000_0010;
-const INTERRUPT: u8 = 0b0000_0100;
-const DECIMAL: u8 = 0b0000_1000;
-//const BREAK: u8 = 0b0001_0000;
-//const UNUSED: u8 = 0b0010_0000;
-const OVERFLOW: u8 = 0b0100_0000;
-const NEGATIVE: u8 = 0b1000_0000;
+pub const CARRY: u8 = 0b0000_0001;
+pub const ZERO: u8 = 0b0000_0010;
+pub const INTERRUPT: u8 = 0b0000_0100;
+pub const DECIMAL: u8 = 0b0000_1000;
+pub const BREAK: u8 = 0b0001_0000;
+pub const UNUSED: u8 = 0b0010_0000;
+pub const OVERFLOW: u8 = 0b0100_0000;
+pub const NEGATIVE: u8 = 0b1000_0000;
 
 #[derive(Default, Debug)]
 pub struct Status {
@@ -13,6 +13,20 @@ pub struct Status {
 }
 
 impl Status {
+    pub fn set_break(&mut self, val: bool) {
+        if val {
+            self.value |= BREAK;
+        } else {
+            self.value &= !BREAK;
+        }
+    }
+    pub fn set_unused(&mut self, val: bool) {
+        if val {
+            self.value |= UNUSED;
+        } else {
+            self.value &= !UNUSED;
+        }
+    }
     pub fn set_negative(&mut self, val: bool) {
         if val {
             self.value |= NEGATIVE;
