@@ -35,7 +35,7 @@
 ///
 /////////////////////////////
 use serde::Deserialize;
-use std::{collections::HashMap};
+use std::collections::HashMap;
 
 use crate::disassembler::mos6502_opcodes;
 use crate::memory::Memory;
@@ -71,25 +71,47 @@ pub fn disassemble(
         if let Some(def) = opcodes.get(&opcode_byte) {
             let args = &memory_data[(pc + 1) as usize..];
             let operand_str = match def.mode.as_str() {
+                "accumulator" => "A".to_string(),
                 "immediate" => format!("#${:02X}", args[0]),
-                "zero_page" => format!("${:02X}", args[0]),
+                "zeropage" => format!("${:02X}", args[0]),
+                "zeropage,X" => format!("${:02X},X", args[0]),
+                "zeropage,Y" => format!("${:02X},Y", args[0]),
                 "absolute" => format!("${:04X}", u16::from_le_bytes([args[0], args[1]])),
+                "absolute,X" => format!("${:04X},X", u16::from_le_bytes([args[0], args[1]])),
+                "absolute,Y" => format!("${:04X},Y", u16::from_le_bytes([args[0], args[1]])),
+                "indirect" => format!("(${:04X})", u16::from_le_bytes([args[0], args[1]])),
                 "relative" => {
                     let offset = args[0] as i8;
                     let target = (pc as i16 + 2 + offset as i16) as u16;
                     format!("${:04X}", target)
                 }
                 "implied" => "".to_string(),
+                "(indirect,X)" => format!("(${:02X},X)", args[0]),
+                "(indirect),Y" => format!("(${:02X}),Y", args[0]),
                 _ => format!("?? {}", def.mode),
             };
-
+            let operand_bytes = match def.mode.as_str() {
+                "immediate" | "zeropage" | "zeropage,X" | "zeropage,Y" | "relative"
+                | "(indirect,X)" | "(indirect),Y" => {
+                    format!("{:02X}", args[0])
+                }
+                "absolute" | "absolute,X" | "absolute,Y" => {
+                    format!("{:02X} {:02X}", args[0], args[1])
+                }
+                "implied" => "".to_string(),
+                _ => format!(""),
+            };
             output.push(format!(
                 "{:04X}  {:02X} {:<8} {} {}",
-                pc, opcode_byte, "", def.mnemonic, operand_str
+                pc,
+                opcode_byte,
+                operand_bytes,
+                &def.mnemonic[..3],
+                operand_str
             ));
             pc += def.bytes as u16;
         } else {
-            output.push(format!("{:04X}  {:02X}        ???", pc, opcode_byte));
+            output.push(format!("{:04X}  {:02X}          !byte {:02X}", pc, opcode_byte, opcode_byte));
             pc += 1;
         }
     }

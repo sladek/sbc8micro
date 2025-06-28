@@ -13,13 +13,6 @@ pub struct Status {
 }
 
 impl Status {
-    pub fn set_break(&mut self, val: bool) {
-        if val {
-            self.value |= BREAK;
-        } else {
-            self.value &= !BREAK;
-        }
-    }
     pub fn set_unused(&mut self, val: bool) {
         if val {
             self.value |= UNUSED;
@@ -27,6 +20,20 @@ impl Status {
             self.value &= !UNUSED;
         }
     }
+    pub fn is_unused(&self) -> bool {
+        self.value & UNUSED != 0
+    }
+    pub fn set_break(&mut self, val: bool) {
+        if val {
+            self.value |= BREAK;
+        } else {
+            self.value &= !BREAK;
+        }
+    }
+    pub fn is_break(&self) -> bool {
+        self.value & BREAK != 0
+    }
+
     pub fn set_negative(&mut self, val: bool) {
         if val {
             self.value |= NEGATIVE;

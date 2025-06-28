@@ -1,6 +1,6 @@
+pub mod mos6502;
 pub mod mos6502_opcodes;
 pub mod opcode_viewer;
-pub mod mos6502;
 
 use serde::Deserialize;
 

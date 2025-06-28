@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////
 /// Usage of the viewer is simple. Just provide <OPCODES> string
 /// And call view. Below is an example.
-/// 
+///
 /// ```
 /// mod disassembler;
 ///

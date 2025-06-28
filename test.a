@@ -1,0 +1,1060 @@
+;--- Example code fragment, start ---
+
+; store A and X
+
+		!to "test.o", cbm	; set output file and format
+		zp_address = $55
+		*= zp_address
+zp:	    !byte $00
+zp_1:	!word data2
+zp_3:	!word data3
+zp_5:	!byte $66
+zp_22	!byte $22
+zp_33:	!byte $33
+zp_44:  !byte $44
+zp_55:	!byte $55
+zp_lsr:	!byte $11
+		!byte $99
+zp_30:	!byte $00
+		!word data_33
+zp_40:	!word data_40
+zp_50:	!byte $00
+		!byte $50
+zp_rol: !byte $00
+		!byte $88
+zp_x:	!byte $00
+		!word data_zp_x
+zp_y:	!word data_zp_y
+zp_data:
+		!byte $00
+		!byte $00
+		!byte $00
+
+		*= $0200		; set program counter
+
+		basout = $1234		; explicit global label def.
+		ldx	#$FF
+		txs			; set stack pointer to top
+		lda #$aa	; set first byte of interrupt routine address
+		sta $FFFE
+		lda #$55	; set second byte of interrupt routine address
+		sta $FFFF
+		; Below goes the code for testing
+		;-------------------------------
+		; Test ADC
+		clc
+		lda #$10
+		adc #$01
+		pha				; $11
+		;---
+		sec
+		lda #$20
+		adc #$01
+		pha				; $22
+		;---
+		sec
+		lda #$02
+		sta data_abs
+		lda #$30
+		adc data_abs
+		pha				; $33
+		;---
+		sec
+		lda #$03
+		sta zp
+		lda #$40
+		adc zp
+		pha				; $44
+		;---
+		lda #$04
+		sta data_zp_x
+		sec
+		lda #$50
+		ldx #$01
+		adc (zp_x,X)
+		pha				; $55
+		lda (zp_x,X)
+		;---
+		lda #$60
+		sta data_zp_y+1
+		sec
+		ldy #$01
+		lda #$05
+		adc (zp_y),Y
+		pha				; $66
+		;---
+		lda #$70
+		sta zp_data+2
+		lda #$06
+		ldx	#$02
+		sec
+		adc zp_data,X
+		pha				; $77
+		;---
+		lda #$80
+		sta data_abs+1
+		ldx #$01
+		lda #$07
+		sec
+		adc data_abs,X
+		pha				; $88
+		;---
+		lda #$90
+		sta data_abs+1
+		ldy #$01
+		lda #$08
+		sec
+		adc data_abs,Y
+		pha				; $99
+		;---
+		lda #$ff
+		pha
+		; Test AND
+		lda #$11
+		and #$0f
+		pha				; $01
+		;---
+		lda #$0f
+		sta zp
+		lda #$22
+		and zp
+		pha				; $02
+		;---
+		lda #$0f
+		sta data_abs
+		lda #$33
+		and data_abs
+		pha				; $03
+		;---
+		lda #$0f
+		sta data_abs_x
+		lda #$44
+		ldx #$01
+		and (zp_x,X)
+		pha				; $04
+		;---
+		lda #$0f
+		sta data_zp_y+1
+		ldy #$01
+		lda #$55
+		and (zp_y),Y
+		pha				; $05
+		;---
+		lda #$0f
+		sta zp_data+1
+		lda #$66
+		ldx #$01
+		and zp_data,X
+		pha				; $06
+		;---
+		lda #$0f
+		sta data_abs+1
+		lda #$77
+		ldx #$01
+		and data_abs,X
+		pha				; $07
+		;---
+		lda #$0f
+		sta data_abs+1
+		lda #$88
+		ldy #$01
+		and data_abs,Y
+		pha				; $08
+		;---
+		lda #$ff
+		pha
+		; Test ASL
+		lda #$81
+		sta data_abs
+		cli
+		cld
+		clv
+		sec
+		asl data_abs
+		lda data_abs
+		pha				; $02
+		php				; $31
+		;---
+		lda #$82
+		sta zp
+		asl zp
+		lda zp
+		pha				; $04
+		php				; $31
+		;---
+		lda #$84
+		asl
+		pha				; $08
+		php				; $31
+		;---
+		lda #$88
+		sta zp_data+1
+		ldx #$01
+		asl zp_data,x
+		lda zp_data+1
+		pha				; $10
+		php				; $31
+		;---
+		lda #$90
+		sta data_abs+1
+		ldx #$01
+		asl data_abs,x
+		lda data_abs+1
+		pha				; $20
+		php				; $31
+		;---
+		lda #$ff
+		pha
+		; Test Bxx branching
+		lda #$55
+		sta zp
+		clc
+		bcc .bcc
+		lda #$aa
+		sta zp
+.bcc	pha				; $55
+		;---
+		lda #$aa
+		sta zp
+		sec
+		bcs .bcs
+		lda #$55
+		sta zp
+.bcs	pha				; $aa
+		;---
+		lda #$55
+		sta zp
+		clc
+		sbc #$55
+		beq .beq
+		lda #$aa
+		sta zp
+.beq	lda zp
+		pha				; $55
+		;---
+		lda #$aa
+		sta zp
+		lda #55
+		sbc zp
+		bne .bne
+		lda $55
+		sta zp
+.bne	lda zp
+		pha				; $aa
+		;---
+		lda #$55
+		sta zp
+		lda #$88
+		bmi .bmi
+		lda #$aa
+		sta zp
+.bmi	lda zp
+		pha
+		;---			; $55
+		lda #$aa
+		sta zp
+		lda #$44
+		bpl .bpl
+		lda #$55
+		sta zp
+.bpl	lda zp
+		pha				; $aa
+		;---
+		lda #$55
+		sta zp
+		lda #$33
+		sbc #$55
+		bvc .bvc
+		lda #$aa
+		sta zp
+.bvc	lda zp
+		pha				; $55
+		;---
+		lda #$aa
+		sta zp
+		lda #$aa
+		sbc #$55
+		bvs .bvs
+		lda #$55
+		sta zp
+.bvs	lda zp
+		pha				; $aa
+		;---
+		lda #$ff
+		pha
+		;Test BIT
+		clc
+		lda #$ca
+		sta zp
+		lda #$ca
+		bit zp
+		php				; $f0
+		;---
+		lda #$55
+		sta data_abs
+		lda #$55
+		bit data_abs
+		php				; $70
+		;Test CLx
+		lda #$c0
+		sta zp
+		lda #$c0
+		bit zp ;set V
+		sec
+		sed
+		sei
+		php				; $FD
+		clc
+		cld
+		cli
+		php				; $F0
+		;---
+		lda #$ff
+		pha
+		; Test CMP
+		clv
+		lda #$ff
+		cmp #$ff
+		php				; $33
+		;---
+		lda #$55
+		sta zp
+		lda #$55
+		cmp zp
+		php				; $33
+		;---
+		lda #$55
+		sta data_abs
+		lda #$55
+		cmp data_abs
+		php 			; $33
+		;---
+		lda #$aa
+		sta data_zp_x
+		ldx #$01
+		cmp (zp_x,X)
+		php				; $33
+		;---
+		lda #$55
+		sta data_zp_y+1
+		ldy #$01
+		cmp (zp_y),Y
+		php				; $33
+		;---
+		lda #$aa
+		sta zp_data+1
+		ldx #$01
+		cmp zp_data,X
+		php				; $33
+		;---
+		lda #$55
+		sta data_abs+1
+		ldx #$01
+		cmp data_abs,X
+		php				; $33
+		;---
+		lda #$55
+		sta data_abs+1
+		ldy #$01
+		cmp data_abs,Y
+		php				; $33
+		;---
+		lda #$ff
+		pha
+		; Test CPX
+		ldx #$55
+		cpx #$55
+		php 			; $33
+		;---
+		lda #$aa
+		sta data_abs
+		ldx #$aa
+		cpx data_abs
+		php 			; $33
+		;---
+		lda #$55
+		sta zp_data
+		ldx #$55
+		cpx zp_data
+		php				; $33
+		;---
+		lda #$ff
+		pha
+		; Test CPY
+		ldy #$55
+		cpy #$55
+		php 			; $33
+		;---
+		lda #$aa
+		sta data_abs
+		ldy #$aa
+		cpy data_abs
+		php 			; $33
+		;---
+		lda #$55
+		sta zp_data
+		ldy #$55
+		cpy zp_data
+		php				; $33
+		;---
+		lda #$ff
+		pha
+		; Test DEC
+		lda #$56
+		sta zp
+		dec zp
+		lda zp
+		pha				; $55
+		;---
+		lda #$56
+		sta data_abs
+		dec data_abs
+		lda data_abs
+		pha				; $55
+		;---
+		lda #$56
+		sta zp_data+1
+		ldx #$01
+		dec zp_data,X
+		lda zp_data+1
+		pha				; $55
+		;---
+		lda #$56
+		sta data_abs+1
+		ldx #$01
+		dec data_abs,X
+		lda data_abs+1
+		pha				; $55
+		;---
+		lda #$ff
+		pha
+		; Test DEX, DEY
+		ldx #$56
+		dex
+		txa
+		pha				; $55
+		ldy #$56
+		dey
+		tya
+		pha				; $55
+		;---
+		lda #$ff
+		pha
+		; Test EOR
+		lda #$c5
+		eor #$fa
+		pha				; $3f
+		;---
+		lda #$c5
+		sta data_abs
+		lda #$fa
+		eor data_abs
+		pha				; $3f
+		;---
+		lda #$c5
+		sta zp
+		lda #$fa
+		eor zp
+		pha				; $3f
+		;---
+		lda #$c5
+		sta data_zp_x
+		ldx #$01
+		lda #$fa
+		eor (zp_x,X)
+		pha				; $3f
+		;---
+		lda #$c5
+		sta data_zp_y+1
+		ldy #$01
+		lda #$fa
+		eor (zp_y),Y
+		pha				; $3f
+		;---
+		lda #$c5
+		sta zp_data+1
+		ldx #$01
+		lda #$fa
+		eor zp_data,X
+		pha				; $3f
+		;---
+		lda #$c5
+		sta data_abs+1
+		ldx #$01
+		lda #$fa
+		eor data_abs,X
+		pha				; $3f
+		;---
+		lda #$c5
+		sta data_abs+1
+		ldy #$01
+		lda #$fa
+		eor data_abs,Y
+		pha				; $3f
+		;---
+		lda #$ff
+		pha
+		; Test INC
+		lda #$54
+		sta data_abs
+		inc data_abs
+		lda data_abs
+		pha				;$55
+		;---
+		lda #$54
+		sta zp
+		inc	zp
+		lda zp
+		pha				; $55
+		;---
+		lda #$54
+		sta zp_data+1
+		ldx #$01
+		inc	zp_data,X
+		lda zp
+		pha				; $55
+		;---
+		lda #$54
+		sta data_abs+1
+		ldx #$01
+		inc data_abs,X
+		lda data_abs+1
+		pha
+		;---
+		lda #$ff
+		pha
+		; Test JMP
+		lda #$55
+		sta zp
+		jmp .jmp
+		lda #$aa
+		sta zp
+.jmp	lda zp
+		pha				; $55
+		;---
+		lda #$55
+		pha
+		jmp  (.j_addr)
+.j_addr !word .j_here
+		lda #$33
+		pha
+		jmp .j_end
+.j_here lda #$aa
+.j_end	pha
+		;---
+		lda #$ff
+		pha
+        ; Test LDA
+		lda #$11
+		pha			; $11
+		;---
+		lda data1   
+		pha			; $22
+		;---
+		lda #$33
+		sta zp_address
+		lda zp_address
+		pha			; $33
+		;---
+		ldx #$1
+		lda (zp,X)
+		pha			; $44
+		;---
+		ldy #$1
+		lda (zp_3),Y
+		pha			; $55
+		;---
+		ldx #$05
+		lda zp,X
+		pha			; $66
+		;---
+		lda #$ff
+		pha
+		; Test LDX
+		ldx #$11
+		txa
+		pha			; $11
+		;---
+		ldx b22
+		txa
+		pha			; $22
+		;---
+		ldx	zp_33
+		txa
+		pha			; $33
+		;---
+		ldy #$01
+		ldx data1,Y
+		txa
+		pha			; $44
+		;---
+		ldy #$01
+		ldx zp_44,Y
+		txa
+		pha 		; $55
+		;---
+		lda #$ff
+		pha
+		; Test LDY
+		ldY #$11
+		tya
+		pha			; $11
+		ldy b22
+		tya
+		pha			; $22
+		;---
+		ldy	zp_33
+		tya
+		pha			; $33
+		;---
+		ldx #$01
+		ldy data1,X
+		tya
+		pha			; $44
+		;---
+		ldx #$01
+		ldy zp_44,X
+		tya
+		pha 		; $55
+		;---
+		lda #$ff
+		pha
+		; Test LSR
+		lda #$22
+		lsr
+		pha			; $11
+		php
+		;---
+		lsr lsr_data
+		lda lsr_data
+		pha			; $22
+		php
+		;---
+		lsr zp_lsr
+		lda zp_lsr
+		pha			; $08 p=$31
+		php
+		;---
+		ldx #$01
+		lsr zp_lsr,X
+		lda zp_lsr+1
+		pha			; $4c p=$31
+		php
+		;---
+		ldx #$01
+		lsr lsr_data,X
+		lda lsr_data+1
+		pha			; $55
+		php
+		;---
+		lda #$ff
+		pha
+		nop
+		; Test ORA
+		lda #$00
+		ora #$11
+		pha			; $11
+		;---
+		lda #$00
+		ora zp_22
+		pha			; $22
+		;---
+		lda #$03
+		ldx #$01
+		ora (zp_30,X)
+		pha			; $33
+		;---
+		lda #$04
+		ldy #$01
+		ora (zp_40),Y
+		pha			; $44
+		;---
+		lda #$05
+		ldx #$01
+		ora zp_50,X
+		pha			; $55
+		;---
+		lda #$06
+		ldx #$01
+		ora data_60,X
+		pha			; $66
+		;---
+		lda #$07
+		ldy #$01
+		ora data_70,X
+		pha			; $77
+		;---
+		lda #$ff
+		pha
+		; Test PFx PLx instructions
+		lda #$55
+		pha
+		lda #$ff
+		pha
+		sec
+		sed
+		sei
+		php			; bd
+		clc
+		cld
+		cli
+		php			; $b0
+		lda #$ff
+		pha
+		; Test rol
+		lda #$00
+		clc
+		php			; $32
+		sec
+		lda #$88
+		rol
+		pha 		; $11
+		php			; $31
+		;---
+		sec
+		lda #$88
+		sta rol_abs
+		rol rol_abs
+		lda rol_abs
+		pha			; $11
+		php			; $31
+		;---
+		lda #$88
+		sta zp_rol
+		sec
+		rol zp_rol
+		lda zp_rol
+		pha			; $11
+		php			; $31
+		;---
+		lda #$00
+		sta zp_rol
+		lda #$88
+		sta zp_rol+1
+		ldx #$01
+		sec
+		rol zp_rol,X
+		lda zp_rol+1
+		pha			; $11
+		php 		; $31
+		;---
+		lda #$00
+		sta rol_abs
+		ldx #$01
+		lda #$88
+		sta rol_abs+1
+		sec
+		rol rol_abs,X
+		lda rol_abs+1
+		pha			; $11
+		php			; $31
+		;---
+		lda #$ff
+		pha
+		; Test ror
+		lda #$00
+		clc
+		php			; $32
+		sec
+		lda #$03
+		ror
+		pha 		; $81
+		php			; $b1
+        ;---
+		sec
+		lda #$03
+		sta rol_abs
+		ror rol_abs
+		lda rol_abs
+		pha			; $81
+		php			; $b1
+        ;---
+		lda #$03
+		sta zp_rol
+		sec
+		ror zp_rol
+		lda zp_rol
+		pha			; $81
+		php			; $b1
+        ;---
+		lda #$00
+		sta zp_rol
+		lda #$03
+		sta zp_rol+1
+		ldx #$01
+		sec
+		ror zp_rol,X
+		lda zp_rol+1
+		pha			; $81
+		php 		; $b1
+        ;---
+		lda #$00
+		sta rol_abs
+		ldx #$01
+		lda #$03
+		sta rol_abs+1
+		sec
+		ror rol_abs,X
+		lda rol_abs+1
+		pha			; $81
+		php			; $b1
+		;---
+		lda #$ff
+		pha
+        ;---
+		; Test interrypt routine
+		lda #< int_routine	; low address byte to A
+		sta $fffe
+		lda #> int_routine	; high address byte to A
+		sta $ffff
+		lda data_int
+		pha			; $00
+		brk
+		!byte $aa
+		lda data_int
+		pha			; $55
+		lda #$ff
+		pha	
+		; Test subroutine
+		lda data_sub
+		pha			; $00
+		jsr tst_routine
+		lda data_sub
+		pha			; $aa
+		lda #$ff
+		pha
+		;---
+		; Test SBc
+		sec
+		lda #$13
+		sbc #$01
+		pha			; $11
+		;---
+		sec
+		lda #$01
+		sta zp
+		lda #$24
+		sbc zp
+		pha			; $22
+		;---
+		lda #$01
+		sta data_abs
+		lda #$35
+		sbc data_abs
+		pha			; $33
+		;---
+		lda #$01
+		sta data_zp_x
+		ldx #$01
+		lda #$46
+		sec
+		sbc (zp_x,X)
+		pha			; $44
+		;---
+		lda #$01
+		sta data_zp_y+1
+		sec
+		ldx #$01
+		lda #$57
+		sbc (zp_y),Y
+		pha				; $55
+		;---
+		lda #$01
+		sta zp_data+1
+		sec
+		lda #$68
+		sbc zp_data,X
+		pha				; $66
+		;---
+		lda #$01
+		sta data_abs+1
+		sec
+		ldx #$01
+		lda #$79
+		sbc data_abs,X
+		pha				; $77
+		;---
+		lda #$01
+		sta data_abs+1
+		sec
+		ldy #$01
+		lda #$8A
+		sbc data_abs,Y
+		pha				; $88
+		;---
+		lda #$ff
+		pha
+		; Test SEC, SED, SEI
+		clc
+		cld
+		cli
+		php				; $b0
+		sec
+		sed
+		sei
+		php				; $bd
+		lda #$ff
+		pha
+		; Test sta
+		lda #$55
+		sta data_abs
+		lda data_abs
+		pha				;$55
+		;---
+		lda #$aa
+		sta zp
+		lda zp
+		pha				;aa
+		;---
+		lda #$55
+		ldx #$01
+		sta (zp_x,X)
+		lda data_zp_x
+		pha				; $55
+		;---
+		lda #$aa
+		ldy #$01
+		sta (zp_y),Y
+		lda data_zp_y+1
+		pha				; $aa
+		;---
+		lda #$55
+		ldx #$01
+		sta zp_data,X
+		lda zp_data+1
+		pha				; $55
+		;---
+		lda #$aa
+		ldx #$01
+		sta data_abs,X
+		lda data_abs+1
+		pha				; $aa
+		;---
+		lda #$55
+		ldy #$01
+		sta data_abs,Y
+		lda data_abs+1
+		pha				; $55
+		;---
+		lda #$ff
+		pha
+		; Test STX
+		ldx #$11
+		stx	data_abs
+		lda data_abs
+		pha
+		;---
+		ldx #$22
+		stx zp
+		lda zp
+		pha
+		;---
+		ldx #$33
+		ldy #$01
+		stx zp_data,Y
+		lda zp_data,Y
+		pha
+		;---
+		lda #$ff
+		pha
+		; Test STY
+		ldy #$11
+		sty data_abs
+		lda data_abs
+		pha
+		;---
+		ldy #$22
+		sty zp
+		lda zp
+		pha
+		;---
+		ldy #$33
+		ldx #$01
+		sty zp_data,X
+		lda zp_data, X
+		pha
+		;---
+		lda #$ff
+		pha
+		; Tesy TAX
+		lda #$11
+		tax
+		lda #$22
+		txa
+		pha				; $11
+		;---
+		lda #$ff
+		pha
+		; Test TAY
+		lda #$22
+		tay
+		lda #$33
+		tya
+		pha				; $22
+		;---
+		lda #$ff
+		pha
+		; Test TSX
+		tsx
+		txa
+		pha				; $96
+		ldx #$95
+		txs
+		lda #$aa
+		pha				; $aa
+		;---
+		lda #$ff
+		pha
+		;---
+		; End of emulation 
+		jmp end
+data1:	!byte $22
+data2:  !byte $44
+data3:	!byte $00
+		!byte $55
+b22:	!byte $22
+lsr_data:
+		!byte $44
+		!byte $aa
+data_33:
+		!byte $30
+data_40:
+		!byte $00
+		!byte $40
+data_60:
+		!byte $00
+		!byte $60
+data_70:
+		!byte $00
+		!byte $70
+rol_abs:
+		!byte $00
+		!byte $00
+data_int:
+		!byte $00
+data_sub:
+		!byte $00
+data_abs:
+		!byte $00
+		!byte $00
+data_zp_x:
+		!byte $04
+data_zp_y:
+		!byte $00
+		!byte $00
+data_abs_x:
+		!byte $00
+		!byte $00
+
+end:	!byte $ff
+routine_addr:
+		!word tst_routine
+
+int_routine:
+		lda #$55
+		sta data_int
+		rti
+tst_routine:
+		lda #$aa
+		sta data_sub
+		rts

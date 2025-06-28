@@ -100,7 +100,6 @@ impl Cpu {
     }
 
     fn push_word(&mut self, val: u16) {
-        println!("Pushing word={:?}", val);
         self.push((val >> 8) as u8);
         self.push((val & 0xFF) as u8);
     }
@@ -304,7 +303,6 @@ impl Cpu {
         self.p.set_carry(self.y >= value);
     }
     fn eor(&mut self, value: u8) {
-        self.pc += 1;
         self.a ^= value;
         self.p.set_zero(self.a == 0);
         self.p.set_negative(self.a & 0x80 != 0);
@@ -335,6 +333,17 @@ impl Cpu {
         flag = if value & 0x80 != 0 { true } else { false };
         self.p.set_negative(flag);
     }
+    fn code_to_str(&mut self, mut num_bytes: u8) -> String {
+        let mut addr = self.pc.wrapping_sub(num_bytes as u16);
+        let mut result = String::new();
+        result.push_str(format!("{:04X}  ", addr).as_str());
+        while num_bytes != 0 {
+            result.push_str(format!("{:02X} ", self.memory.read_byte(addr)).as_str());
+            num_bytes -= 1;
+            addr += 1;
+        }
+        format!("{:<18}", result)
+    }
     pub fn step(&mut self) {
         let opcode = self.memory.read_byte(self.pc);
         self.pc += 1;
@@ -345,14 +354,15 @@ impl Cpu {
             0x69 => {
                 let value = self.read_immediate_byte();
                 self.adc(value);
-                println!("ADC #${:02X}", value);
+                println!("{}ADC #${:02X}", self.code_to_str(2), value);
             }
             // ADC zp
             0x65 => {
                 let value = self.read_zero_page();
                 self.adc(value);
                 println!(
-                    "ADC ${:02X}",
+                    "{}ADC ${:02X}",
+                    self.code_to_str(2),
                     self.memory.read_byte(self.pc.wrapping_sub(1))
                 );
             }
@@ -361,7 +371,8 @@ impl Cpu {
                 let value = self.read_zero_page_x();
                 self.adc(value);
                 println!(
-                    "ADC ${:02X},X",
+                    "{}ADC ${:02X},X",
+                    self.code_to_str(2),
                     self.memory.read_byte(self.pc.wrapping_sub(1))
                 );
             }
@@ -370,98 +381,98 @@ impl Cpu {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 self.adc(value);
-                println!("ADC ${:04X}", addr);
+                println!("{}ADC ${:04X}", self.code_to_str(3), addr);
             }
             // ADC oper ;absolute,X
             0x7D => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_x();
                 self.adc(value);
-                println!("ADC ${:04X},X", addr);
+                println!("{}ADC ${:04X},X", self.code_to_str(3), addr);
             }
             // ADC abs,Y ;absolute,Y
             0x79 => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_y();
                 self.adc(value);
-                println!("ADC ${:02X},Y", addr);
+                println!("{}ADC ${:02X},Y", self.code_to_str(3), addr);
             }
             // ADC (oper,X) ;(indexed indirect)
             0x61 => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_indexed_indirect();
                 self.adc(value);
-                println!("ADC (${:02X},X)", addr);
+                println!("{}ADC (${:02X},X)", self.code_to_str(2), addr);
             }
             // ADC (oper),Y ;(indexed indirect),Y
             0x71 => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_indirect_indexed();
                 self.adc(value);
-                println!("ADC (${:02X}),Y", addr);
+                println!("{}ADC (${:02X}),Y", self.code_to_str(2), addr);
             }
             ////////////////// End of ADC
             ////////////////// Start of AND
             0x29 => {
                 let value = self.read_immediate_byte();
                 self.and(value);
-                println!("AND #${:02X}", value);
+                println!("{}AND #${:02X}", self.code_to_str(2), value);
             }
             0x25 => {
                 // AND zp
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 self.and(value);
-                println!("AND ${:02X}", addr);
+                println!("{}AND ${:02X}", self.code_to_str(2), addr);
             }
             0x35 => {
                 // AND zp,X
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page_x();
                 self.and(value);
-                println!("AND ${:02X},X", addr);
+                println!("{}AND ${:02X},X", self.code_to_str(2), addr);
             }
             0x2D => {
                 // AND abs
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 self.and(value);
-                println!("AND ${:04X}", addr);
+                println!("{}AND ${:04X}", self.code_to_str(3), addr);
             }
             0x3D => {
                 // AND abs,X
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_x();
                 self.and(value);
-                println!("AND ${:04X},X", addr);
+                println!("{}AND ${:04X},X", self.code_to_str(3), addr);
             }
             0x39 => {
                 // AND abs,Y
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_y();
                 self.and(value);
-                println!("AND ${:04X},Y", addr);
+                println!("{}AND ${:04X},Y", self.code_to_str(3), addr);
             }
             0x21 => {
                 // AND (indirect,X)
                 let addr = self.get_zero_page_address();
                 let value = self.read_indexed_indirect();
                 self.and(value);
-                println!("AND (${:02X},X)", addr);
+                println!("{}AND (${:02X},X)", self.code_to_str(2), addr);
             }
             0x31 => {
                 // AND (indirect),Y
                 let addr = self.get_zero_page_address();
                 let value = self.read_indirect_indexed();
                 self.and(value);
-                println!("AND (${:02X}),Y", addr);
+                println!("{}AND (${:02X}),Y", self.code_to_str(2), addr);
             }
             ////////////////// End of AND
             ////////////////// Start of ASL
             0x0A => {
                 // ASL A
                 self.a = self.asl(self.a);
-                println!("ASL A");
+                println!("{}ASL A", self.code_to_str(1));
             }
             0x06 => {
                 // ASL Zero Page
@@ -469,7 +480,7 @@ impl Cpu {
                 let value = self.read_zero_page();
                 let result = self.asl(value);
                 self.memory.write_byte_zero_page(addr, result);
-                println!("ASL ${:02X}", addr);
+                println!("{}ASL ${:02X}", self.code_to_str(2), addr);
             }
             0x16 => {
                 // ASL Zero Page,X
@@ -478,7 +489,7 @@ impl Cpu {
                 let value = self.read_zero_page_x();
                 let result = self.asl(value);
                 self.memory.write_byte(addr as u16, result);
-                println!("ASL ${:02X},X", addr_zp);
+                println!("{}ASL ${:02X},X", self.code_to_str(2), addr_zp);
             }
             0x0E => {
                 // ASL Absolute
@@ -486,7 +497,7 @@ impl Cpu {
                 let value = self.read_absolute();
                 let result = self.asl(value);
                 self.memory.write_byte(addr, result);
-                println!("ASL ${:04X}", addr);
+                println!("{}ASL ${:04X}", self.code_to_str(3), addr);
             }
             0x1E => {
                 // ASL Absolute,X
@@ -495,42 +506,39 @@ impl Cpu {
                 let value = self.read_absolute_x();
                 let result = self.asl(value);
                 self.memory.write_byte(addr, result);
-                println!("ASL ${:04X},X", addr_zp);
+                println!("{}ASL ${:04X},X", self.code_to_str(3), addr_zp);
             }
             ////////////////// End of ASL
             ////////////////// Start of BCC
             0x90 => {
                 // BCC
-                let offset = self.read_immediate_byte();
+                let offset = self.read_immediate_byte() as i8;
+                let addr = self.pc.wrapping_add(offset as u16);
+                println!("{}BCC ${:04X}", self.code_to_str(2), addr);
                 if !self.p.is_carry() {
-                    self.pc = self.pc.wrapping_add(offset as u16);
-                    println!("BCC taken");
-                } else {
-                    println!("BCC not taken");
+                    self.pc = addr;
                 }
             }
             ////////////////// End of BCC
             ////////////////// Start of BCS
             0xB0 => {
                 // BCS
-                let offset = self.read_immediate_byte();
+                let offset = self.read_immediate_byte() as i8;
+                let addr = self.pc.wrapping_add(offset as u16);
+                println!("{}BCS ${:04X}", self.code_to_str(2), addr);
                 if self.p.is_carry() {
-                    self.pc = self.pc.wrapping_add(offset as u16);
-                    println!("BCS taken");
-                } else {
-                    println!("BCS not taken");
+                    self.pc = addr;
                 }
             }
             ////////////////// End of BCS
             ////////////////// Start of BEQ
             0xF0 => {
                 // BEQ (Branch if Equal / Zero flag set)
-                let offset = self.read_immediate_byte();
+                let offset = self.read_immediate_byte() as i8;
+                let addr = self.pc.wrapping_add(offset as u16);
+                println!("{}BEQ ${:04X}", self.code_to_str(2), addr);
                 if self.p.is_zero() {
-                    self.pc = self.pc.wrapping_add(offset as u16);
-                    println!("BEQ taken to ${:04X} (offset: {:+})", self.pc, offset);
-                } else {
-                    println!("BEQ not taken");
+                    self.pc = addr;
                 }
             }
             ////////////////// End of BEQ
@@ -540,104 +548,100 @@ impl Cpu {
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 self.bit(value);
-                println!("BIT ${:02X}", addr);
+                println!("{}BIT ${:02X}", self.code_to_str(2), addr);
             }
             0x2C => {
                 // BIT Absolute
                 let addr = self.read_immediate_word();
                 let value = self.memory.read_byte(addr);
                 self.bit(value);
-                println!("BIT ${:04X}", addr);
+                println!("{}BIT ${:04X}", self.code_to_str(3), addr);
             }
             ////////////////// End of BIT
             ////////////////// Start of BMI
             0x30 => {
                 // BMI
-                let offset = self.read_immediate_byte();
+                let offset = self.read_immediate_byte() as i8;
+                let addr = self.pc.wrapping_add(offset as u16);
+                println!("{}BMI ${:04X}", self.code_to_str(2), addr);
                 if self.p.is_negative() {
-                    self.pc = self.pc.wrapping_add(offset as u16);
-                    println!("BMI taken");
-                } else {
-                    println!("BMI not taken");
+                    self.pc = addr;
                 }
             }
             ////////////////// End of BMI
             ////////////////// Start of BNE
             0xD0 => {
                 // BNE (Branch if Not Equal / Zero flag clear)
-                let offset = self.read_immediate_byte();
+                let offset = self.read_immediate_byte() as i8;
+                let addr = self.pc.wrapping_add(offset as u16);
+                println!("{}BNE ${:04X}", self.code_to_str(3) , addr);
                 if !self.p.is_zero() {
-                    self.pc = self.pc.wrapping_add(offset as u16);
-                    println!("BNE taken to ${:04X} (offset: {:+})", self.pc, offset);
-                } else {
-                    println!("BNE not taken");
+                    self.pc = addr;
                 }
             }
             ////////////////// End of BNE
             ////////////////// Start of BPL
             0x10 => {
                 // BPL
-                let offset = self.read_immediate_byte();
+                let offset = self.read_immediate_byte() as i8;
+                let addr = self.pc.wrapping_add(offset as u16);
+                println!("{}BPL ${:04X}", self.code_to_str(3) , addr);
                 if !self.p.is_negative() {
-                    self.pc = self.pc.wrapping_add(offset as u16);
-                    println!("BPL taken");
-                } else {
-                    println!("BPL not taken");
+                    self.pc = addr;
                 }
             }
             ////////////////// End of BPL
             ////////////////// Start of BRK
             0x00 => {
+                println!("{}BRK", self.code_to_str(1));
+                println!("----");
                 self.brk();
-                println!("BRK (break)");
             }
             ////////////////// End of BRK
             ////////////////// Start of BVC
             0x50 => {
                 // BVC
-                let offset = self.read_immediate_byte();
+                let offset = self.read_immediate_byte() as i8;
+                let addr = self.pc.wrapping_add(offset as u16);
+                println!("{}BVC ${:04X}", self.code_to_str(3) , addr);
                 if self.p.value & 0x40 == 0 {
-                    self.pc = self.pc.wrapping_add(offset as u16);
-                    println!("BVC taken");
-                } else {
-                    println!("BVC not taken");
+                    self.pc = addr;
                 }
             }
             ////////////////// End of BVC
             ////////////////// Start of BVS
             0x70 => {
                 // BVS
-                let offset = self.read_immediate_byte();
+                let offset = self.read_immediate_byte() as i8;
+                let addr = self.pc.wrapping_add(offset as u16);
+                println!("{}BVS ${:04X}", self.code_to_str(3) , addr);
                 if self.p.value & 0x40 != 0 {
-                    self.pc = self.pc.wrapping_add(offset as u16);
-                    println!("BVS taken");
-                } else {
-                    println!("BVS not taken");
+                    self.pc = addr;
                 }
             }
             ////////////////// End of BVS
             ////////////////// Start of CLC
             0x18 => {
                 self.p.set_carry(false);
-                println!("CLC");
+                println!("{}CLC", self.code_to_str(1));
             }
             ////////////////// End of CLC
             ////////////////// Start of CLD
             0xD8 => {
                 self.p.set_decimal_mode(false);
-                println!("CLD");
+                println!("{}CLD", self.code_to_str(1));
             }
             ////////////////// End of CLD
             ////////////////// Start of CLI
             0x58 => {
                 self.p.set_interrupt_disable(false);
-                println!("CLI");
+                println!("{}CLI", self.code_to_str(1));
             }
             ////////////////// End of CLI
             ////////////////// Start of CLV
             0xB8 => {
                 self.p.set_overflow(false);
-                println!("CLV");
+                println!("{}CLV", self.code_to_str(1));
             }
             ////////////////// End of CLV
             ////////////////// Start of CMP
@@ -645,55 +649,56 @@ impl Cpu {
                 // CMP #imm
                 let value = self.read_immediate_byte();
                 self.cmp(value);
-                println!("CMP #${:02X}", value);
+                println!("{}CMP #${:02X}", self.code_to_str(2), value);
             }
             0xC5 => {
                 // CMP zp
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 self.cmp(value);
-                println!("CMP ${:02X}", addr);
+                println!("{}CMP ${:02X}", self.code_to_str(2), addr);
             }
             0xD5 => {
                 // CMP zp,X
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page_x();
                 self.cmp(value);
-                println!("CMP ${:02X},X", addr);
+                println!("{}CMP ${:02X},X", self.code_to_str(2), addr);
             }
             0xCD => {
                 // CMP abs
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 self.cmp(value);
-                println!("CMP ${:04X}", addr);
+                println!("{}CMP ${:04X}", self.code_to_str(3), addr);
             }
             0xDD => {
                 // CMP abs,X
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_x();
                 self.cmp(value);
-                println!("CMP ${:04X},X", addr);
+                println!("{}CMP ${:04X},X", self.code_to_str(3), addr);
             }
             0xD9 => {
+                // CMP abs,Y
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_y();
                 self.cmp(value);
-                println!("CMP ${:04X},Y", addr);
+                println!("{}CMP ${:04X},Y", self.code_to_str(3), addr);
             }
             0xC1 => {
                 // CMP (zp,X)
                 let addr = self.get_zero_page_address();
                 let value = self.read_indexed_indirect();
                 self.cmp(value);
-                println!("CMP (${:02X},X)", addr);
+                println!("{}CMP (${:02X},X)", self.code_to_str(2), addr);
             }
             0xD1 => {
                 // CMP (zp),Y
                 let addr = self.get_zero_page_address();
                 let value = self.read_indirect_indexed();
                 self.cmp(value);
-                println!("CMP (${:02X}),Y", addr);
+                println!("{}CMP (${:02X}),Y", self.code_to_str(2), addr);
             }
             ////////////////// End of CMP
             ////////////////// Start of CPX
@@ -701,21 +706,21 @@ impl Cpu {
                 // CPX #imm
                 let value = self.read_immediate_byte();
                 self.cpx(value);
-                println!("CPX #${:02X}", value);
+                println!("{}CPX #${:02X}", self.code_to_str(2), value);
             }
             0xE4 => {
                 // CPX zp
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 self.cpx(value);
-                println!("CPX ${:02X}", addr);
+                println!("{}CPX ${:02X}", self.code_to_str(2), addr);
             }
             0xEC => {
                 // CPX abs
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 self.cpx(value);
-                println!("CPX ${:04X}", addr);
+                println!("{}CPX ${:04X}", self.code_to_str(3), addr);
             }
             ////////////////// End of CPX
             ////////////////// Start of CPY
@@ -723,21 +728,21 @@ impl Cpu {
                 // CPY #imm
                 let value = self.read_immediate_byte();
                 self.cpy(value);
-                println!("CPY #${:02X}", value);
+                println!("{}CPY #${:02X}", self.code_to_str(2), value);
             }
             0xC4 => {
                 // CPY zp
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 self.cpy(value);
-                println!("CPY ${:02X}", addr);
+                println!("{}CPY ${:02X}", self.code_to_str(2), addr);
             }
             0xCC => {
                 // CPY abs
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 self.cpy(value);
-                println!("CPY ${:04X}", addr);
+                println!("{}CPY ${:04X}", self.code_to_str(3), addr);
             }
             ////////////////// End of CPY
             ////////////////// Start of DEC
@@ -747,7 +752,7 @@ impl Cpu {
                 let val = self.read_zero_page();
                 let result = self.dec(val);
                 self.memory.write_byte(addr as u16, result);
-                println!("DEC ${:02X}", addr);
+                println!("{}DEC ${:02X}", self.code_to_str(2), addr);
             }
             0xD6 => {
                 // DEC Zero Page,X
@@ -756,7 +761,7 @@ impl Cpu {
                 let val = self.read_zero_page_x();
                 let result = self.dec(val);
                 self.memory.write_byte(addr as u16, result);
-                println!("DEC ${:02X},X", addr_zp);
+                println!("{}DEC ${:02X},X", self.code_to_str(2), addr_zp);
             }
             0xCE => {
                 // DEC Absolute
@@ -764,7 +769,7 @@ impl Cpu {
                 let val = self.read_absolute();
                 let result = self.dec(val);
                 self.memory.write_byte(addr, result);
-                println!("DEC ${:04X}", addr);
+                println!("{}DEC ${:04X}", self.code_to_str(3), addr);
             }
             0xDE => {
                 // DEC Absolute,X
@@ -773,21 +778,21 @@ impl Cpu {
                 let val = self.read_absolute_x();
                 let result = self.dec(val);
                 self.memory.write_byte(addr, result);
-                println!("DEC ${:04X},X", addr_abs);
+                println!("{}DEC ${:04X},X", self.code_to_str(3), addr_abs);
             }
             ////////////////// End of DEC
             ////////////////// Start of DEX
             0xCA => {
                 // DEX
                 self.x = self.dec(self.x);
-                println!("DEX");
+                println!("{}DEX", self. code_to_str(1));
             }
             ////////////////// End of DEX
             ////////////////// Start of DEY
             0x88 => {
                 // DEY
                 self.y = self.dec(self.y);
-                println!("DEY");
+                println!("{}DEY",self. code_to_str(1));
             }
             ////////////////// Stop of DEY
             ////////////////// Start of EOR
@@ -795,56 +800,56 @@ impl Cpu {
                 // EOR #imm
                 let value = self.read_immediate_byte();
                 self.eor(value);
-                println!("EOR #${:02X}", value);
+                println!("{}EOR #${:02X}", self.code_to_str(2), value);
             }
             0x45 => {
                 // EOR zp
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 self.eor(value);
-                println!("EOR ${:02X}", addr);
+                println!("{}EOR ${:02X}", self.code_to_str(2), addr);
             }
             0x55 => {
                 // EOR zp,X
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page_x();
                 self.eor(value);
-                println!("EOR ${:02X},X", addr);
+                println!("{}EOR ${:02X},X", self.code_to_str(2), addr);
             }
             0x4D => {
                 // EOR abs
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 self.eor(value);
-                println!("EOR ${:04X}", addr);
+                println!("{}EOR ${:04X}", self.code_to_str(3), addr);
             }
             0x5D => {
                 // EOR abs,X
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_x();
                 self.eor(value);
-                println!("EOR ${:02X},X", addr);
+                println!("{}EOR ${:04X},X", self.code_to_str(3), addr);
             }
             0x59 => {
                 // EOR abs,Y
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_y();
                 self.eor(value);
-                println!("EOR ${:02X},Y", addr);
+                println!("{}EOR ${:04X},Y", self.code_to_str(3), addr);
             }
             0x41 => {
                 // EOR indirect,X
                 let addr = self.get_zero_page_address();
                 let value = self.read_indexed_indirect();
                 self.eor(value);
-                println!("EOR (${:02X},X)", addr);
+                println!("{}EOR (${:02X},X)", self.code_to_str(2), addr);
             }
             0x51 => {
                 // EOR indirect,Y
                 let addr = self.get_zero_page_address();
                 let value = self.read_indirect_indexed();
                 self.eor(value);
-                println!("EOR (${:02X}),Y", addr);
+                println!("{}EOR (${:02X}),Y", self.code_to_str(2), addr);
             }
             ////////////////// End of EOR
             ////////////////// Start of INC
@@ -854,7 +859,7 @@ impl Cpu {
                 let value = self.read_zero_page();
                 let result = self.inc(value);
                 self.memory.write_byte_zero_page(addr, result);
-                println!("INC ${:02X}", addr);
+                println!("{}INC ${:02X}", self.code_to_str(2), addr);
             }
             0xF6 => {
                 // INC Zero Page,X
@@ -862,7 +867,7 @@ impl Cpu {
                 let value = self.read_zero_page_x();
                 let result = self.inc(value);
                 self.memory.write_byte_zero_page(addr, result);
-                println!("INC ${:02X},X", addr.wrapping_sub(self.x));
+                println!("{}INC ${:02X},X", self.code_to_str(2), addr.wrapping_sub(self.x));
             }
             0xEE => {
                 // INC Absolute
@@ -870,7 +875,7 @@ impl Cpu {
                 let value = self.read_absolute();
                 let result = self.inc(value);
                 self.memory.write_byte(addr, result);
-                println!("INC ${:04X}", addr);
+                println!("{}INC ${:04X}", self.code_to_str(3), addr);
             }
             0xFE => {
                 // INC Absolute,X
@@ -878,29 +883,30 @@ impl Cpu {
                 let value = self.read_absolute_x();
                 let result = self.inc(value);
                 self.memory.write_byte(addr, result);
-                println!("INC ${:04X},X", addr.wrapping_sub(self.x as u16));
+                println!("{}INC ${:04X},X", self.code_to_str(3), addr.wrapping_sub(self.x as u16));
             }
             ////////////////// End of INC
             ////////////////// Start of INX
             0xE8 => {
                 // INX
                 self.x = self.inc(self.x);
-                println!("INX");
+                println!("{}INX", self.code_to_str(1));
             }
             ////////////////// End of INX
             ////////////////// Start of INY
             0xC8 => {
                 // INY
                 self.y = self.inc(self.y);
-                println!("INY");
+                println!("{}INY", self.code_to_str(1));
             }
             ////////////////// End of INY
             ////////////////// Start of JMP
             0x4C => {
                 // JMP absolute
                 let addr = self.memory.read_word(self.pc);
+                self.pc += 2;
+                println!("{}JMP ${:04X}\n----", self.code_to_str(3), addr);
                 self.pc = addr;
-                println!("JMP ${:04X}", addr);
             }
             0x6C => {
                 // JMP indirect
@@ -913,17 +919,19 @@ impl Cpu {
                 let jmp_addr_hi = self
                     .memory
                     .read_byte((addr_hi as u16) << 0x8 | addr_lo.wrapping_add(1) as u16);
+                self.pc += 2;
+                println!("{}JMP (${:04X})\n----", self.code_to_str(3), addr);
                 self.pc = (jmp_addr_hi as u16) << 8 | jmp_addr_lo as u16;
-                println!("JMP (${:04X})", addr);
             }
             ////////////////// End of JMP
             ////////////////// Start of JSR
             0x20 => {
                 // JSR
                 let addr = self.read_immediate_word();
+//                self.pc += 2;
                 self.push_word(self.pc.wrapping_sub(1)); // push return address - 1
+                println!("{}JSR ${:04X}\n----", self.code_to_str(3), addr);
                 self.pc = addr;
-                println!("JSR ${:04X}", addr);
             }
             ////////////////// End of JSR
             ////////////////// Start of LDA
@@ -931,56 +939,56 @@ impl Cpu {
                 // LDA Immediate
                 let value = self.read_immediate_byte();
                 self.lda(value);
-                println!("LDA #${:02X}", value);
+                println!("{}LDA #${:02X}", self.code_to_str(2), value);
             }
             0xA5 => {
                 // LDA Zero Page
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 self.lda(value);
-                println!("LDA ${:02X}", addr);
+                println!("{}LDA ${:02X}", self.code_to_str(2), addr);
             }
             0xB5 => {
                 // LDA Zero Page,X
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page_x();
                 self.lda(value);
-                println!("LDA ${:02X},X", addr);
+                println!("{}LDA ${:02X},X", self.code_to_str(2), addr);
             }
             0xAD => {
                 // LDA Absolute
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 self.lda(value);
-                println!("LDA ${:04X}", addr);
+                println!("{}LDA ${:04X}", self.code_to_str(3), addr);
             }
             0xBD => {
                 // LDA Absolute,X
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_x();
                 self.lda(value);
-                println!("LDA ${:04X},X", addr);
+                println!("{}LDA ${:04X},X", self.code_to_str(3), addr);
             }
             0xB9 => {
                 // LDA Absolute,Y
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_y();
                 self.lda(value);
-                println!("LDA ${:02X},Y", addr);
+                println!("{}LDA ${:02X},Y", self.code_to_str(2), addr);
             }
             0xA1 => {
                 // LDA (zp,X)
                 let addr = self.get_zero_page_address();
                 let value = self.read_indexed_indirect();
                 self.lda(value);
-                println!("LDA (${:02X},X)", addr);
+                println!("{}LDA (${:02X},X)", self.code_to_str(2), addr);
             }
             0xB1 => {
                 // LDA (zp),Y
                 let addr = self.get_zero_page_address();
                 let value = self.read_indirect_indexed();
                 self.lda(value);
-                println!("LDA (${:02X}),Y", addr);
+                println!("{}LDA (${:02X}),Y", self.code_to_str(2), addr);
             }
             ////////////////// Stop of LDA
             ////////////////// Start of LDX
@@ -988,35 +996,35 @@ impl Cpu {
                 // LDX Immediate
                 let value = self.read_immediate_byte();
                 self.ldx(value);
-                println!("LDX #${:02X}", value);
+                println!("{}LDX #${:02X}", self.code_to_str(2), value);
             }
             0xA6 => {
                 // LDX zp
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 self.ldx(value);
-                println!("LDX ${:02X}", addr);
+                println!("{}LDX ${:02X}", self.code_to_str(2), addr);
             }
             0xB6 => {
                 // LDX zp,Y
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page_y();
                 self.ldx(value);
-                println!("LDX ${:02X},Y", addr);
+                println!("{}LDX ${:02X},Y", self.code_to_str(2), addr);
             }
             0xAE => {
                 // LDX abs
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 self.ldx(value);
-                println!("LDX ${:04X}", addr);
+                println!("{}LDX ${:04X}", self.code_to_str(3), addr);
             }
             0xBE => {
                 // LDX abs,Y
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_y();
                 self.ldx(value);
-                println!("LDX ${:04X},Y", addr);
+                println!("{}LDX ${:04X},Y", self.code_to_str(3), addr);
             }
             ////////////////// End of LDX
             ////////////////// Start of LDY
@@ -1024,42 +1032,42 @@ impl Cpu {
                 // LDY Immediate
                 let value = self.read_immediate_byte();
                 self.ldy(value);
-                println!("LDY #${:02X}", value);
+                println!("{}LDY #${:02X}", self.code_to_str(2), value);
             }
             0xA4 => {
                 // LDY Zero Page
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 self.ldy(value);
-                println!("LDY ${:02X}", addr);
+                println!("{}LDY ${:02X}", self.code_to_str(2), addr);
             }
             0xB4 => {
                 // LDY zp,X
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page_x();
                 self.ldy(value);
-                println!("LDY ${:02X},X", addr);
+                println!("{}LDY ${:02X},X", self.code_to_str(2), addr);
             }
             0xAC => {
                 // LDY abs
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 self.ldy(value);
-                println!("LDY ${:04X}", addr);
+                println!("{}LDY ${:04X}", self.code_to_str(3), addr);
             }
             0xBC => {
                 // LDY abs,X
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_x();
                 self.ldy(value);
-                println!("LDY ${:02X},X", addr);
+                println!("{}LDY ${:02X},X", self.code_to_str(3), addr);
             }
             ////////////////// End of LDY
             ////////////////// Start of LSR
             0x4A => {
                 // LSR A
                 self.a = self.lsr(self.a);
-                println!("LSR A => {:02X}", self.a);
+                println!("{}LSR A", self.code_to_str(1));
             }
             0x46 => {
                 // LSR zp
@@ -1067,7 +1075,7 @@ impl Cpu {
                 let value = self.read_zero_page();
                 let result = self.lsr(value);
                 self.memory.write_byte(addr as u16, result);
-                println!("LSR ${:02X}", addr);
+                println!("{}LSR ${:02X}", self.code_to_str(2), addr);
             }
             0x56 => {
                 // LSR zp,X
@@ -1075,7 +1083,7 @@ impl Cpu {
                 let value = self.read_zero_page_x();
                 let result = self.lsr(value);
                 self.memory.write_byte(addr as u16, result);
-                println!("LSR ${:02X},X", addr.wrapping_sub(self.x));
+                println!("{}LSR ${:02X},X", self.code_to_str(2), addr.wrapping_sub(self.x));
             }
             0x4E => {
                 // LSR abs
@@ -1083,7 +1091,7 @@ impl Cpu {
                 let value = self.read_absolute();
                 let result = self.lsr(value);
                 self.memory.write_byte(addr, result);
-                println!("LSR ${:04X}", addr);
+                println!("{}LSR ${:04X}", self.code_to_str(3), addr);
             }
             0x5E => {
                 // LSR abs,X
@@ -1091,12 +1099,12 @@ impl Cpu {
                 let value = self.read_absolute_x();
                 let result = self.lsr(value);
                 self.memory.write_byte(addr, result);
-                println!("LSR ${:04X},X", addr.wrapping_sub(self.x as u16));
+                println!("{}LSR ${:04X},X", self.code_to_str(3), addr.wrapping_sub(self.x as u16));
             }
             ////////////////// End of LSR
             ////////////////// Start of NOP
             0xEA => {
-                println!("NOP")
+                println!("{}NOP", self.code_to_str(1))
             }
             ////////////////// Stop of NOP
             ////////////////// Start of ORA
@@ -1104,70 +1112,70 @@ impl Cpu {
                 // ORA #imm
                 let value = self.read_immediate_byte();
                 self.ora(value);
-                println!("ORA #${:02X}", value);
+                println!("{}ORA #${:02X}", self.code_to_str(2), value);
             }
             0x05 => {
                 // ORA zp
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 self.ora(value);
-                println!("ORA ${:02X}", addr);
+                println!("{}ORA ${:02X}", self.code_to_str(2), addr);
             }
             0x15 => {
                 // ORA zp,X
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page_x();
                 self.ora(value);
-                println!("ORA ${:02X},X", addr);
+                println!("{}ORA ${:02X},X", self.code_to_str(2), addr);
             }
             0x0D => {
                 // ORA abs
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 self.ora(value);
-                println!("ORA ${:04X}", addr);
+                println!("{}ORA ${:04X}", self.code_to_str(3), addr);
             }
             0x1D => {
                 // ORA abs,X
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_x();
                 self.ora(value);
-                println!("ORA ${:04X},X", addr);
+                println!("{}ORA ${:04X},X", self.code_to_str(3), addr);
             }
             0x19 => {
                 // ORA abs,Y
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_y();
                 self.ora(value);
-                println!("ORA ${:04X},Y", addr);
+                println!("{}ORA ${:04X},Y", self.code_to_str(3), addr);
             }
             0x01 => {
                 // ORA (zp,X)
                 let addr = self.get_zero_page_address();
                 let value = self.read_indexed_indirect();
                 self.ora(value);
-                println!("ORA (${:02X},X)", addr);
+                println!("{}ORA (${:02X},X)", self.code_to_str(2), addr);
             }
             0x11 => {
                 // ORA (zp),Y
                 let addr = self.get_zero_page_address();
                 let value = self.read_indirect_indexed();
                 self.ora(value);
-                println!("ORA (${:02X}),Y", addr);
+                println!("{}ORA (${:02X}),Y", self.code_to_str(2), addr);
             }
             ////////////////// End of ORA
             ////////////////// Start of PHA
             0x48 => {
                 // PHA
                 self.push(self.a);
-                println!("PHA (push A)");
+                println!("{}PHA", self.code_to_str(1));
             }
             ////////////////// End of PHA
             ////////////////// Start of PHP
             0x08 => {
                 // PHP
                 self.push(self.p.value | status::mos6502::BREAK | status::mos6502::UNUSED); // emulate B and Unused flag set when pushed
-                println!("PHP (push P)");
+                println!("{}PHP", self.code_to_str(1));
             }
             ////////////////// Stop of PHP
             ////////////////// Start of PLA
@@ -1176,21 +1184,21 @@ impl Cpu {
                 self.a = self.pop();
                 self.p.set_zero(self.a == 0);
                 self.p.set_negative(self.a & 0x80 != 0);
-                println!("PLA (pull A)");
+                println!("{}PLA", self.code_to_str(1));
             }
             ////////////////// End of PLA
             ////////////////// Start of PLP
             0x28 => {
                 // PLP
                 self.p.value = self.pop() & 0b1100_1111; // B and unused bits masked off
-                println!("PLP (pull P)");
+                println!("{}PLP (pull P)", self.code_to_str(1));
             }
             ////////////////// End of PLP
             ////////////////// Start of ROL
             0x2A => {
                 // ROL A
                 self.a = self.rol(self.a);
-                println!("ROL A");
+                println!("{}ROL A", self.code_to_str(1));
             }
             0x26 => {
                 // ROL zp
@@ -1198,7 +1206,7 @@ impl Cpu {
                 let value = self.read_zero_page();
                 let result = self.rol(value);
                 self.memory.write_byte(addr as u16, result);
-                println!("ROL ${:02X}", addr);
+                println!("{}ROL ${:02X}", self.code_to_str(2), addr);
             }
             0x36 => {
                 // ROL zp,X
@@ -1206,7 +1214,7 @@ impl Cpu {
                 let value = self.read_zero_page_x();
                 let result = self.rol(value);
                 self.memory.write_byte(addr as u16, result);
-                println!("ROL ${:02X},X", addr.wrapping_sub(self.x));
+                println!("{}ROL ${:02X},X", self.code_to_str(2), addr.wrapping_sub(self.x));
             }
             0x2E => {
                 // ROL abs
@@ -1214,7 +1222,7 @@ impl Cpu {
                 let value = self.read_absolute();
                 let result = self.rol(value);
                 self.memory.write_byte(addr as u16, result);
-                println!("ROL ${:04X}", addr);
+                println!("{}ROL ${:04X}", self.code_to_str(3), addr);
             }
             0x3E => {
                 // ROL abs,X
@@ -1222,14 +1230,14 @@ impl Cpu {
                 let value = self.read_absolute_x();
                 let result = self.rol(value);
                 self.memory.write_byte(addr as u16, result);
-                println!("ROL ${:04X},X", addr.wrapping_sub(self.x as u16));
+                println!("{}ROL ${:04X},X", self.code_to_str(3), addr.wrapping_sub(self.x as u16));
             }
             ////////////////// End of ROL
             ////////////////// Start of ROR
             0x6A => {
                 // ROR A
                 self.a = self.ror(self.a);
-                println!("ROR A");
+                println!("{}ROR A", self.code_to_str(1));
             }
             0x66 => {
                 // ROR zp
@@ -1237,7 +1245,7 @@ impl Cpu {
                 let value = self.read_zero_page();
                 let result = self.ror(value);
                 self.memory.write_byte(addr as u16, result);
-                println!("ROR ${:02X}", addr);
+                println!("{}ROR ${:02X}", self.code_to_str(2), addr);
             }
             0x76 => {
                 // ROR zp,X
@@ -1245,7 +1253,7 @@ impl Cpu {
                 let value = self.read_zero_page_x();
                 let result = self.ror(value);
                 self.memory.write_byte(addr as u16, result);
-                println!("ROR ${:02X},X", addr.wrapping_sub(self.x));
+                println!("{}ROR ${:02X},X", self.code_to_str(2), addr.wrapping_sub(self.x));
             }
             0x6E => {
                 // ROR abs
@@ -1253,7 +1261,7 @@ impl Cpu {
                 let value = self.read_absolute();
                 let result = self.ror(value);
                 self.memory.write_byte(addr, result);
-                println!("ROR ${:04X}", addr);
+                println!("{}ROR ${:04X}", self.code_to_str(3), addr);
             }
             0x7E => {
                 // ROR abs,X
@@ -1261,23 +1269,23 @@ impl Cpu {
                 let value = self.read_absolute_x();
                 let result = self.ror(value);
                 self.memory.write_byte(addr, result);
-                println!("ROR ${:04X},X", addr.wrapping_sub(self.x as u16));
+                println!("{}ROR ${:04X},X", self.code_to_str(3), addr.wrapping_sub(self.x as u16));
             }
             ////////////////// End of ROR
             ////////////////// Start of RTI
             0x40 => {
                 // RTI
+                println!("{}RTI", self.code_to_str(1));
+                println!("----");
                 self.p.value = self.pop() & !status::mos6502::BREAK & !status::mos6502::UNUSED; // B and unused bits masked off
                 self.pc = self.pop_word();
-                println!("RTI");
             }
             ////////////////// End of RTI
             ////////////////// Start of RTS
             0x60 => {
                 // RTS
-                let return_addr = self.pop_word().wrapping_add(1);
-                self.pc = return_addr;
-                println!("RTS to ${:04X}", return_addr);
+                self.pc = self.pop_word().wrapping_add(1);
+                println!("{}RTS\n----", self.code_to_str(1));
             }
             ////////////////// End of RTS
             ////////////////// Start of SBC
@@ -1285,75 +1293,75 @@ impl Cpu {
                 // SBC #imm
                 let value = self.read_immediate_byte();
                 self.sbc(value);
-                println!("SBC #${:02X}", value);
+                println!("{}SBC #${:02X}", self.code_to_str(2), value);
             }
             0xE5 => {
                 // SBC zp
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 self.sbc(value);
-                println!("SBC ${:02x}", addr)
+                println!("{}SBC ${:02x}", self.code_to_str(2), addr)
             }
             0xF5 => {
                 // SBC zp,X
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page_x();
                 self.sbc(value);
-                println!("SBC ${:02x},X", addr);
+                println!("{}SBC ${:02x},X", self.code_to_str(2), addr);
             }
             0xED => {
                 // SBC absolute
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 self.sbc(value);
-                println!("SBC ${:04x}", addr);
+                println!("{}SBC ${:04x}", self.code_to_str(3), addr);
             }
             0xFD => {
                 // SBC absolute,X
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_x();
                 self.sbc(value);
-                println!("SBC ${:04x},X", addr);
+                println!("{}SBC ${:04x},X", self.code_to_str(3), addr);
             }
             0xF9 => {
                 // SBC absolute,Y
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_y();
                 self.sbc(value);
-                println!("SBC ${:04x},Y", addr);
+                println!("{}SBC ${:04x},Y", self.code_to_str(3), addr);
             }
             0xE1 => {
                 // SBC (indirect,X)
                 let addr = self.get_absolute_address();
                 let value = self.read_indexed_indirect();
                 self.sbc(value);
-                println!("SBC $({:02x},X)", addr);
+                println!("{}SBC $({:02x},X)", self.code_to_str(2), addr);
             }
             0xF1 => {
                 // SBC(indirect),Y
                 let addr = self.get_absolute_address();
                 let value = self.read_indirect_indexed();
                 self.sbc(value);
-                println!("SBC $({:02x}),Y", addr);
+                println!("{}SBC $({:02x}),Y", self.code_to_str(2), addr);
             }
             ////////////////// End of SBC
             ////////////////// Start of SEC
             0x38 => {
                 // SEC
                 self.p.set_carry(true);
-                println!("SEC");
+                println!("{}SEC", self.code_to_str(1));
             }
             ////////////////// End of SEC
             ////////////////// Start of SED
             0xF8 => {
                 self.p.set_decimal_mode(true);
-                println!("SED");
+                println!("{}SED", self.code_to_str(1));
             }
             ////////////////// End of SED
             ////////////////// Start of SEI
             0x78 => {
                 self.p.set_interrupt_disable(true);
-                println!("SEI");
+                println!("{}SEI", self.code_to_str(1));
             }
             ////////////////// End of SEI
             ////////////////// Start of STA
@@ -1362,35 +1370,35 @@ impl Cpu {
                 let addr = self.get_zero_page_address();
                 self.pc += 1;
                 self.memory.write_byte_zero_page(addr, self.a);
-                println!("STA ${:02X}", addr);
+                println!("{}STA ${:02X}", self.code_to_str(2), addr);
             }
             0x95 => {
                 // STA zp,X
                 let addr = self.get_zero_page_address_x();
                 self.pc += 1;
                 self.memory.write_byte_zero_page(addr, self.a);
-                println!("STA ${:02X},X", addr.wrapping_sub(self.x));
+                println!("{}STA ${:02X},X", self.code_to_str(2), addr.wrapping_sub(self.x));
             }
             0x8D => {
                 // STA $nnnn
                 let addr = self.get_absolute_address();
                 self.pc += 2;
                 self.memory.write_byte(addr, self.a);
-                println!("STA ${:04X}", addr);
+                println!("{}STA ${:04X}", self.code_to_str(3), addr);
             }
             0x9D => {
                 // STA $nnnn,X
                 let addr = self.get_absolute_address_x();
                 self.pc += 2;
                 self.memory.write_byte(addr, self.a);
-                println!("STA ${:04X},X", addr);
+                println!("{}STA ${:04X},X", self.code_to_str(3), addr);
             }
             0x99 => {
                 // STA $nnnn,Y
                 let addr = self.get_absolute_address_y();
                 self.pc += 2;
                 self.memory.write_byte(addr, self.a);
-                println!("STA ${:04X},Y", addr);
+                println!("{}STA ${:04X},Y", self.code_to_str(3), addr);
             }
             0x81 => {
                 // STA (indirect,X)
@@ -1398,14 +1406,14 @@ impl Cpu {
                 let addr = self.get_indirect_address_x();
                 self.pc += 1;
                 self.memory.write_byte(addr, self.a);
-                println!("STA (${:02X},X)", addr_zp);
+                println!("{}STA (${:02X},X)", self.code_to_str(2), addr_zp);
             }
             0x91 => {
                 let addr_zp = self.get_zero_page_address();
                 let addr = self.get_indirect_address_y();
                 self.pc += 1;
                 self.memory.write_byte(addr, self.a);
-                println!("STA (${:02X}),Y", addr_zp);
+                println!("{}STA (${:02X}),Y", self.code_to_str(2), addr_zp);
             }
             ////////////////// End of STA
             ////////////////// Start of STX
@@ -1413,20 +1421,20 @@ impl Cpu {
                 // STX zp
                 let addr = self.read_immediate_byte();
                 self.memory.write_byte_zero_page(addr, self.x);
-                println!("STX ${:02X}", addr);
+                println!("{}STX ${:02X}", self.code_to_str(2), addr);
             }
             0x96 => {
                 // STX zp,Y
                 let addr = self.read_immediate_byte();
                 self.memory
                     .write_byte_zero_page(addr.wrapping_add(self.y), self.x);
-                println!("STX ${:02X},Y", addr);
+                println!("{}STX ${:02X},Y", self.code_to_str(2), addr);
             }
             0x8E => {
                 // STX abs
                 let addr = self.read_immediate_word();
                 self.memory.write_byte(addr, self.x);
-                println!("STX ${:02X}", addr);
+                println!("{}STX ${:02X}", self.code_to_str(2), addr);
             }
             ////////////////// End of STX
             ////////////////// Start of STY
@@ -1434,20 +1442,20 @@ impl Cpu {
                 // STY zp
                 let addr = self.read_immediate_byte();
                 self.memory.write_byte_zero_page(addr, self.y);
-                println!("STY ${:02X}", addr);
+                println!("{}STY ${:02X}", self.code_to_str(2), addr);
             }
             0x94 => {
                 // STY zp,X
                 let addr = self.read_immediate_byte();
                 self.memory
                     .write_byte_zero_page(addr.wrapping_add(self.x), self.y);
-                println!("STY ${:02X},X", addr);
+                println!("{}STY ${:02X},X", self.code_to_str(2), addr);
             }
             0x8C => {
                 // STY abs
                 let addr = self.read_immediate_word();
                 self.memory.write_byte(addr, self.y);
-                println!("STY ${:02X}", addr);
+                println!("{}STY ${:04X}", self.code_to_str(3), addr);
             }
             ////////////////// End of STY
             ////////////////// Start of TAX
@@ -1455,8 +1463,7 @@ impl Cpu {
                 // TAX
                 self.x = self.a;
                 self.set_n_z(self.x);
-                self.pc += 1;
-                println!("TAX");
+                println!("{}TAX", self.code_to_str(1));
             }
             ////////////////// End of TAX
             ////////////////// Start of TAY
@@ -1464,8 +1471,7 @@ impl Cpu {
                 // TAY
                 self.y = self.a;
                 self.set_n_z(self.y);
-                self.pc += 1;
-                println!("TAY");
+                println!("{}TAY", self.code_to_str(1));
             }
             ////////////////// End of TAY
             ////////////////// Start of TSX
@@ -1473,8 +1479,7 @@ impl Cpu {
                 // TSX
                 self.x = self.sp;
                 self.set_n_z(self.x);
-                self.pc += 1;
-                println!("TSX");
+                println!("{}TSX", self.code_to_str(1));
             }
             ////////////////// End of TSX
             ////////////////// Start of TXA
@@ -1482,16 +1487,14 @@ impl Cpu {
                 // TXA
                 self.a = self.x;
                 self.set_n_z(self.a);
-                self.pc += 1;
-                println!("TXA");
+                println!("{}TXA", self.code_to_str(1));
             }
             ////////////////// End of TXA
             ////////////////// Start of TXS
             0x9A => {
                 // TXS
                 self.sp = self.x;
-                self.pc += 1;
-                println!("TXS");
+                println!("{}TXS", self.code_to_str(1));
             }
             ////////////////// End of TXS
             ////////////////// Start of TYA
@@ -1499,12 +1502,11 @@ impl Cpu {
                 // TYA
                 self.a = self.y;
                 self.set_n_z(self.a);
-                self.pc += 1;
-                println!("TYA");
+                println!("{}TYA", self.code_to_str(1));
             }
             ////////////////// End of TYA
             _ => {
-                println!("Unknown opcode ${:02X}", opcode);
+                println!("{}!byte ${:02X}", self.code_to_str(1), opcode);
             }
         }
     }
