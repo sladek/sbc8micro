@@ -135,8 +135,8 @@ impl OpcodeViewer {
             [
                 Constraint::Length(8),
                 Constraint::Length(15),
-                Constraint::Length(15),
-                Constraint::Length(6),
+                Constraint::Length(18),
+                Constraint::Length(8),
                 Constraint::Length(6),
             ],
         )

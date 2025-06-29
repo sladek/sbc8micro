@@ -111,7 +111,10 @@ pub fn disassemble(
             ));
             pc += def.bytes as u16;
         } else {
-            output.push(format!("{:04X}  {:02X}          !byte {:02X}", pc, opcode_byte, opcode_byte));
+            output.push(format!(
+                "{:04X}  {:02X}          !byte {:02X}",
+                pc, opcode_byte, opcode_byte
+            ));
             pc += 1;
         }
     }
