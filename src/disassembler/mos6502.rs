@@ -99,7 +99,7 @@ pub fn disassemble(
                     format!("{:02X} {:02X}", args[0], args[1])
                 }
                 "implied" => "".to_string(),
-                _ => format!(""),
+                _ => "".to_string(),
             };
             output.push(format!(
                 "{:04X}  {:02X} {:<8} {} {}",
