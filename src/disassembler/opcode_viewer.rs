@@ -1,20 +1,31 @@
 //////////////////////////////////////////////////////////
-use crate::disassembler::Draw;
-/// Usage of the viewer is simple. Just provide <OPCODES> string
-/// And call view. Below is an example.
+/// This is the common viewer for op codes. Each CPU has its own draw() function that
+/// draws code information to terminal. Dynamic dispatch is used so that new type of CPU
+/// Can be added easily
+/// Below is an example of usage.
 ///
 /// ```
 /// mod disassembler;
+/// mod disassembler;
+/// mod memory;
 ///
-/// use crate::disassembler::mos6502_opcodes::OPCODES;
+/// use crate::disassembler::i8080_opcodes::OpcodeView as op_i8080; // Use i8080 opcodes
+/// use crate::disassembler::mos6502_opcodes::OpcodeView as op_mos6502; // Use mos6502 opcodes
 /// use crate::disassembler::opcode_viewer::view;
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
-///     view(OPCODES)
+///    let i8080 = true;
+///    if i8080 {
+///        let op_view = op_i8080::new();
+///        view(&op_view)
+///    } else {
+///        let op_view = op_mos6502::new();
+///        view(&op_view)
+///    }
 /// }
 /// ```
 //////////////////////////////////////////////////////////
-//use crate::disassembler::{Opcode, load_opcodes};
+use crate::disassembler::DrawOpcode;
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
     execute,
@@ -28,26 +39,26 @@ use ratatui::{
 };
 
 //#[derive(Default)]
-pub struct OpcodeViewer<T> {
-    view: Box<dyn Draw<T>>,
+pub struct OpcodeViewer<'a, T> {
+    view: &'a dyn DrawOpcode<T>,
     scroll_state: ScrollbarState,
     // Note: TableState should be stored in your application state (not constructed in your render
     // method) so that the selected row is preserved across renders
     table_state: TableState,
 }
 
-impl<T> OpcodeViewer<T> {
+impl<'a, T> OpcodeViewer<'a, T> {
     pub fn table_state(&self) -> TableState {
         self.table_state.clone()
     }
 
     pub fn scroll_state(&self) -> ScrollbarState {
-        self.scroll_state.clone()
+        self.scroll_state
     }
-    pub fn view(&self) -> &Box<dyn Draw<T>> {
-        &self.view
+    pub fn view(&self) -> &dyn DrawOpcode<T> {
+        self.view
     }
-    pub fn new(view: Box<dyn Draw<T>>) -> Self {
+    pub fn new(view: &'a dyn DrawOpcode<T>) -> Self {
         let len = view.opcodes().len();
         Self {
             view,
@@ -110,24 +121,13 @@ impl<T> OpcodeViewer<T> {
     }
 }
 
-//pub fn view<T: Draw<T>>(opcodes: Vec<T>) -> Result<(), Box<dyn std::error::Error>> {
-pub fn view<T>(view: Box<dyn Draw<T>>) -> Result<(), Box<dyn std::error::Error>> {
+pub fn view<T>(view: &dyn DrawOpcode<T>) -> Result<(), Box<dyn std::error::Error>> {
     simple_logging::log_to_file("test.log", LevelFilter::Trace)?;
     enable_raw_mode()?;
     let mut stdout = std::io::stdout();
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
     let backend = CrosstermBackend::new(stdout);
     let terminal = Terminal::new(backend)?;
-    /*
-       let codes = match opcodes {
-           Ok(value) => value,
-           Err(err) => {
-               _ = disable_raw_mode();
-               ratatui::restore();
-               panic!("cannot load opcode: [{}]", err.to_string())
-           }
-       };
-    */
     let app_result = OpcodeViewer::new(view).run(terminal);
     disable_raw_mode()?;
     ratatui::restore();
