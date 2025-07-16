@@ -1,5 +1,5 @@
 #[cfg(test)]
-use crate::mos6502;
+use crate::cpu::mos6502;
 #[cfg(test)]
 use crate::status;
 

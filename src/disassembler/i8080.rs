@@ -59,7 +59,7 @@ pub fn disassemble(
                 "register" | "none" => {
                     mnemonic = &def.mnemonic;
                     "".to_string()
-                },
+                }
                 "register indirect" => {
                     mnemonic = &def.mnemonic;
                     if mnemonic.contains(",data") {
@@ -78,16 +78,15 @@ pub fn disassemble(
             let operand_bytes = match def.mode.as_str() {
                 "immediate8" | "direct port" => {
                     format!("{:02X}", args[0])
-                },
-                "register indirect"=> {
+                }
+                "register indirect" => {
                     mnemonic = &def.mnemonic.trim_end_matches("data");
-                    if mnemonic.ends_with(","){
+                    if mnemonic.ends_with(",") {
                         format!("{:02X}", args[0])
-                    }
-                    else {
+                    } else {
                         "".to_string()
                     }
-                },
+                }
                 "immediate16" | "direct" => {
                     format!("{:02X} {:02X}", args[0], args[1])
                 }

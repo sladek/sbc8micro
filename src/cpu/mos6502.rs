@@ -40,8 +40,7 @@ use log::debug;
 /// Flags: Z=false, N=true
 ///////////////////////////////////////////////////////////////////////////////
 use crate::memory::Memory;
-use crate::status;
-use crate::status::mos6502::Status;
+use crate::status::mos6502;
 
 pub struct Cpu {
     pub a: u8,
@@ -49,7 +48,7 @@ pub struct Cpu {
     pub y: u8,
     pub sp: u8,
     pub pc: u16,
-    pub p: Status,
+    pub p: mos6502::Status,
     pub memory: Memory,
     debug: bool,
 }
@@ -62,12 +61,11 @@ impl Cpu {
             y: 0,
             sp: 0xFF,
             pc: 0,
-            p: Status::default(),
+            p: mos6502::Status::default(),
             memory: Memory::new(),
-            debug: true
+            debug: true,
         }
     }
-
 
     ///
     /// Loads program to the memory and set PC to start address of the programm
@@ -99,7 +97,7 @@ impl Cpu {
             self.p.is_carry() as u8
         )
     }
-    pub fn set_debug(&mut self, debug: bool){
+    pub fn set_debug(&mut self, debug: bool) {
         self.debug = debug;
     }
     fn brk(&mut self) {
@@ -109,8 +107,8 @@ impl Cpu {
         self.push((self.pc & 0xFF) as u8);
         // Push status with Break flag set
         let mut status = self.p.value;
-        status |= status::mos6502::BREAK;
-        status |= status::mos6502::UNUSED; // Bit 5 is always set in stack copy
+        status |= mos6502::BREAK;
+        status |= mos6502::UNUSED; // Bit 5 is always set in stack copy
         self.push(status);
         // Set Interrupt Disable flag
         self.p.set_interrupt_disable(true);
@@ -364,20 +362,31 @@ impl Cpu {
         flag = if value & 0x80 != 0 { true } else { false };
         self.p.set_negative(flag);
     }
-    fn code_to_str(&mut self, mut num_bytes: u8) -> String {
-        let mut addr = self.pc.wrapping_sub(num_bytes as u16);
+    ///
+    /// This function formats HEX string from address and opcode and
+    /// is used in debug mode to print address and opcode of the instruction that
+    /// is currently being processed
+    /// For example if you are processing the following code at address 0x200
+    /// LDA #$01
+    /// Then it looks like this in memory
+    /// 0x200 0xA9, 0x01,
+    /// and PC points to the address of 0x0202 (just after the operand).
+    /// To get the opcode you have to go back 2 bytes so neg_offset is 2.
+    /// And the resulting string is '0200 3E'
+    ///  
+    fn code_to_str(&mut self, mut neg_offset: u8) -> String {
+        let mut addr = self.pc.wrapping_sub(neg_offset as u16);
         let mut result = String::new();
         result.push_str(format!("{:04X}  ", addr).as_str());
-        while num_bytes != 0 {
+        while neg_offset != 0 {
             result.push_str(format!("{:02X} ", self.memory.read_byte(addr)).as_str());
-            num_bytes -= 1;
+            neg_offset -= 1;
             addr += 1;
         }
         format!("{:<18}", result)
     }
     pub fn step(&mut self) {
-
-    macro_rules! dbg { ($($x:tt)*) => { if self.debug { println!($($x)*); } } }
+        macro_rules! dbg { ($($x:tt)*) => { if self.debug { println!($($x)*); } } }
 
         let opcode = self.memory.read_byte(self.pc);
         self.pc += 1;
@@ -1232,7 +1241,7 @@ impl Cpu {
             ////////////////// Start of PHP
             0x08 => {
                 // PHP
-                self.push(self.p.value | status::mos6502::BREAK | status::mos6502::UNUSED); // emulate B and Unused flag set when pushed
+                self.push(self.p.value | mos6502::BREAK | mos6502::UNUSED); // emulate B and Unused flag set when pushed
                 dbg!("{}PHP", self.code_to_str(1));
             }
             ////////////////// Stop of PHP
@@ -1351,7 +1360,7 @@ impl Cpu {
                 // RTI
                 dbg!("{}RTI", self.code_to_str(1));
                 dbg!("----");
-                self.p.value = self.pop() & !status::mos6502::BREAK & !status::mos6502::UNUSED; // B and unused bits masked off
+                self.p.value = self.pop() & !mos6502::BREAK & !mos6502::UNUSED; // B and unused bits masked off
                 self.pc = self.pop_word();
             }
             ////////////////// End of RTI

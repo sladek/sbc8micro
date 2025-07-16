@@ -1,0 +1,70 @@
+Following data comes from testing of CMP instruction. Those test were executed on real i8080 board (PMI-80)
+so that simulation is as precise as possible.
+CMP instructions use basically SUB, but preserve ACC register.
+Below is the data used for testing and the result of PSW register.
+Notation of hexadecimal data is in i8080 assembler
+Bits af PSW registers are as follows:
+
+--------------------------------------------------------
+|bit 7 |bit 6 |bit 5|bit 4||bit 3|bit 2   |bit 1| bit 0|
+--------------------------------------------------------
+| SIGN | ZERO |  0  | AUX ||  0  | PARITY |  1  | CARRY|
+--------------------------------------------------------
+
+ACC  -  data -> PSW
+FFH     AAH     16H
+AAH     FFH     83H
+80H     70H     12H
+70H     80H     97H
+55H     AAH     83H
+AAH     55H     16H
+20H     10H     12H
+10H     20H     97H
+05H     0AH     83H
+0AH     05H     16H
+05H     05H     56H
+55H     55H     56H
+AAH     AAH     56H
+05H     01H     12H
+01H     05H     87H
+
+Next one is a result of ADC/ACI instruction tests
+ACC  +  op   +  CY  ->  ACC | PSW
+55H     74H     0       C9H | 86H
+66H     AAH     0       10H | 13H
+56H     AAH     0       00H | 57H
+55H     AAH     1       00H | 57H
+55H     AAH     0       FFH | 86H
+55H     55H     1       ABH | 82H
+34H     12H     1       47H | 06H
+FFH     AAH     1       AAH | 97H
+FFH     FFH     1       FFH | 97H
+FFH     FFH     0       FEH | 93H
+AAH     AAH     0       54H | 13H
+AAH     AAH     1       55H | 17H
+
+Next one is a result of ADD/ADI instruction tests
+ACC  +  op  ->  ACC | PSW
+55H     AAH     FFH | 86H
+66H     AAH     10H | 13H
+56H     AAH     00H | 57H
+FFH     FFH     FEH | 93H
+AAH     AAH     54H | 13H
+55H     74H     C9H | 86H
+12H     35H     47H | 06H
+12H     34H     46H | 02H
+34H     34H     68H | 02H
+
+Next one is a result of AND/ANI instruction tests
+Not the AC flag which is set as follows
+if op1[3] | op2[3] != 0, AC = 1 else AC = 0
+ACC  &  op  ->  ACC | PSW
+55H     AAH     00H | 56H
+12H     34H     10H | 02H
+34H     34H     34H | 02H
+55H     55H     55H | 06H
+08H     08H     08H | 12H
+08H     00H     00H | 56H
+FFH     FFH     FFH | 96H
+FFH     0FH     0FH | 16H
+AAH     AAH     AAH | 96H
