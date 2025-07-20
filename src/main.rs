@@ -11,9 +11,15 @@ fn main() {
     let opcodes = load_opcodes_table();
     let mut cpu = i8080::Cpu::new();
     cpu.set_debug(true);
-    cpu.memory.write_byte(0x1234, 0x12);
-    let program: Vec<u8> = vec![MVI_A, 0x01, MVI_B, 0x05, CMP_B, HLT];
+    cpu.a = 0xff;
+    cpu.psw.clear_flags();
+    cpu.h = 0xf0;
+    cpu.l = 0xf0;
+    cpu.b = 0x12;
+    cpu.c = 0x34;
+    let program: Vec<u8> = vec![DAD_B,  HLT,];
     let start_addr = 0x0200;
+    cpu.sp = 0xffff;
     let size = program.len();
     cpu.load_program(&program, start_addr);
     let disassembly = disassemble(&cpu.memory, start_addr, start_addr + size as u16, &opcodes);
@@ -28,7 +34,7 @@ fn main() {
     println!("---------------------------");
 
     cpu.pc = start_addr;
-    cpu.psw.set_carry(true);
+    let mut max_op = 100; // Max number of instructions executed. It prevents never endin loops.
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
         cpu.step();
@@ -36,6 +42,10 @@ fn main() {
         if opcode == 0x76 {
             println!("---------------------------");
             println!("End of simulation");
+            break;
+        }
+        max_op -= 1;
+        if max_op == 0 {
             break;
         }
     }

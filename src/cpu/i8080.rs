@@ -43,11 +43,11 @@ impl Cpu {
     }
     pub fn print_registers(&self) -> String {
         format!(
-"Registers\n--------------------------------------------------------------------------------------
-|  A  |  B  |  C  |  D  |  E  |  H  |  L  |  SP   |  PC   | PSW | S | Z | AC | P | C |
-|-----|-----|-----|-----|-----|-----|-----|-------|-------|-----|---|---|----|---|---|
-| {:02X}H | {:02X}H | {:02X}H | {:02X}H | {:02X}H | {:02X}H | {:02X}H | {:04X}H | {:04X}H | {:02X}H | {} | {} | {}  | {} | {} |
---------------------------------------------------------------------------------------\n",
+"Registers\n--------------------------------------------------------------------------------------------------
+|  A  |  B  |  C  |  D  |  E  |  H  |  L  |  SP   |  PC   | PSW | S | Z | 0 | AC | 0 | P | 1 | C |
+|-----|-----|-----|-----|-----|-----|-----|-------|-------|-----|---|---|---|----|---|---|---|---|
+| {:02X}H | {:02X}H | {:02X}H | {:02X}H | {:02X}H | {:02X}H | {:02X}H | {:04X}H | {:04X}H | {:02X}H | {} | {} | 0 | {}  | 0 | {} | 1 | {} |
+--------------------------------------------------------------------------------------------------\n",
             self.a,
             self.b,
             self.c,
@@ -70,8 +70,29 @@ impl Cpu {
     }
     fn read_immediate_byte(&mut self) -> u8 {
         let value = self.memory.read_byte(self.pc);
-        self.pc += 1;
+        self.pc = self.pc.wrapping_add(1);
         value
+    }
+    fn get_bc(&self) -> u16 {
+        (self.b as u16) << 8 | self.c as u16
+    }
+    fn get_de(&self) -> u16 {
+        (self.d as u16) << 8 | self.e as u16
+    }
+    fn get_hl(&self) -> u16 {
+        (self.h as u16) << 8 | self.l as u16
+    }
+    fn store_bc(&mut self, data: u16) {
+        self.b = ((data & 0xff00) >> 8) as u8;
+        self.c = (data & 0x0ff)  as u8;
+    }
+    fn store_de(&mut self, data: u16) {
+        self.d = ((data & 0xff00) >> 8) as u8;
+        self.e = (data & 0x0ff)  as u8;
+    }
+    fn store_hl(&mut self, data: u16) {
+        self.h = ((data & 0xff00) >> 8) as u8;
+        self.l = (data & 0x0ff)  as u8;
     }
     ///
     /// This function formats HEX string from address and opcode and
@@ -92,7 +113,7 @@ impl Cpu {
         while neg_offset != 0 {
             result.push_str(format!("{:02X} ", self.memory.read_byte(addr)).as_str());
             neg_offset -= 1;
-            addr += 1;
+            addr = addr.wrapping_add(1);
         }
         format!("{:<18}", result)
     }
@@ -146,7 +167,7 @@ impl Cpu {
         self.set_parity(sum as u8);
     }
     fn and(&mut self, value: u8) {
-        let is_ac = (self.a | value) & 0x08 != 0 ;
+        let is_ac = (self.a | value) & 0x08 != 0;
         let result = self.a as u16 & value as u16;
         self.a = result as u8;
         self.psw.set_carry(false);
@@ -161,12 +182,60 @@ impl Cpu {
         let hl = (h << 8) | l;
         self.memory.read_byte(hl)
     }
-    fn cmp(&self, value: u8) {}
+    fn push(&mut self, rph: u8, rpl: u8) {
+        let mut addr = self.sp.wrapping_sub(1);
+        self.memory.write_byte(addr, rph);
+        addr = self.sp.wrapping_sub(2);
+        self.memory.write_byte(addr, rpl);
+        self.sp = addr;
+    }
+    fn call(&mut self) {
+        let addr = self.memory.read_word(self.pc);
+        self.pc = self.pc.wrapping_add(2);
+        let pcl = (self.pc & 0xff) as u8;
+        let pch = ((self.pc & 0xff00) >> 8) as u8;
+        self.push(pch, pcl);
+        self.pc = addr;
+    }
+    fn ret(&mut self) {
+        let addrl = self.memory.read_byte(self.sp) as u16;
+        self.sp = self.sp.wrapping_add(1);
+        let addrh = (self.memory.read_byte(self.sp) as u16) << 8;
+        self.sp = self.sp.wrapping_add(1);
+        self.pc = addrh | addrl;
+    }
+    fn daa(&mut self) {
+        let mut accl: u8 = self.a & 0x0f;
+        let mut acch: u16 = self.a as u16 & 0xf0;
+        if (self.a & 0x0f > 0x09) || self.psw.is_ac() {
+            accl = accl.wrapping_add(0x06);
+            self.psw.set_ac(accl > 0x0f);
+        }
+        if (self.a & 0xf0 > 0x90) || self.psw.is_carry() {
+            acch = acch.wrapping_add(0x60);
+            self.psw.set_carry(true);
+        }
+        self.a = acch.wrapping_add(accl as u16)as u8;
+        if self.a == 0 {
+            self.psw.set_zero(true);
+        }
+        if (self.a & 0x80) != 0 {
+            self.psw.set_negative(true);
+        }
+        self.set_parity(self.a);
+    }
+    // Add data to HL pair and set CARRY if result is > 0x00ff.
+    pub fn dad(&mut self, rp: u16){
+        let result: u32 = self.get_hl()as u32 + rp as u32;
+        println!("Result: {:08X}", result);
+        self.store_hl(result as u16);
+        self.psw.set_carry(result > 0x0ffff);
+    }
     pub fn step(&mut self) {
         macro_rules! dbg { ($($x:tt)*) => { if self.debug { println!($($x)*); } } }
 
         let opcode = self.memory.read_byte(self.pc);
-        self.pc += 1;
+        self.pc = self.pc.wrapping_add(1);
 
         match opcode {
             ////////////////// Start of ACI
@@ -292,7 +361,7 @@ impl Cpu {
             ADI => {
                 let value = self.read_immediate_byte();
                 self.add(value, false);
-                dbg!("{}ADI ,{:02X}H", self.code_to_str(2), value);
+                dbg!("{}ADI {:02X}H", self.code_to_str(2), value);
             }
             ////////////////// End of ADI
             ////////////////// Start of ANA B
@@ -355,7 +424,7 @@ impl Cpu {
             ANI => {
                 let value = self.read_immediate_byte();
                 self.and(value);
-                dbg!("{}ANI ,{:02X}H", self.code_to_str(2), value);
+                dbg!("{}ANI {:02X}H", self.code_to_str(2), value);
             }
             ////////////////// End of ANI
             ////////////////// Start of CMA
@@ -440,10 +509,185 @@ impl Cpu {
                 let data = self.read_immediate_byte();
                 self.sub(data);
                 self.a = tmp;
-                dbg!("{}CPI", self.code_to_str(1));
+                dbg!("{}CPI {:02X}", self.code_to_str(2), data);
             }
             ////////////////// End of CPI
+            ////////////////// Start of CALL
+            CALL => {
+                if self.debug {
+                    let addr = self.memory.read_word(self.pc);
+                    self.pc = self.pc.wrapping_add(2);
+                    let code = self.code_to_str(3);
+                    self.pc = self.pc.wrapping_sub(2);
+                    dbg!("{}CALL {:04X}", code, addr);
+                }
+                self.call();
+            }
+            ////////////////// End of CALL
+            ////////////////// Start of CNZ
+            CNZ => {
+                if !self.psw.is_zero() {
+                    if self.debug {
+                        let addr = self.memory.read_word(self.pc);
+                        self.pc = self.pc.wrapping_add(2);
+                        let code = self.code_to_str(3);
+                        self.pc = self.pc.wrapping_sub(2);
+                        dbg!("{}CNZ {:04X}", code, addr);
+                    }
+                    self.call();
+                } else {
+                    self.pc = self.pc.wrapping_add(2);
+                }
+            }
+            ////////////////// End of CNZ
+            ////////////////// Start of CZ
+            CZ => {
+                if self.psw.is_zero() {
+                    if self.debug {
+                        let addr = self.memory.read_word(self.pc);
+                        self.pc = self.pc.wrapping_add(2);
+                        let code = self.code_to_str(3);
+                        self.pc = self.pc.wrapping_sub(2);
+                        dbg!("{}CZ {:04X}", code, addr);
+                    }
+                    self.call();
+                } else {
+                    self.pc = self.pc.wrapping_add(2);
+                }
+            }
+            ////////////////// End of CZ
+            ////////////////// Start of CNC
+            CNC => {
+                if !self.psw.is_carry() {
+                    if self.debug {
+                        let addr = self.memory.read_word(self.pc);
+                        self.pc = self.pc.wrapping_add(2);
+                        let code = self.code_to_str(3);
+                        self.pc = self.pc.wrapping_sub(2);
+                        dbg!("{}CNC {:04X}", code, addr);
+                    }
+                    self.call();
+                } else {
+                    self.pc = self.pc.wrapping_add(2);
+                }
+            }
+            ////////////////// End of CNC
+            ////////////////// Start of CC
+            CC => {
+                if self.psw.is_carry() {
+                    if self.debug {
+                        let addr = self.memory.read_word(self.pc);
+                        self.pc = self.pc.wrapping_add(2);
+                        let code = self.code_to_str(3);
+                        self.pc = self.pc.wrapping_sub(2);
+                        dbg!("{}CC {:04X}", code, addr);
+                    }
+                    self.call();
+                } else {
+                    self.pc = self.pc.wrapping_add(2);
+                }
+            }
+            ////////////////// End of CC
+            ////////////////// Start of CPO
+            CPO => {
+                if !self.psw.is_parity() {
+                    if self.debug {
+                        let addr = self.memory.read_word(self.pc);
+                        self.pc = self.pc.wrapping_add(2);
+                        let code = self.code_to_str(3);
+                        self.pc = self.pc.wrapping_sub(2);
+                        dbg!("{}CPO {:04X}", code, addr);
+                    }
+                    self.call();
+                } else {
+                    self.pc = self.pc.wrapping_add(2);
+                }
+            }
+            ////////////////// End of CPO
+            ////////////////// Start of CPE
+            CPE => {
+                if self.psw.is_parity() {
+                    if self.debug {
+                        let addr = self.memory.read_word(self.pc);
+                        self.pc = self.pc.wrapping_add(2);
+                        let code = self.code_to_str(3);
+                        self.pc = self.pc.wrapping_sub(2);
+                        dbg!("{}CPE {:04X}", code, addr);
+                    }
+                    self.call();
+                } else {
+                    self.pc = self.pc.wrapping_add(2);
+                }
+            }
+            ////////////////// End of CPE
+            ////////////////// Start of CP
+            CP => {
+                if !self.psw.is_negative() {
+                    if self.debug {
+                        let addr = self.memory.read_word(self.pc);
+                        self.pc = self.pc.wrapping_add(2);
+                        let code = self.code_to_str(3);
+                        self.pc = self.pc.wrapping_sub(2);
+                        dbg!("{}CP {:04X}", code, addr);
+                    }
+                    self.call();
+                } else {
+                    self.pc = self.pc.wrapping_add(2);
+                }
+            }
+            ////////////////// End of CP
+            ////////////////// Start of CM
+            CM => {
+                if self.psw.is_negative() {
+                    if self.debug {
+                        let addr = self.memory.read_word(self.pc);
+                        self.pc = self.pc.wrapping_add(2);
+                        let code = self.code_to_str(3);
+                        self.pc = self.pc.wrapping_sub(2);
+                        dbg!("{}CM {:04X}", code, addr);
+                    }
+                    self.call();
+                } else {
+                    self.pc = self.pc.wrapping_add(2);
+                }
+            }
+            ////////////////// End of CM
+            ////////////////// Start of DAA
+            DAA => {
+                self.daa();
+                dbg!("{}DAA", self.code_to_str(1));
+            }
+            ////////////////// End of DAA
+            ////////////////// Start of DAD B
+            DAD_B => {
+                self.dad(self.get_bc());
+                dbg!("{}DAD B", self.code_to_str(1));
+            }
+            ////////////////// End of DAD B
+            ////////////////// Start of DAD D
+            DAD_D => {
+                self.dad(self.get_de());
+                dbg!("{}DAD D", self.code_to_str(1));
+            }
+            ////////////////// End of DAD D
+            ////////////////// Start of DAD H
+            DAD_H => {
+                self.dad(self.get_hl());
+                dbg!("{}DAD H", self.code_to_str(1));
+            }
+            ////////////////// End of DAD H
+            ////////////////// Start of DAD SP
+            DAD_SP => {
+                self.dad(self.sp);
+                dbg!("{}DAD H", self.code_to_str(1));
+            }
+            ////////////////// End of DAD SP
 
+            ////////////////// Start of HLT
+            HLT => {
+                dbg!("{}HLT", self.code_to_str(1));
+            }
+            ////////////////// End of HLT
             ////////////////// Start of MVI A
             MVI_A => {
                 let value = self.read_immediate_byte();
@@ -493,11 +737,17 @@ impl Cpu {
                 dbg!("{}MVI L,{:02X}H", self.code_to_str(2), value);
             }
             ////////////////// End of MVI L
-            ////////////////// Start of HLT
-            0x76 => {
-                dbg!("{}HLT", self.code_to_str(1));
+            ////////////////// Start of NOP
+            NOP => {
+                dbg!("{}NOP", self.code_to_str(1));
             }
-            ////////////////// End of HLT
+            ////////////////// End of NOP
+            ////////////////// Start of RET
+            RET => {
+                dbg!("{}RET", self.code_to_str(1));
+                self.ret();
+            }
+            ////////////////// End of RET
             _ => {
                 dbg!("{}!byte {:02X}H", self.code_to_str(1), opcode);
             }

@@ -46,6 +46,23 @@ pub const CMP_M: u8 = 0xBE;
 pub const CMP_A: u8 = 0xBF;
 // CMI
 pub const CPI: u8 = 0xFE;
+// Ccond/CALL
+pub const CNZ: u8 = 0xC4;
+pub const CZ: u8 = 0xCC;
+pub const CNC: u8 = 0xD4;
+pub const CC: u8 = 0xDC;
+pub const CPO: u8 = 0xE4;
+pub const CPE: u8 = 0xEC;
+pub const CP: u8 = 0xF4;
+pub const CM: u8 = 0xFC;
+pub const CALL: u8 = 0xCD;
+// DAA
+pub const DAA: u8 = 0x27;
+// DAD
+pub const DAD_B: u8 = 0x09;
+pub const DAD_D: u8 = 0x19;
+pub const DAD_H: u8 = 0x29;
+pub const DAD_SP: u8 = 0x39;
 // HLT
 pub const HLT: u8 = 0x76;
 // MVI
@@ -56,3 +73,7 @@ pub const MVI_D: u8 = 0x16;
 pub const MVI_E: u8 = 0x1E;
 pub const MVI_H: u8 = 0x26;
 pub const MVI_L: u8 = 0x2E;
+// NOP
+pub const NOP: u8 = 0x00;
+// RET
+pub const RET: u8 = 0xC9;

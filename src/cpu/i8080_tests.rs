@@ -26,7 +26,7 @@ fn aci_no_c_neg_p() {
 }
 #[test]
 ///
-/// Tests immediate ACI 
+/// Tests immediate ACI
 ///
 fn aci_c_ac_p() {
     let mut cpu = Cpu::new();
@@ -122,7 +122,7 @@ fn adc_c_neg_p() {
 }
 #[test]
 ///
-/// Tests ADC D 
+/// Tests ADC D
 ///
 fn adc_d_neg_p() {
     let mut cpu = Cpu::new();
@@ -314,7 +314,7 @@ fn adc_m_neg_ac_c() {
 }
 #[test]
 ///
-/// Tests ADC M 
+/// Tests ADC M
 ///
 fn adc_m_ac_c() {
     let mut cpu = Cpu::new();
@@ -354,7 +354,7 @@ fn add_b_neg_p() {
 
 #[test]
 ///
-/// Tests ADD C 
+/// Tests ADD C
 ///
 fn add_c_neg_p() {
     let mut cpu = Cpu::new();
@@ -412,7 +412,7 @@ fn add_d_acc_c() {
 ///
 fn add_e_z_ac_p_c() {
     let mut cpu = Cpu::new();
-//    cpu.psw.set_carry(true);
+    //    cpu.psw.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0x56, MVI_E, 0xaa, ADD_E, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
@@ -461,7 +461,6 @@ fn add_l_p() {
     }
     assert_eq!(cpu.a, 0x54u8);
     assert_eq!(cpu.psw.value, 0x13);
-
 }
 #[test]
 ///
@@ -566,8 +565,10 @@ fn ana_b() {
 ///
 fn ana_b_2() {
     let mut cpu = Cpu::new();
-    let program: Vec<u8> = vec![MVI_A, 0x66, ADI, 0xaa, // set CY and AC
-    MVI_B, 0x10, ANA_B, HLT];
+    let program: Vec<u8> = vec![
+        MVI_A, 0x66, ADI, 0xaa, // set CY and AC
+        MVI_B, 0x10, ANA_B, HLT,
+    ];
     cpu.load_program(&program, 0x0600);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -585,8 +586,10 @@ fn ana_b_2() {
 ///
 fn ana_c_p() {
     let mut cpu = Cpu::new();
-    let program: Vec<u8> = vec![MVI_A, 0x66, ADI, 0xaa, // set CY and AC
-    MVI_A, 0x55, MVI_C, 0xAA, ANA_C, HLT];
+    let program: Vec<u8> = vec![
+        MVI_A, 0x66, ADI, 0xaa, // set CY and AC
+        MVI_A, 0x55, MVI_C, 0xAA, ANA_C, HLT,
+    ];
     cpu.load_program(&program, 0x0600);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -688,7 +691,6 @@ fn ana_m() {
     }
     assert_eq!(cpu.a, 0x10u8);
     assert_eq!(cpu.psw.value, 0x02);
-
 }
 #[test]
 ///
@@ -746,7 +748,7 @@ fn ani_08_00() {
 }
 #[test]
 ///
-/// Tests ANI 
+/// Tests ANI
 ///
 fn ani_ff_ff() {
     let mut cpu = Cpu::new();
@@ -764,7 +766,7 @@ fn ani_ff_ff() {
 }
 #[test]
 ///
-/// Tests ANI 
+/// Tests ANI
 ///
 fn ani_ff_0f() {
     let mut cpu = Cpu::new();
@@ -1109,3 +1111,1704 @@ fn cpi_55_aa() {
     assert_eq!(cpu.a, 0x55u8);
     assert_eq!(cpu.psw.value, 0x83);
 }
+#[test]
+///
+/// Tests CALL
+///
+fn call() {
+    let mut cpu = Cpu::new();
+    cpu.sp = 0xffff;
+    let program: Vec<u8> = vec![
+        MVI_A, 0xff, CALL, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET,
+    ];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0xa5u8);
+    assert_eq!(cpu.sp, 0xffff);
+    let addr = 0xfffd;
+    let val = cpu.memory.read_word(addr);
+    assert_eq!(val, 0x0205);
+}
+#[test]
+///
+/// Tests CNZ
+///
+fn cnz_nz() {
+    let mut cpu = Cpu::new();
+    cpu.sp = 0xffff;
+    cpu.a = 0xff;
+    let program: Vec<u8> = vec![CPI, 0xf0, CNZ, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0xa5u8);
+    assert_eq!(cpu.sp, 0xffff);
+    let addr = 0xfffd;
+    let val = cpu.memory.read_word(addr);
+    assert_eq!(val, 0x0205);
+}
+#[test]
+///
+/// Tests CNZ
+///
+fn cnz_z() {
+    let mut cpu = Cpu::new();
+    cpu.sp = 0xffff;
+    cpu.a = 0xff;
+    let program: Vec<u8> = vec![CPI, 0xff, CNZ, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0xafu8);
+    assert_eq!(cpu.sp, 0xffff);
+    let addr = 0xfffd;
+    let val = cpu.memory.read_word(addr);
+    assert_eq!(val, 0x0000); // No data ahould be on stack
+}
+#[test]
+///
+/// Tests CZ
+///
+fn cz_z() {
+    let mut cpu = Cpu::new();
+    cpu.sp = 0xffff;
+    cpu.a = 0xff;
+    let program: Vec<u8> = vec![CPI, 0xff, CZ, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0xa5u8);
+    assert_eq!(cpu.sp, 0xffff);
+    let addr = 0xfffd;
+    let val = cpu.memory.read_word(addr);
+    assert_eq!(val, 0x0205);
+}
+#[test]
+///
+/// Tests CZ
+///
+fn cz_nz() {
+    let mut cpu = Cpu::new();
+    cpu.sp = 0xffff;
+    cpu.a = 0xff;
+    let program: Vec<u8> = vec![CPI, 0xf0, CZ, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0xaFu8);
+    assert_eq!(cpu.sp, 0xffff);
+    let addr = 0xfffd;
+    let val = cpu.memory.read_word(addr);
+    assert_eq!(val, 0x0000);
+}
+#[test]
+///
+/// Tests CNC
+///
+fn cnc_nc() {
+    let mut cpu = Cpu::new();
+    cpu.sp = 0xffff;
+    cpu.a = 0xff;
+    let program: Vec<u8> = vec![ANI, 0xff, CNC, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0xa5u8);
+    assert_eq!(cpu.sp, 0xffff);
+    let addr = 0xfffd;
+    let val = cpu.memory.read_word(addr);
+    assert_eq!(val, 0x0205);
+}
+#[test]
+///
+/// Tests CNC
+///
+fn cnc_c() {
+    let mut cpu = Cpu::new();
+    cpu.sp = 0xffff;
+    cpu.a = 0xff;
+    let program: Vec<u8> = vec![ADI, 0x01, CNC, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x00u8);
+    assert_eq!(cpu.sp, 0xffff);
+    let addr = 0xfffd;
+    let val = cpu.memory.read_word(addr);
+    assert_eq!(val, 0x0000);
+}
+#[test]
+///
+/// Tests CC
+///
+fn cc_c() {
+    let mut cpu = Cpu::new();
+    cpu.sp = 0xffff;
+    cpu.a = 0xff;
+    let program: Vec<u8> = vec![ADI, 0xff, CC, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0xa4u8);
+    assert_eq!(cpu.sp, 0xffff);
+    let addr = 0xfffd;
+    let val = cpu.memory.read_word(addr);
+    assert_eq!(val, 0x0205);
+}
+#[test]
+///
+/// Tests CC
+///
+fn cc_nc() {
+    let mut cpu = Cpu::new();
+    cpu.sp = 0xffff;
+    cpu.a = 0xff;
+    let program: Vec<u8> = vec![ADI, 0x00, CC, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0xafu8);
+    assert_eq!(cpu.sp, 0xffff);
+    let addr = 0xfffd;
+    let val = cpu.memory.read_word(addr);
+    assert_eq!(val, 0x0000);
+}
+#[test]
+///
+/// Tests CPO
+///
+fn cpo_po() {
+    let mut cpu = Cpu::new();
+    cpu.sp = 0xffff;
+    cpu.a = 0xff;
+    let program: Vec<u8> = vec![ANI, 0x01, CPO, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x01u8);
+    assert_eq!(cpu.sp, 0xffff);
+    let addr = 0xfffd;
+    let val = cpu.memory.read_word(addr);
+    assert_eq!(val, 0x0205);
+}
+#[test]
+///
+/// Tests CPO
+///
+fn cpo_npo() {
+    let mut cpu = Cpu::new();
+    cpu.sp = 0xffff;
+    cpu.a = 0xff;
+    let program: Vec<u8> = vec![ANI, 0x03, CPO, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x03u8);
+    assert_eq!(cpu.sp, 0xffff);
+    let addr = 0xfffd;
+    let val = cpu.memory.read_word(addr);
+    assert_eq!(val, 0x0000);
+}
+#[test]
+///
+/// Tests CPE
+///
+fn cpe_pe() {
+    let mut cpu = Cpu::new();
+    cpu.sp = 0xffff;
+    cpu.a = 0xff;
+    let program: Vec<u8> = vec![ANI, 0x03, CPE, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x01u8);
+    assert_eq!(cpu.sp, 0xffff);
+    let addr = 0xfffd;
+    let val = cpu.memory.read_word(addr);
+    assert_eq!(val, 0x0205);
+}
+#[test]
+///
+/// Tests CPE
+///
+fn cpe_po() {
+    let mut cpu = Cpu::new();
+    cpu.sp = 0xffff;
+    cpu.a = 0xff;
+    let program: Vec<u8> = vec![ANI, 0x01, CPE, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x01u8);
+    assert_eq!(cpu.sp, 0xffff);
+    let addr = 0xfffd;
+    let val = cpu.memory.read_word(addr);
+    assert_eq!(val, 0x0000);
+}
+#[test]
+///
+/// Tests CP
+///
+fn cp_p() {
+    let mut cpu = Cpu::new();
+    cpu.sp = 0xffff;
+    cpu.a = 0xff;
+    let program: Vec<u8> = vec![ANI, 0x03, CP, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x01u8);
+    assert_eq!(cpu.sp, 0xffff);
+    let addr = 0xfffd;
+    let val = cpu.memory.read_word(addr);
+    assert_eq!(val, 0x0205);
+}
+#[test]
+///
+/// Tests CP
+///
+fn cp_m() {
+    let mut cpu = Cpu::new();
+    cpu.sp = 0xffff;
+    cpu.a = 0xff;
+    let program: Vec<u8> = vec![ANI, 0xff, CP, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0xafu8);
+    assert_eq!(cpu.sp, 0xffff);
+    let addr = 0xfffd;
+    let val = cpu.memory.read_word(addr);
+    assert_eq!(val, 0x0000);
+}
+#[test]
+///
+/// Tests CM
+///
+fn cm_m() {
+    let mut cpu = Cpu::new();
+    cpu.sp = 0xffff;
+    cpu.a = 0xff;
+    let program: Vec<u8> = vec![ANI, 0xff, CM, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0xa5u8);
+    assert_eq!(cpu.sp, 0xffff);
+    let addr = 0xfffd;
+    let val = cpu.memory.read_word(addr);
+    assert_eq!(val, 0x0205);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_00() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    let program: Vec<u8> = vec![MVI_A, 0x00, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x00u8);
+    assert_eq!(cpu.psw.value, 0x46u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_05() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    let program: Vec<u8> = vec![MVI_A, 0x05, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x05u8);
+    assert_eq!(cpu.psw.value, 0x06u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_0a() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    let program: Vec<u8> = vec![MVI_A, 0x0A, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x10u8);
+    assert_eq!(cpu.psw.value, 0x12u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_0f() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    let program: Vec<u8> = vec![MVI_A, 0x0f, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x15u8);
+    assert_eq!(cpu.psw.value, 0x12u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_50() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    let program: Vec<u8> = vec![MVI_A, 0x50, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x50u8);
+    assert_eq!(cpu.psw.value, 0x06u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_a0() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    let program: Vec<u8> = vec![MVI_A, 0xa0, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x00u8);
+    assert_eq!(cpu.psw.value, 0x47u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_f0() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    let program: Vec<u8> = vec![MVI_A, 0xf0, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x50u8);
+    assert_eq!(cpu.psw.value, 0x07u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_55() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    let program: Vec<u8> = vec![MVI_A, 0x55, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x55u8);
+    assert_eq!(cpu.psw.value, 0x06u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_aa() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    let program: Vec<u8> = vec![MVI_A, 0xaa, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x10u8);
+    assert_eq!(cpu.psw.value, 0x13u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_ff() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    let program: Vec<u8> = vec![MVI_A, 0xff, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x65u8);
+    assert_eq!(cpu.psw.value, 0x17u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_33() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    let program: Vec<u8> = vec![MVI_A, 0x33, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x33u8);
+    assert_eq!(cpu.psw.value, 0x06u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_00_ac() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_ac(true);
+    let program: Vec<u8> = vec![MVI_A, 0x00, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x06u8);
+    assert_eq!(cpu.psw.value, 0x06u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_05_ac() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_ac(true);
+    let program: Vec<u8> = vec![MVI_A, 0x05, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x0bu8);
+    assert_eq!(cpu.psw.value, 0x02u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_0a_ac() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_ac(true);
+    let program: Vec<u8> = vec![MVI_A, 0x0A, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x10u8);
+    assert_eq!(cpu.psw.value, 0x12u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_0f_ac() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_ac(true);
+    let program: Vec<u8> = vec![MVI_A, 0x0f, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x15u8);
+    assert_eq!(cpu.psw.value, 0x12u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_50_ac() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_ac(true);
+    let program: Vec<u8> = vec![MVI_A, 0x50, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x56u8);
+    assert_eq!(cpu.psw.value, 0x06u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_a0_ac() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_ac(true);
+    let program: Vec<u8> = vec![MVI_A, 0xa0, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x06u8);
+    assert_eq!(cpu.psw.value, 0x07u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_f0_ac() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_ac(true);
+    let program: Vec<u8> = vec![MVI_A, 0xf0, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x56u8);
+    assert_eq!(cpu.psw.value, 0x07u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_55_ac() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_ac(true);
+    let program: Vec<u8> = vec![MVI_A, 0x55, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x5bu8);
+    assert_eq!(cpu.psw.value, 0x02u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_aa_ac() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_ac(true);
+    let program: Vec<u8> = vec![MVI_A, 0xaa, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x10u8);
+    assert_eq!(cpu.psw.value, 0x13u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_ff_ac() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_ac(true);
+    let program: Vec<u8> = vec![MVI_A, 0xff, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x65u8);
+    assert_eq!(cpu.psw.value, 0x17u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_33_ac() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_ac(true);
+    let program: Vec<u8> = vec![MVI_A, 0x33, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x39u8);
+    assert_eq!(cpu.psw.value, 0x06u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_00_c() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0x00, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x60u8);
+    assert_eq!(cpu.psw.value, 0x07u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_05_c() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0x05, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x65u8);
+    assert_eq!(cpu.psw.value, 0x07u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_0a_c() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0x0A, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x70u8);
+    assert_eq!(cpu.psw.value, 0x13u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_0f_c() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0x0f, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x75u8);
+    assert_eq!(cpu.psw.value, 0x13u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_50_c() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0x50, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0xb0u8);
+    assert_eq!(cpu.psw.value, 0x83u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_a0_c() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0xa0, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x00u8);
+    assert_eq!(cpu.psw.value, 0x47u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_f0_c() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0xf0, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x50u8);
+    assert_eq!(cpu.psw.value, 0x07u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_55_c() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0x55, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0xb5u8);
+    assert_eq!(cpu.psw.value, 0x83u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_aa_c() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0xaa, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x10u8);
+    assert_eq!(cpu.psw.value, 0x13u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_ff_c() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0xff, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x65u8);
+    assert_eq!(cpu.psw.value, 0x17u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_00_ac_c() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_ac(true);
+    cpu.psw.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0x00, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x66u8);
+    assert_eq!(cpu.psw.value, 0x07u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_05_ac_c() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_ac(true);
+    cpu.psw.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0x05, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x6bu8);
+    assert_eq!(cpu.psw.value, 0x03u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_0a_ac_c() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_ac(true);
+    cpu.psw.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0x0A, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x70u8);
+    assert_eq!(cpu.psw.value, 0x13u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_0f_ac_c() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_ac(true);
+    cpu.psw.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0x0f, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x75u8);
+    assert_eq!(cpu.psw.value, 0x13u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_50_ac_c() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_ac(true);
+    cpu.psw.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0x50, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0xb6u8);
+    assert_eq!(cpu.psw.value, 0x83u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_a0_ac_c() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_ac(true);
+    cpu.psw.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0xa0, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x06u8);
+    assert_eq!(cpu.psw.value, 0x07u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_f0_ac_c() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_ac(true);
+    cpu.psw.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0xf0, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x56u8);
+    assert_eq!(cpu.psw.value, 0x07u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_55_ac_c() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_ac(true);
+    cpu.psw.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0x55, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0xbbu8);
+    assert_eq!(cpu.psw.value, 0x87u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_aa_ac_c() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_ac(true);
+    cpu.psw.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0xaa, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x10u8);
+    assert_eq!(cpu.psw.value, 0x13u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_ff_ac_c() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_ac(true);
+    cpu.psw.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0xff, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x65u8);
+    assert_eq!(cpu.psw.value, 0x17u8);
+}
+#[test]
+///
+/// Tests DAA
+///
+fn daa_33_ac_c() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.psw.set_ac(true);
+    cpu.psw.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0x33, DAA,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x99u8);
+    assert_eq!(cpu.psw.value, 0x87u8);
+}
+#[test]
+///
+/// Tests DAD B
+///
+fn dad_b_1() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.h = 0x00;
+    cpu.l = 0x00;
+    cpu.b = 0x00;
+    cpu.c = 0x00;
+    let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A,DAD_B,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.h, 0x00u8);
+    assert_eq!(cpu.l, 0x00u8);
+    assert_eq!(cpu.psw.value, 0x46u8);
+}
+#[test]
+///
+/// Tests DAD B
+///
+fn dad_b_2() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.h = 0x00;
+    cpu.l = 0x00;
+    cpu.b = 0x12;
+    cpu.c = 0x34;
+    let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_B,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.h, 0x12u8);
+    assert_eq!(cpu.l, 0x34u8);
+    assert_eq!(cpu.psw.value, 0x46u8);
+}
+#[test]
+///
+/// Tests DAD B
+///
+fn dad_b_3() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.h = 0x00;
+    cpu.l = 0x00;
+    cpu.b = 0x55;
+    cpu.c = 0x55;
+    let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_B,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.h, 0x55u8);
+    assert_eq!(cpu.l, 0x55u8);
+    assert_eq!(cpu.psw.value, 0x46u8);
+}
+#[test]
+///
+/// Tests DAD B
+///
+fn dad_b_4() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.h = 0x00;
+    cpu.l = 0x00;
+    cpu.b = 0xAA;
+    cpu.c = 0xAA;
+    let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_B,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.h, 0xAAu8);
+    assert_eq!(cpu.l, 0xAAu8);
+    assert_eq!(cpu.psw.value, 0x46u8);
+}
+#[test]
+///
+/// Tests DAD B
+///
+/// 
+fn dad_b_5() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.h = 0x00;
+    cpu.l = 0x00;
+    cpu.b = 0xff;
+    cpu.c = 0xff;
+    let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_B,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.h, 0xffu8);
+    assert_eq!(cpu.l, 0xffu8);
+    assert_eq!(cpu.psw.value, 0x46u8);
+}
+#[test]
+///
+/// Tests DAD D
+///
+fn dad_d_1() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.h = 0xf0;
+    cpu.l = 0xf0;
+    cpu.d = 0x00;
+    cpu.e = 0x00;
+    let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A,DAD_D,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.h, 0xf0u8);
+    assert_eq!(cpu.l, 0xf0u8);
+    assert_eq!(cpu.psw.value, 0x46u8);
+}
+#[test]
+///
+/// Tests DAD D
+///
+fn dad_d_2() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.h = 0xf0;
+    cpu.l = 0xf0;
+    cpu.d = 0x12;
+    cpu.e = 0x34;
+    let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_D,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.h, 0x03u8);
+    assert_eq!(cpu.l, 0x24u8);
+    assert_eq!(cpu.psw.value, 0x47u8);
+}
+#[test]
+///
+/// Tests DAD D
+///
+fn dad_d_3() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.h = 0xf0;
+    cpu.l = 0xf0;
+    cpu.d = 0x55;
+    cpu.e = 0x55;
+    let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_D,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.h, 0x46u8);
+    assert_eq!(cpu.l, 0x45u8);
+    assert_eq!(cpu.psw.value, 0x47u8);
+}
+#[test]
+///
+/// Tests DAD D
+///
+fn dad_d_4() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.h = 0xf0;
+    cpu.l = 0xf0;
+    cpu.d = 0xAA;
+    cpu.e = 0xAA;
+    let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_D,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.h, 0x9bu8);
+    assert_eq!(cpu.l, 0x9au8);
+    assert_eq!(cpu.psw.value, 0x47u8);
+}
+#[test]
+///
+/// Tests DAD D
+///
+/// 
+fn dad_d_5() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.h = 0xf0;
+    cpu.l = 0xf0;
+    cpu.d = 0xff;
+    cpu.e = 0xff;
+    let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_D,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.h, 0xf0u8);
+    assert_eq!(cpu.l, 0xefu8);
+    assert_eq!(cpu.psw.value, 0x47u8);
+}
+#[test]
+///
+/// Tests DAD H
+///
+fn dad_h_1() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.h = 0x00;
+    cpu.l = 0x00;
+    let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A,DAD_H,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.h, 0x00u8);
+    assert_eq!(cpu.l, 0x00u8);
+    assert_eq!(cpu.psw.value, 0x46u8);
+}
+#[test]
+///
+/// Tests DAD H
+///
+fn dad_h_2() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.h = 0x12;
+    cpu.l = 0x34;
+    let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_H,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.h, 0x24u8);
+    assert_eq!(cpu.l, 0x68u8);
+    assert_eq!(cpu.psw.value, 0x46u8);
+}
+#[test]
+///
+/// Tests DAD H
+///
+fn dad_h_3() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.h = 0x55;
+    cpu.l = 0x55;
+    let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_H,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.h, 0xaau8);
+    assert_eq!(cpu.l, 0xaau8);
+    assert_eq!(cpu.psw.value, 0x46u8);
+}
+#[test]
+///
+/// Tests DAD H
+///
+fn dad_h_4() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.h = 0xAA;
+    cpu.l = 0xAA;
+    let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_H,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.h, 0x55u8);
+    assert_eq!(cpu.l, 0x54u8);
+    assert_eq!(cpu.psw.value, 0x47u8);
+}
+#[test]
+///
+/// Tests DAD H
+///
+/// 
+fn dad_h_5() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.h = 0xff;
+    cpu.l = 0xff;
+    let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_H,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.h, 0xffu8);
+    assert_eq!(cpu.l, 0xfeu8);
+    assert_eq!(cpu.psw.value, 0x47u8);
+}
+#[test]
+///
+/// Tests DAD SP
+///
+fn dad_sp_1() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.h = 0x0f;
+    cpu.l = 0x0f;
+    cpu.sp = 0x0000;
+    let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A,DAD_SP,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.h, 0x0fu8);
+    assert_eq!(cpu.l, 0x0fu8);
+    assert_eq!(cpu.psw.value, 0x46u8);
+}
+#[test]
+///
+/// Tests DAD SP
+///
+fn dad_sp_2() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.h = 0x0f;
+    cpu.l = 0x0f;
+    cpu.sp = 0x1234;
+    let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_SP,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.h, 0x21u8);
+    assert_eq!(cpu.l, 0x43u8);
+    assert_eq!(cpu.psw.value, 0x46u8);
+}
+#[test]
+///
+/// Tests DAD SP
+///
+fn dad_sp_3() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.h = 0x0f;
+    cpu.l = 0x0f;
+    cpu.sp = 0x5555;
+    let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_SP,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.h, 0x64u8);
+    assert_eq!(cpu.l, 0x64u8);
+    assert_eq!(cpu.psw.value, 0x46u8);
+}
+#[test]
+///
+/// Tests DAD SP
+///
+fn dad_sp_4() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.h = 0x0f;
+    cpu.l = 0x0f;
+    cpu.sp = 0xaaaa;
+    let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_SP,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.h, 0xb9u8);
+    assert_eq!(cpu.l, 0xb9u8);
+    assert_eq!(cpu.psw.value, 0x46u8);
+}
+#[test]
+///
+/// Tests DAD SP
+///
+/// 
+fn dad_sp_5() {
+    let mut cpu = Cpu::new();
+    cpu.psw.clear_flags();
+    cpu.h = 0x0f;
+    cpu.l = 0x0f;
+    cpu.sp = 0xffff;
+    let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_SP,  HLT,];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.h, 0x0fu8);
+    assert_eq!(cpu.l, 0x0eu8);
+    assert_eq!(cpu.psw.value, 0x47u8);
+}
+/*
+
+*/

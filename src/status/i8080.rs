@@ -13,6 +13,9 @@ impl Psw {
     pub fn new() -> Self {
         Self { value: 0b0000_0010 }
     }
+    pub fn clear_flags(&mut self) {
+        self.value = 0x02;
+    }
     pub fn set_negative(&mut self, value: bool) {
         if value {
             self.value |= SIGN;
