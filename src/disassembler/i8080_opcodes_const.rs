@@ -63,17 +63,241 @@ pub const DAD_B: u8 = 0x09;
 pub const DAD_D: u8 = 0x19;
 pub const DAD_H: u8 = 0x29;
 pub const DAD_SP: u8 = 0x39;
+// DCR
+pub const DCR_B: u8 = 0x05;
+pub const DCR_C: u8 = 0x0D;
+pub const DCR_D: u8 = 0x15;
+pub const DCR_E: u8 = 0x1D;
+pub const DCR_H: u8 = 0x25;
+pub const DCR_L: u8 = 0x2D;
+pub const DCR_M: u8 = 0x35;
+pub const DCR_A: u8 = 0x3D;
+// DCX
+pub const DCX_B: u8 = 0x0B;
+pub const DCX_D: u8 = 0x1B;
+pub const DCX_H: u8 = 0x2B;
+pub const DCX_SP: u8 = 0x3B;
+// DI
+pub const DI: u8 = 0xF3;
+// EI
+pub const EI: u8 = 0xFB;
 // HLT
 pub const HLT: u8 = 0x76;
+// IN
+pub const IN: u8 = 0xDB;
+// INR
+pub const INR_B: u8 = 0x04;
+pub const INR_C: u8 = 0x0C;
+pub const INR_D: u8 = 0x14;
+pub const INR_E: u8 = 0x1C;
+pub const INR_H: u8 = 0x24;
+pub const INR_L: u8 = 0x2C;
+pub const INR_M: u8 = 0x34;
+pub const INR_A: u8 = 0x3C;
+// INX
+pub const INX_B: u8 = 0x03;
+pub const INX_D: u8 = 0x13;
+pub const INX_H: u8 = 0x23;
+pub const INX_SP: u8 = 0x33;
+// JNx
+pub const JNZ: u8 = 0xC2;
+pub const JZ: u8 = 0xCA;
+pub const JNC: u8 = 0xD2;
+pub const JC: u8 = 0xDA;
+pub const JPO: u8 = 0xE2;
+pub const JPE: u8 = 0xEA;
+pub const JP: u8 = 0xF2;
+pub const JM: u8 = 0xFA;
+pub const JMP: u8 = 0xC3;
+// LDA
+pub const LDA: u8 = 0x3A;
+// LDAX
+pub const LDAX_B: u8 = 0x0A;
+pub const LDAX_D: u8 = 0x1A;
+// LHLD
+pub const LHLD: u8 = 0x2A;
+// LXI
+pub const LXI_B: u8 = 0x01;
+pub const LXI_D: u8 = 0x11;
+pub const LXI_H: u8 = 0x21;
+pub const LXI_SP: u8 = 0x31;
 // MVI
-pub const MVI_A: u8 = 0x3E;
 pub const MVI_B: u8 = 0x06;
 pub const MVI_C: u8 = 0x0E;
 pub const MVI_D: u8 = 0x16;
 pub const MVI_E: u8 = 0x1E;
 pub const MVI_H: u8 = 0x26;
 pub const MVI_L: u8 = 0x2E;
+pub const MVI_M: u8 = 0x36;
+pub const MVI_A: u8 = 0x3E;
+// MOV A,x
+pub const MOV_A_B: u8 = 0x78;
+pub const MOV_A_C: u8 = 0x79;
+pub const MOV_A_D: u8 = 0x7A;
+pub const MOV_A_E: u8 = 0x7B;
+pub const MOV_A_H: u8 = 0x7C;
+pub const MOV_A_L: u8 = 0x7D;
+pub const MOV_A_M: u8 = 0x7E;
+pub const MOV_A_A: u8 = 0x7F;
+// MOV B,x
+pub const MOV_B_B: u8 = 0x40;
+pub const MOV_B_C: u8 = 0x41;
+pub const MOV_B_D: u8 = 0x42;
+pub const MOV_B_E: u8 = 0x43;
+pub const MOV_B_H: u8 = 0x44;
+pub const MOV_B_L: u8 = 0x45;
+pub const MOV_B_M: u8 = 0x46;
+pub const MOV_B_A: u8 = 0x47;
+// MOV C,x
+pub const MOV_C_B: u8 = 0x48;
+pub const MOV_C_C: u8 = 0x49;
+pub const MOV_C_D: u8 = 0x4A;
+pub const MOV_C_E: u8 = 0x4B;
+pub const MOV_C_H: u8 = 0x4C;
+pub const MOV_C_L: u8 = 0x4D;
+pub const MOV_C_M: u8 = 0x4E;
+pub const MOV_C_A: u8 = 0x4F;
+// MOV D,x
+pub const MOV_D_B: u8 = 0x50;
+pub const MOV_D_C: u8 = 0x51;
+pub const MOV_D_D: u8 = 0x52;
+pub const MOV_D_E: u8 = 0x53;
+pub const MOV_D_H: u8 = 0x54;
+pub const MOV_D_L: u8 = 0x55;
+pub const MOV_D_M: u8 = 0x56;
+pub const MOV_D_A: u8 = 0x57;
+// MOV E,x
+pub const MOV_E_B: u8 = 0x58;
+pub const MOV_E_C: u8 = 0x59;
+pub const MOV_E_D: u8 = 0x5A;
+pub const MOV_E_E: u8 = 0x5B;
+pub const MOV_E_H: u8 = 0x5C;
+pub const MOV_E_L: u8 = 0x5D;
+pub const MOV_E_M: u8 = 0x5E;
+pub const MOV_E_A: u8 = 0x5F;
+// MOV H,x
+pub const MOV_H_B: u8 = 0x60;
+pub const MOV_H_C: u8 = 0x61;
+pub const MOV_H_D: u8 = 0x62;
+pub const MOV_H_E: u8 = 0x63;
+pub const MOV_H_H: u8 = 0x64;
+pub const MOV_H_L: u8 = 0x65;
+pub const MOV_H_M: u8 = 0x66;
+pub const MOV_H_A: u8 = 0x67;
+// MOV L,x
+pub const MOV_L_B: u8 = 0x68;
+pub const MOV_L_C: u8 = 0x69;
+pub const MOV_L_D: u8 = 0x6A;
+pub const MOV_L_E: u8 = 0x6B;
+pub const MOV_L_H: u8 = 0x6C;
+pub const MOV_L_L: u8 = 0x6D;
+pub const MOV_L_M: u8 = 0x6E;
+pub const MOV_L_A: u8 = 0x6F;
+// MOV M,x
+pub const MOV_M_B: u8 = 0x70;
+pub const MOV_M_C: u8 = 0x71;
+pub const MOV_M_D: u8 = 0x72;
+pub const MOV_M_E: u8 = 0x73;
+pub const MOV_M_H: u8 = 0x74;
+pub const MOV_M_L: u8 = 0x75;
+pub const MOV_M_A: u8 = 0x77;
 // NOP
 pub const NOP: u8 = 0x00;
+// ORA
+pub const ORA_B: u8 = 0xB0;
+pub const ORA_C: u8 = 0xB1;
+pub const ORA_D: u8 = 0xB2;
+pub const ORA_E: u8 = 0xB3;
+pub const ORA_H: u8 = 0xB4;
+pub const ORA_L: u8 = 0xB5;
+pub const ORA_M: u8 = 0xB6;
+pub const ORA_A: u8 = 0xB7;
+// ORI
+pub const ORI: u8 = 0xF6;
+// PCHL
+pub const PCHL: u8 = 0xE9;
+// POP
+pub const POP_B: u8 = 0xC1;
+pub const POP_D: u8 = 0xD1;
+pub const POP_H: u8 = 0xE1;
+pub const POP_PSW: u8 = 0xF1;
+// PUSH
+pub const PUSH_B: u8 = 0xC5;
+pub const PUSH_D: u8 = 0xD5;
+pub const PUSH_H: u8 = 0xE5;
+pub const PUSH_PSW: u8 = 0xF5;
+// RAL
+pub const RAL: u8 = 0x17;
+// RAR
+pub const RAR: u8 = 0x1F;
+// RLC
+pub const RLC: u8 = 0x07;
+// RRC
+pub const RRC: u8 = 0x0F;
 // RET
 pub const RET: u8 = 0xC9;
+// Rx
+pub const RNZ: u8 = 0xC0;
+pub const RZ: u8 = 0xC8;
+pub const RNC: u8 = 0xD0;
+pub const RC: u8 = 0xD8;
+pub const RPO: u8 = 0xE0;
+pub const RPE: u8 = 0xE8;
+pub const RP: u8 = 0xF0;
+pub const RM: u8 = 0xF8;
+// RST
+pub const RST_0: u8 = 0xC7;
+pub const RST_1: u8 = 0xCF;
+pub const RST_2: u8 = 0xD7;
+pub const RST_3: u8 = 0xDF;
+pub const RST_4: u8 = 0xE7;
+pub const RST_5: u8 = 0xEF;
+pub const RST_6: u8 = 0xF7;
+pub const RST_7: u8 = 0xFF;
+// SBB
+pub const SBB_B: u8 = 0x98;
+pub const SBB_C: u8 = 0x99;
+pub const SBB_D: u8 = 0x9A;
+pub const SBB_E: u8 = 0x9B;
+pub const SBB_H: u8 = 0x9c;
+pub const SBB_L: u8 = 0x9D;
+pub const SBB_M: u8 = 0x9E;
+pub const SBB_A: u8 = 0x9F;
+// SBI
+pub const SBI: u8 = 0xDE;
+// SUB
+pub const SUB_B: u8 = 0x90;
+pub const SUB_C: u8 = 0x91;
+pub const SUB_D: u8 = 0x92;
+pub const SUB_E: u8 = 0x93;
+pub const SUB_H: u8 = 0x94;
+pub const SUB_L: u8 = 0x95;
+pub const SUB_M: u8 = 0x96;
+pub const SUB_A: u8 = 0x97;
+// SUI
+pub const SUI: u8 = 0xD6;
+// SHLD
+pub const SHLD: u8 = 0x22;
+// STA
+pub const STA: u8 = 0x32;
+// STAX
+pub const STAX_B: u8 = 0x02;
+pub const STAX_D: u8 = 0x12;
+// SPHL
+pub const SPHL: u8 = 0xF9;
+// XCHG
+pub const XCHG: u8 = 0xEB;
+// XRA
+pub const XRA_B: u8 = 0xA8;
+pub const XRA_C: u8 = 0xA9;
+pub const XRA_D: u8 = 0xAA;
+pub const XRA_E: u8 = 0xAB;
+pub const XRA_H: u8 = 0xAC;
+pub const XRA_L: u8 = 0xAD;
+pub const XRA_M: u8 = 0xAE;
+pub const XRA_A: u8 = 0xAF;
+// XRI
+pub const XRI: u8 = 0xEE;
+// XTHL
+pub const XTHL: u8 = 0xE3;
+

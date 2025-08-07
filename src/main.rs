@@ -13,13 +13,18 @@ fn main() {
     cpu.set_debug(true);
     cpu.a = 0xff;
     cpu.psw.clear_flags();
-    cpu.h = 0xf0;
-    cpu.l = 0xf0;
+    cpu.h = 0x02;
+    cpu.l = 0x10;
     cpu.b = 0x12;
     cpu.c = 0x34;
-    let program: Vec<u8> = vec![DAD_B,  HLT,];
+    cpu.d = 0x56;
+    cpu.e = 0x78;
+    cpu.sp = 0x0210;
+    cpu.psw.set_carry(true);
+    let program: Vec<u8> = vec![
+          LXI_D, 0x34, 0x12, LXI_H, 0x78, 0x56, PUSH_D, XTHL, PUSH_H, HLT,
+    ];
     let start_addr = 0x0200;
-    cpu.sp = 0xffff;
     let size = program.len();
     cpu.load_program(&program, start_addr);
     let disassembly = disassemble(&cpu.memory, start_addr, start_addr + size as u16, &opcodes);

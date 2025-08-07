@@ -1705,6 +1705,15 @@ pub static OPCODES: &str = r#"
     "description": "The content of register A is inclusive-OR'd with the content of the accumulator. \nThe result is placed in the accumulator. The CY and AC flags are cleared. \n[(A) <- (A) OR (A)]\n\nZ S P CY AC\nx x x 0  0"
   },
   {
+    "opcode": "F6",
+    "mnemonic": "ORI data",
+    "mode": "immediate8",
+    "bytes": 2,
+    "cycles": "2",
+    "states": "7",
+    "description": "The content of the second byte of the instruction is inclusive-OR'd with the content of the accumulator. \nThe result is placed in the accumulator. The CY and AC flags are cleared. \n[(A) <- (A) OR (byte 2)]\n\nZ S P CY AC\nx x x 0  0"
+  },
+  {
     "opcode": "E9",
     "mnemonic": "PCHL",
     "mode": "register",
@@ -2197,7 +2206,7 @@ pub static OPCODES: &str = r#"
     "bytes": 1,
     "cycles": "1",
     "states": "4",
-    "description": "The content of register B is exclusive-or'd with the content of the accumulator. \nThe result is placed in the accumulator. The CY and AC flags are cleared.\n[(A) <- (A) XOR (B)]\n\nZ S P CY AC\n- - - 0  0"
+    "description": "The content of register B is exclusive-or'd with the content of the accumulator. \nThe result is placed in the accumulator. The CY and AC flags are cleared.\n[(A) <- (A) XOR (B)]\n\nZ S P CY AC\nx x x 0  0"
   },
   {
     "opcode": "A9",
@@ -2206,7 +2215,7 @@ pub static OPCODES: &str = r#"
     "bytes": 1,
     "cycles": "1",
     "states": "4",
-    "description": "The content of register C is exclusive-or'd with the content of the accumulator. \nThe result is placed in the accumulator. The CY and AC flags are cleared.\n[(A) <- (A) XOR (C)]\n\nZ S P CY AC\n- - - 0  0"
+    "description": "The content of register C is exclusive-or'd with the content of the accumulator. \nThe result is placed in the accumulator. The CY and AC flags are cleared.\n[(A) <- (A) XOR (C)]\n\nZ S P CY AC\nx x x 0  0"
   },
   {
     "opcode": "AA",
@@ -2215,7 +2224,7 @@ pub static OPCODES: &str = r#"
     "bytes": 1,
     "cycles": "1",
     "states": "4",
-    "description": "The content of register D is exclusive-or'd with the content of the accumulator. \nThe result is placed in the accumulator. The CY and AC flags are cleared.\n[(A) <- (A) XOR (D)]\n\nZ S P CY AC\n- - - 0  0"
+    "description": "The content of register D is exclusive-or'd with the content of the accumulator. \nThe result is placed in the accumulator. The CY and AC flags are cleared.\n[(A) <- (A) XOR (D)]\n\nZ S P CY AC\nx x x 0  0"
   },
   {
     "opcode": "AB",
@@ -2224,7 +2233,7 @@ pub static OPCODES: &str = r#"
     "bytes": 1,
     "cycles": "1",
     "states": "4",
-    "description": "The content of register E is exclusive-or'd with the content of the accumulator. \nThe result is placed in the accumulator. The CY and AC flags are cleared.\n[(A) <- (A) XOR (E)]\n\nZ S P CY AC\n- - - 0  0"
+    "description": "The content of register E is exclusive-or'd with the content of the accumulator. \nThe result is placed in the accumulator. The CY and AC flags are cleared.\n[(A) <- (A) XOR (E)]\n\nZ S P CY AC\nx x x 0  0"
   },
   {
     "opcode": "AC",
@@ -2233,7 +2242,7 @@ pub static OPCODES: &str = r#"
     "bytes": 1,
     "cycles": "1",
     "states": "4",
-    "description": "The content of register H is exclusive-or'd with the content of the accumulator. \nThe result is placed in the accumulator. The CY and AC flags are cleared.\n[(A) <- (A) XOR (H)]\n\nZ S P CY AC\n- - - 0  0"
+    "description": "The content of register H is exclusive-or'd with the content of the accumulator. \nThe result is placed in the accumulator. The CY and AC flags are cleared.\n[(A) <- (A) XOR (H)]\n\nZ S P CY AC\nx x x 0  0"
   },
   {
     "opcode": "AD",
@@ -2242,7 +2251,7 @@ pub static OPCODES: &str = r#"
     "bytes": 1,
     "cycles": "1",
     "states": "4",
-    "description": "The content of register L is exclusive-or'd with the content of the accumulator. \nThe result is placed in the accumulator. The CY and AC flags are cleared.\n[(A) <- (A) XOR (L)]\n\nZ S P CY AC\n- - - 0  0"
+    "description": "The content of register L is exclusive-or'd with the content of the accumulator. \nThe result is placed in the accumulator. The CY and AC flags are cleared.\n[(A) <- (A) XOR (L)]\n\nZ S P CY AC\nx x x 0  0"
   },
   {
     "opcode": "AE",
@@ -2251,7 +2260,7 @@ pub static OPCODES: &str = r#"
     "bytes": 1,
     "cycles": "2",
     "states": "7",
-    "description": "The content of the memory location whose address is contained in the H and L registers \nis exclusive-OR'd with the content of the accumulator. The result is placed in the accumulator. \nThe CY and AC flags are cleared.  \n[(A) <- (A) XOR ((H)(L))]\n\nZ S P CY AC\n- - - 0  0"
+    "description": "The content of the memory location whose address is contained in the H and L registers \nis exclusive-OR'd with the content of the accumulator. The result is placed in the accumulator. \nThe CY and AC flags are cleared.  \n[(A) <- (A) XOR ((H)(L))]\n\nZ S P CY AC\nx x x 0  0"
   },
   {
     "opcode": "AF",
@@ -2260,7 +2269,7 @@ pub static OPCODES: &str = r#"
     "bytes": 1,
     "cycles": "1",
     "states": "4",
-    "description": "The content of register A is exclusive-or'd with the content of the accumulator. \nThe result is placed in the accumulator. The CY and AC flags are cleared.\n[(A) <- (A) XOR (A)]\n\nZ S P CY AC\n- - - 0  0"
+    "description": "The content of register A is exclusive-or'd with the content of the accumulator. \nThe result is placed in the accumulator. The CY and AC flags are cleared.\n[(A) <- (A) XOR (A)]\n\nZ S P CY AC\nx x x 0  0"
   },
   {
     "opcode": "EE",
@@ -2269,7 +2278,7 @@ pub static OPCODES: &str = r#"
     "bytes": 2,
     "cycles": "2",
     "states": "7",
-    "description": "The content of the second byte of the instruction is exclusive-OR'd with \nthe content of the accumulator. The result is placed in the accumulator. \nThe CY and AC ftags are cleared.\n[(A) <- (A) XOR data]\n\nZ S P CY AC\n- - - 0  0"
+    "description": "The content of the second byte of the instruction is exclusive-OR'd with \nthe content of the accumulator. The result is placed in the accumulator. \nThe CY and AC ftags are cleared.\n[(A) <- (A) XOR data]\n\nZ S P CY AC\nx x x 0  0"
   },
   {
     "opcode": "E3",
