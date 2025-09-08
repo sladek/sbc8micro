@@ -467,7 +467,6 @@ impl Cpu {
     ///
     /// Read instriction from memory, executes it and set PC to point to next instruction in memory.
     /// If debug flag is set to true it will also print mnemonic code of the instruction that is executed.
-
     pub fn step(&mut self) {
         macro_rules! dbg { ($($x:tt)*) => { if self.debug { println!($($x)*); } } }
 
