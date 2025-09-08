@@ -1,7 +1,8 @@
+//! Disassembler for INTEL i8080 CPU
 use serde::Deserialize;
 use std::collections::HashMap;
 
-use crate::disassembler::i8080_opcodes;
+use crate::disassembler::i8080_opcode;
 use crate::memory::Memory;
 
 #[derive(Debug, Deserialize)]
@@ -14,7 +15,7 @@ pub struct OpcodeDef {
 }
 pub fn load_opcodes_table() -> HashMap<u8, OpcodeDef> {
     let defs: Vec<OpcodeDef> =
-        serde_json::from_str(i8080_opcodes::OPCODES).expect("Failed to parse JSON");
+        serde_json::from_str(i8080_opcode::OPCODES).expect("Failed to parse JSON");
     defs.into_iter()
         .map(|def| (u8::from_str_radix(&def.opcode, 16).unwrap(), def))
         .collect()
@@ -80,7 +81,7 @@ pub fn disassemble(
                     format!("{:02X}", args[0])
                 }
                 "register indirect" => {
-                    mnemonic = &def.mnemonic.trim_end_matches("data");
+                    mnemonic = def.mnemonic.trim_end_matches("data");
                     if mnemonic.ends_with(",") {
                         format!("{:02X}", args[0])
                     } else {

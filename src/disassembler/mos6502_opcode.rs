@@ -1,3 +1,4 @@
+//! Opcode for MOS Technology mos6502 CPU
 use crate::disassembler::{DrawOpcode, opcode_viewer::OpcodeViewer};
 use ratatui::{
     Frame,
@@ -9,20 +10,27 @@ use ratatui::{
 
 #[derive(Default, Debug, Clone, serde::Deserialize)]
 pub struct Opcode {
+    /// Opcode as an hexadecimal string - "0F", "55", "AA", ...
     opcode: String,
+    /// Mnemonic -  "ADC oper", "ASL oper,X", "CMP (oper),Y", ...
     mnemonic: String,
+    /// Mode - "immediate", "relative", "absolute", "zeropage,X", "absolute,X", ...
     mode: String,
+    /// Number of bytes the instruction occupies in memory
     bytes: u8,
+    /// Number of CPU cycles needed to execute the instruction
     cycles: String,
+    /// Description of instruction
     description: Option<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct OpcodeView<Opcode> {
     opcodes: Vec<Opcode>,
 }
 
 impl OpcodeView<Opcode> {
+    /// Parses OPCODES and returns an instance of opcode view
     pub fn new() -> Self {
         Self {
             opcodes: serde_json::from_str(OPCODES).unwrap(),
@@ -31,10 +39,11 @@ impl OpcodeView<Opcode> {
 }
 
 impl DrawOpcode<Opcode> for OpcodeView<Opcode> {
-    #[allow(clippy::too_many_lines, clippy::cast_possible_truncation)]
+    /// Returns a vector of opcodes
     fn opcodes(&self) -> &Vec<Opcode> {
         &self.opcodes
     }
+    /// Shows opcode description in a frame
     fn draw(&self, viewer: &OpcodeViewer<Opcode>, frame: &mut Frame) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
@@ -1023,6 +1032,38 @@ pub static OPCODES: &str = r#"
     "mode": "accumulator",
     "bytes": 1,
     "cycles": "2",
+    "description": "Rotate One Bit Right (Memory or Accumulator). [C -> [76543210] -> C]\n\nN Z C I D V\n+ + + - - -"
+  },
+  {
+    "opcode": "66",
+    "mnemonic": "ROR oper",
+    "mode": "zeropage",
+    "bytes": 2,
+    "cycles": "5",
+    "description": "Rotate One Bit Right (Memory or Accumulator). [C -> [76543210] -> C]\n\nN Z C I D V\n+ + + - - -"
+  },
+  {
+    "opcode": "76",
+    "mnemonic": "ROR oper,X",
+    "mode": "zeropage,X",
+    "bytes": 2,
+    "cycles": "6",
+    "description": "Rotate One Bit Right (Memory or Accumulator). [C -> [76543210] -> C]\n\nN Z C I D V\n+ + + - - -"
+  },
+  {
+    "opcode": "6E",
+    "mnemonic": "ROR oper",
+    "mode": "absolute",
+    "bytes": 3,
+    "cycles": "6",
+    "description": "Rotate One Bit Right (Memory or Accumulator). [C -> [76543210] -> C]\n\nN Z C I D V\n+ + + - - -"
+  },
+  {
+    "opcode": "7E",
+    "mnemonic": "ROR oper,X",
+    "mode": "absolute,X",
+    "bytes": 3,
+    "cycles": "7",
     "description": "Rotate One Bit Right (Memory or Accumulator). [C -> [76543210] -> C]\n\nN Z C I D V\n+ + + - - -"
   },
   {

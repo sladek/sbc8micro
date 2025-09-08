@@ -1,3 +1,4 @@
+//! Status for MOS technology 6502 CPU
 pub const CARRY: u8 = 0b0000_0001;
 pub const ZERO: u8 = 0b0000_0010;
 pub const INTERRUPT: u8 = 0b0000_0100;

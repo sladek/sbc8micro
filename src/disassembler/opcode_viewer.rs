@@ -1,46 +1,43 @@
-//////////////////////////////////////////////////////////
-/// This is the common viewer for op codes. Each CPU has its own draw() function that
-/// draws code information to terminal. Dynamic dispatch is used so that new type of CPU
-/// Can be added easily
-/// Below is an example of usage.
-///
-/// ```
-/// mod disassembler;
-/// mod disassembler;
-/// mod memory;
-///
-/// use crate::disassembler::i8080_opcodes::OpcodeView as op_i8080; // Use i8080 opcodes
-/// use crate::disassembler::mos6502_opcodes::OpcodeView as op_mos6502; // Use mos6502 opcodes
-/// use crate::disassembler::opcode_viewer::view;
-///
-/// fn main() -> Result<(), Box<dyn std::error::Error>> {
-///    let i8080 = true;
-///    if i8080 {
-///        let op_view = op_i8080::new();
-///        view(&op_view)
-///    } else {
-///        let op_view = op_mos6502::new();
-///        view(&op_view)
-///    }
-/// }
-/// ```
-//////////////////////////////////////////////////////////
+//! Generic op code viewer
+//!
+//! This is the common viewer for op codes. Each CPU has its own draw() function that
+//! draws code information to a terminal. Dynamic dispatch is used so that new type of CPU
+//! can be added easily.
+//! Below is an example of usage.
+//!
+//! ```no_run
+//! use sbc8micro::disassembler::i8080_opcode::OpcodeView as op_i8080; // Use i8080 opcodes
+//! use sbc8micro::disassembler::mos6502_opcode::OpcodeView as op_mos6502; // Use mos6502 opcodes
+//! use sbc8micro::disassembler::opcode_viewer::view;
+//!
+//! fn opcode_viewer() -> Result<(), Box<dyn std::error::Error>> {
+//!    let i8080 = true;
+//!    if i8080 {
+//!        let op_view = op_i8080::new();
+//!        view(&op_view)
+//!    } else {
+//!        let op_view = op_mos6502::new();
+//!        view(&op_view)
+//!    }
+//! }
+//! ```
+//!
 use crate::disassembler::DrawOpcode;
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
     execute,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
-use log::LevelFilter;
 use ratatui::prelude::CrosstermBackend;
 use ratatui::{
     DefaultTerminal, Terminal,
     widgets::{ScrollbarState, TableState},
 };
 
-//#[derive(Default)]
 pub struct OpcodeViewer<'a, T> {
+    /// View of opcode that is drawn 
     view: &'a dyn DrawOpcode<T>,
+    /// Status of scroll bar
     scroll_state: ScrollbarState,
     // Note: TableState should be stored in your application state (not constructed in your render
     // method) so that the selected row is preserved across renders
@@ -120,9 +117,8 @@ impl<'a, T> OpcodeViewer<'a, T> {
         }
     }
 }
-
+/// Renders an opcode viewre on terminal
 pub fn view<T>(view: &dyn DrawOpcode<T>) -> Result<(), Box<dyn std::error::Error>> {
-    simple_logging::log_to_file("test.log", LevelFilter::Trace)?;
     enable_raw_mode()?;
     let mut stdout = std::io::stdout();
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;

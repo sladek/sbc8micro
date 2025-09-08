@@ -1,5 +1,7 @@
+#![doc(hidden)]
 #[cfg(test)]
 use crate::cpu::mos6502;
+use crate::disassembler::mos6502_opcode_consts::LDA_ZP;
 #[cfg(test)]
 use crate::status;
 

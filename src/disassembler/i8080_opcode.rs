@@ -1,3 +1,4 @@
+//! Opcode for INTEL i8080 CPU
 use crate::disassembler::{DrawOpcode, opcode_viewer::OpcodeViewer};
 use ratatui::{
     Frame,
@@ -6,24 +7,33 @@ use ratatui::{
     style::{Color, Style},
     widgets::{Block, Borders, Cell, Paragraph, Row, Scrollbar, ScrollbarOrientation, Table},
 };
-
+/// Opcode information
 #[derive(Default, Debug, Clone, serde::Deserialize)]
 pub struct Opcode {
+    /// Opcode as an hexadecimal string - "0F", "55", "AA", ...
     opcode: String,
+    /// Mnemonic -  "ACI data", "ANA A", "RET", ...
     mnemonic: String,
+    /// Mode - "immediate8", "immediate16", "register", "register indirect"
     mode: String,
+    /// Number of bytes the instruction occupies in memory
     bytes: u8,
+    /// Number of CPU cycles needed to execute the instruction
     cycles: String,
+    /// Number of CPU states needed to execute the instruction
     states: String,
+    /// Description of instruction
     description: Option<String>,
 }
-
-#[derive(Debug)]
+/// Keeps list of opcode informations for disassembler
+#[derive(Debug, Default)]
 pub struct OpcodeView<Opcode> {
+    /// List of opcode informations
     opcodes: Vec<Opcode>,
 }
 
 impl OpcodeView<Opcode> {
+    /// Parses OPCODES and returns an instance of opcode view
     pub fn new() -> Self {
         Self {
             opcodes: serde_json::from_str(OPCODES).unwrap(),
@@ -32,10 +42,11 @@ impl OpcodeView<Opcode> {
 }
 
 impl DrawOpcode<Opcode> for OpcodeView<Opcode> {
-    #[allow(clippy::too_many_lines, clippy::cast_possible_truncation)]
+    /// Returns a vector of opcodes
     fn opcodes(&self) -> &Vec<Opcode> {
         &self.opcodes
     }
+    /// Shows opcode description in a frame
     fn draw(&self, viewer: &OpcodeViewer<Opcode>, frame: &mut Frame) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
@@ -63,7 +74,6 @@ impl DrawOpcode<Opcode> for OpcodeView<Opcode> {
                 .style(style)
             })
             .collect();
-
         let table = Table::new(
             rows,
             [

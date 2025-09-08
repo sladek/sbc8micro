@@ -1,3 +1,4 @@
+//! Status for Intel I8080 CPU
 pub const SIGN: u8 = 0b1000_0000;
 pub const ZERO: u8 = 0b0100_0000;
 pub const AUX_CARRY: u8 = 0b0001_0000;
@@ -5,11 +6,11 @@ pub const PARITY: u8 = 0b0000_0100;
 pub const CARRY: u8 = 0b0000_0001;
 
 #[derive(Default, Debug)]
-pub struct Psw {
+pub struct Status {
     pub value: u8,
 }
 
-impl Psw {
+impl Status {
     pub fn new() -> Self {
         Self { value: 0b0000_0010 }
     }

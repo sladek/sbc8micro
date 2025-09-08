@@ -1,10 +1,5 @@
-mod cpu;
-mod disassembler;
-mod memory;
-mod status;
-
-use cpu::mos6502;
-use disassembler::mos6502::{disassemble, load_opcodes_table};
+use sbc8micro::cpu::mos6502;
+use sbc8micro::disassembler::mos6502::{disassemble, load_opcodes_table};
 
 fn main() {
     let opcodes = load_opcodes_table();
@@ -12,7 +7,10 @@ fn main() {
     cpu.set_debug(true);
 
     let start_addr = 0x0200;
-    let size = cpu.memory.load_program_from_acme_file("test.o").unwrap();
+    let size = cpu
+        .memory
+        .load_program_from_acme_file("examples/test_6502.o")
+        .unwrap();
     let disassembly = disassemble(&cpu.memory, start_addr, start_addr + size as u16, &opcodes);
     println!("---------------------------");
     println!("Main programm.");

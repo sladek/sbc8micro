@@ -1,24 +1,72 @@
-use crate::disassembler::i8080_opcodes_const::*;
+//! Intel I8080 CPU
+//!
+//! Emulates Intel 8080 CPU at register level. No timing is emulated
+//! 
+//! Below is an example of its usage
+//! ```
+//! use sbc8micro::memory;
+//! use sbc8micro::cpu::i8080::Cpu;
+//! use sbc8micro::status;
+//! use sbc8micro::disassembler::i8080_opcode_consts::*;
+//!
+//! let mut cpu = Cpu::new();
+//! cpu.memory.write_byte(0x1234, 0x12);
+//! cpu.status.set_carry(true);
+//! let program: Vec<u8> = vec![MVI_H, 0x12, MVI_L, 0x34, MVI_A, 0x34, ADC_M, HLT];
+//! cpu.load_program(&program, 0x0600);
+//! loop {
+//!     let opcode = cpu.memory.read_byte(cpu.pc);
+//!     cpu.step();
+//!     if opcode == HLT {
+//!         break;
+//!     }
+//! }
+//! assert_eq!(cpu.a, 0x47u8);
+//! assert_eq!(cpu.status.value, 0x06);
+//!```
+use crate::disassembler::i8080_opcode_consts::*;
 use crate::memory::Memory;
 use crate::status::i8080::*;
 
+/// CPU registers, flags, counters and memory
+#[derive(Default)]
 pub struct Cpu {
+    /// Accumulater
     pub a: u8,
+    /// B register
     pub b: u8,
+    /// C register
     pub c: u8,
+    /// D register
     pub d: u8,
+    /// E register
     pub e: u8,
+    /// H register
     pub h: u8,
+    /// L register
     pub l: u8,
-    pub psw: Psw,
+    /// Status register
+    pub status: Status,
+    /// Programm counter
     pub pc: u16,
+    /// Stack pointer
     pub sp: u16,
+    /// Interrupt enable
     pub inte: bool,
+    /// Memory assigned to CPU
     pub memory: Memory,
+    /// Debug flag
+    ///
+    /// If frue opcode is also outputed when the programm is executed.
+    /// This can slow the execution so it should be used mainly
+    /// during debuging process.
     pub debug: bool,
 }
 
 impl Cpu {
+    ///
+    /// Returns initialised instance of CPU 8080
+    ///
     pub fn new() -> Self {
         Self {
             a: 0,
@@ -28,7 +76,7 @@ impl Cpu {
             e: 0,
             h: 0,
             l: 0,
-            psw: Psw::new(),
+            status: Status::new(),
             pc: 0,
             sp: 0,
             inte: false,
@@ -43,9 +91,13 @@ impl Cpu {
         self.memory.load_program(program, start_addr);
         self.pc = start_addr;
     }
+    ///
+    /// Prints content of registers and flags
+    ///
     pub fn print_registers(&self) -> String {
         format!(
-"Registers\n---------------------------------------------------------------------------------------------------------
+"Registers
+---------------------------------------------------------------------------------------------------------
 |  A  |  B  |  C  |  D  |  E  |  H  |  L  |  SP   |  PC   | INTE | PSW | S | Z | 0 | AC | 0 | P | 1 | C |
 |-----|-----|-----|-----|-----|-----|-----|-------|-------|------|-----|---|---|---|----|---|---|---|---|
 | {:02X}H | {:02X}H | {:02X}H | {:02X}H | {:02X}H | {:02X}H | {:02X}H | {:04X}H | {:04X}H |  {}   | {:02X}H | {} | {} | 0 | {}  | 0 | {} | 1 | {} |
@@ -60,20 +112,28 @@ impl Cpu {
             self.sp,
             self.pc,
             if self.inte {1} else {0},
-            self.psw.value,
-            self.psw.is_negative() as u8,
-            self.psw.is_zero() as u8,
-            self.psw.is_ac() as u8,
-            self.psw.is_parity() as u8,
-            self.psw.is_carry() as u8
+            self.status.value,
+            self.status.is_negative() as u8,
+            self.status.is_zero() as u8,
+            self.status.is_ac() as u8,
+            self.status.is_parity() as u8,
+            self.status.is_carry() as u8
         )
     }
+    ///
+    /// Sets debug flag
+    ///
+    /// If debug flag is set to true, then when stepping through instructions
+    /// also mnemonic code of instruction is printed, which is very convenient
+    /// during debugging of the programm
+    ///
     pub fn set_debug(&mut self, debug: bool) {
         self.debug = debug;
     }
-    // Read data from data bus
-    // This will be modified after all the instructions are implemented
-    // Data bus needs to be introduced here
+    /// Read data from data bus
+    ///
+    /// This will be modified after all the instructions are implemented
+    /// Data bus needs to be introduced here
     fn inp(&mut self, _address: u8) -> u8 {
         0xff
     }
@@ -112,10 +172,6 @@ impl Cpu {
         self.h = ((data & 0xff00) >> 8) as u8;
         self.l = (data & 0x0ff) as u8;
     }
-    fn set_m(&mut self, value: u8) {
-        let addr = self.get_hl();
-        self.memory.write_byte(addr, value);
-    }
     ///
     /// This function formats HEX string from address and opcode and
     /// is used in debug mode to print address and opcode of the instruction that
@@ -143,13 +199,13 @@ impl Cpu {
     fn set_parity(&mut self, data: u8) {
         let mut mask = 0x01;
         let mut result: u8 = 0;
-        for i in 1..=8 {
+        for _i in 1..=8 {
             if (data & mask) != 0 {
                 result += 1;
             };
-            mask = mask << 1;
+            mask <<= 1;
         }
-        self.psw.set_parity(result % 2 == 0)
+        self.status.set_parity(result % 2 == 0)
     }
     fn addc(&mut self, value: u8) {
         //        let carry = if self.psw.is_carry() { 1 } else { 0 };
@@ -159,104 +215,105 @@ impl Cpu {
     fn add(&mut self, value: u8, with_carry: bool) {
         let mut carry = 0x0u8;
         if with_carry {
-            carry = if self.psw.is_carry() { 1 } else { 0 } as u8;
+            carry = if self.status.is_carry() { 1 } else { 0 } as u8;
         }
         //        let carry = if self.psw.is_carry() { 1 } else { 0 }
         if (self.a & 0x0f) + (value & 0x0f) + carry > 0x0f {
-            self.psw.set_ac(true);
+            self.status.set_ac(true);
         } else {
-            self.psw.set_ac(false)
+            self.status.set_ac(false)
         };
         let sum = self.a as u16 + value as u16 + carry as u16;
         self.a = sum as u8;
-        self.psw.set_carry(sum > 0xFF);
-        self.psw.set_zero(self.a == 0);
-        self.psw.set_negative(self.a & 0x80 != 0);
+        self.status.set_carry(sum > 0xFF);
+        self.status.set_zero(self.a == 0);
+        self.status.set_negative(self.a & 0x80 != 0);
         self.set_parity(sum as u8);
     }
-/*
-    fn sub(&mut self, value: u8) {
-        self.psw.set_carry(value > self.a);
-        let tmp = !value;
-        if (self.a & 0x0f) + (tmp & 0x0f) + 1 > 0x0f {
-            self.psw.set_ac(true);
-        } else {
-            self.psw.set_ac(false)
-        };
-        let sum = self.a as u16 + tmp as u16 + 1; // complement (!tmp + 1)
-        self.a = sum as u8;
-        self.psw.set_zero(self.a == 0);
-        self.psw.set_negative(self.a & 0x80 != 0);
-        self.set_parity(sum as u8);
-    }
- */
     fn sub(&mut self, value: u8, with_carry: bool) {
         let mut operand = value as u16;
         let mut operand_lower = value & 0x0f;
-        if self.psw.is_carry() && with_carry {
+        if self.status.is_carry() && with_carry {
             operand = operand.wrapping_add(1);
             operand_lower = operand_lower.wrapping_add(1);
         }
-        self.psw.set_carry(operand > self.a as u16);
+        self.status.set_carry(operand > self.a as u16);
         let two_compl = (!operand).wrapping_add(1);
         let two_compl_lower = (!operand_lower).wrapping_add(1);
         let sum = self.a.wrapping_add(two_compl as u8);
-        let tmp = (self.a & 0x0f).wrapping_add (two_compl_lower & 0x0f);
+        let tmp = (self.a & 0x0f).wrapping_add(two_compl_lower & 0x0f);
         if tmp > 0x0f || operand_lower == 0 {
-            self.psw.set_ac(true);
+            self.status.set_ac(true);
         } else {
-            self.psw.set_ac(false);
-        } 
-        self.a = sum as u8;
-        self.psw.set_zero(self.a == 0);
-        self.psw.set_negative(self.a & 0x80 != 0);
-        self.set_parity(sum as u8);
+            self.status.set_ac(false);
+        }
+        self.a = sum;
+        self.status.set_zero(self.a == 0);
+        self.status.set_negative(self.a & 0x80 != 0);
+        self.set_parity(sum);
     }
-    // ANA, ANI iinstructions clear CARRY but set AC based on bit 3
-    // Some documentation states that ANI clears AC, but it is not true
-    // it is set the same way as ANA. Verified on real HW. (TESLA 8080A)
+    ///
+    ///  ANA, ANI iinstructions clear CARRY but set AC based on bit 3
+    /// Some documentation states that ANI clears AC, but it is not true
+    /// it is set the same way as ANA. Verified on real HW. (TESLA 8080A)
+    ///
     fn and(&mut self, value: u8) {
         let is_ac = (self.a | value) & 0x08 != 0;
         let result = self.a as u16 & value as u16;
         self.a = result as u8;
-        self.psw.set_carry(false);
-        self.psw.set_ac(is_ac);
-        self.psw.set_zero(self.a == 0);
-        self.psw.set_negative(self.a & 0x80 != 0);
+        self.status.set_carry(false);
+        self.status.set_ac(is_ac);
+        self.status.set_zero(self.a == 0);
+        self.status.set_negative(self.a & 0x80 != 0);
         self.set_parity(self.a);
     }
-    // ORA, ORI clears CARRY and AC flags
+    ///
+    ///  ORA, ORI clears CARRY and AC flags
+    ///
     fn or(&mut self, value: u8) {
         let result = self.a as u16 | value as u16;
         self.a = result as u8;
-        self.psw.set_carry(false);
-        self.psw.set_ac(false);
-        self.psw.set_zero(self.a == 0);
-        self.psw.set_negative(self.a & 0x80 != 0);
+        self.status.set_carry(false);
+        self.status.set_ac(false);
+        self.status.set_zero(self.a == 0);
+        self.status.set_negative(self.a & 0x80 != 0);
         self.set_parity(self.a);
     }
-    // XRA
+    ///
+    ///  XRA
+    ///
     fn xra(&mut self, value: u8) {
         let result = self.a ^ value;
         self.a = result;
-        self.psw.set_carry(false);
-        self.psw.set_ac(false);
-        self.psw.set_zero(self.a == 0);
-        self.psw.set_negative(self.a & 0x80 != 0);
+        self.status.set_carry(false);
+        self.status.set_ac(false);
+        self.status.set_zero(self.a == 0);
+        self.status.set_negative(self.a & 0x80 != 0);
         self.set_parity(self.a);
     }
+    ///
+    /// Reads a byte from the memory address
+    /// which is in HL register pair
+    ///
     fn read_m(&self) -> u8 {
         let h = self.h as u16;
         let l = self.l as u16;
         let hl = (h << 8) | l;
         self.memory.read_byte(hl)
     }
+    ///
+    /// Stores a byte to the memory address
+    /// which is in HL register pair
+    ///
     fn store_m(&mut self, data: u8) {
         let h = self.h as u16;
         let l = self.l as u16;
         let hl = (h << 8) | l;
         self.memory.write_byte(hl, data);
     }
+    ///
+    ///  PUSH
+    ///
     fn push(&mut self, rph: u8, rpl: u8) {
         let mut addr = self.sp.wrapping_sub(1);
         self.memory.write_byte(addr, rph);
@@ -264,6 +321,9 @@ impl Cpu {
         self.memory.write_byte(addr, rpl);
         self.sp = addr;
     }
+    ///
+    /// POP
+    ///
     fn pop(&mut self) -> (u8, u8) {
         let mut addr = self.sp;
         let rpl = self.memory.read_byte(addr);
@@ -272,6 +332,9 @@ impl Cpu {
         self.sp = self.sp.wrapping_add(2);
         (rph, rpl)
     }
+    ///
+    /// CALL
+    ///
     fn call(&mut self) {
         let addr = self.memory.read_word(self.pc);
         self.pc = self.pc.wrapping_add(2);
@@ -280,10 +343,16 @@ impl Cpu {
         self.push(pch, pcl);
         self.pc = addr;
     }
+    ///
+    /// JMP
+    ///
     fn jmp(&mut self) {
         let addr = self.memory.read_word(self.pc);
         self.pc = addr;
     }
+    ///
+    /// RET
+    ///
     fn ret(&mut self) {
         let addrl = self.memory.read_byte(self.sp) as u16;
         self.sp = self.sp.wrapping_add(1);
@@ -291,58 +360,82 @@ impl Cpu {
         self.sp = self.sp.wrapping_add(1);
         self.pc = addrh | addrl;
     }
+    ///
+    /// DAA
+    ///
+    /// The eight-bit number in the accumulator is adjusted
+    /// to form two four-bit Binary-Coded-Decimal digits
+    ///
     fn daa(&mut self) {
         let mut accl: u8 = self.a & 0x0f;
         let mut acch: u16 = self.a as u16 & 0xf0;
-        if (self.a & 0x0f > 0x09) || self.psw.is_ac() {
+        if (self.a & 0x0f > 0x09) || self.status.is_ac() {
             accl = accl.wrapping_add(0x06);
-            self.psw.set_ac(accl > 0x0f);
+            self.status.set_ac(accl > 0x0f);
         }
-        if (self.a & 0xf0 > 0x90) || self.psw.is_carry() {
+        if (self.a & 0xf0 > 0x90) || self.status.is_carry() {
             acch = acch.wrapping_add(0x60);
-            self.psw.set_carry(true);
+            self.status.set_carry(true);
         }
         self.a = acch.wrapping_add(accl as u16) as u8;
         if self.a == 0 {
-            self.psw.set_zero(true);
+            self.status.set_zero(true);
         }
         if (self.a & 0x80) != 0 {
-            self.psw.set_negative(true);
+            self.status.set_negative(true);
         }
         self.set_parity(self.a);
     }
-    // Add data to HL pair and set CARRY if result is > 0x00ff.
-    pub fn dad(&mut self, rp: u16) {
+    ///
+    ///  Add data to HL pair and set CARRY if result is > 0x00ff.
+    ///
+    fn dad(&mut self, rp: u16) {
         let result: u32 = self.get_hl() as u32 + rp as u32;
         println!("Result: {:08X}", result);
         self.set_hl(result as u16);
-        self.psw.set_carry(result > 0x0ffff);
+        self.status.set_carry(result > 0x0ffff);
     }
-    // DCR reg
-    pub fn dcr(&mut self, reg: u8) -> u8 {
+    ///
+    ///  DCR reg
+    ///
+    /// Decrements content of register and sets relevant flags
+    ///
+    fn dcr(&mut self, reg: u8) -> u8 {
         let res = reg.wrapping_sub(1);
         self.set_parity(res);
-        self.psw.set_zero(res == 0);
-        self.psw.set_ac((res & 0x0fu8) != 0x0fu8);
-        self.psw.set_negative((res & 0x80u8) != 0);
+        self.status.set_zero(res == 0);
+        self.status.set_ac((res & 0x0fu8) != 0x0fu8);
+        self.status.set_negative((res & 0x80u8) != 0);
         res
     }
-    // INR reg
-    pub fn inr(&mut self, reg: u8) -> u8 {
+    ///
+    ///  INR reg
+    ///
+    /// Increments register and sets relevant flags
+    ///
+    fn inr(&mut self, reg: u8) -> u8 {
         let res = reg.wrapping_add(1);
         self.set_parity(res);
-        self.psw.set_zero(res == 0);
-        self.psw.set_ac((res & 0x0fu8) == 0x00u8);
-        self.psw.set_negative((res & 0x80u8) != 0);
+        self.status.set_zero(res == 0);
+        self.status.set_ac((res & 0x0fu8) == 0x00u8);
+        self.status.set_negative((res & 0x80u8) != 0);
         res
     }
+    ///
+    /// RST x
+    ///
     fn rst(&mut self, level: u8) {
         let pcl = (self.pc & 0xff) as u8;
         let pch = ((self.pc & 0xff00) >> 8) as u8;
         self.push(pch, pcl);
         self.pc = (level * 8) as u16;
     }
-    // Step through the instructions
+    ///
+    ///  Steps through the instructions
+    ///
+    /// Read instriction from memory, executes it and set PC to point to next instruction in memory.
+    /// If debug flag is set to true it will also print mnemonic code of the instruction that is executed.
+    ///
     pub fn step(&mut self) {
         macro_rules! dbg { ($($x:tt)*) => { if self.debug { println!($($x)*); } } }
 
@@ -490,7 +583,7 @@ impl Cpu {
                 dbg!("{}CMA", self.code_to_str(1));
             }
             CMC => {
-                self.psw.set_carry(!self.psw.is_carry());
+                self.status.set_carry(!self.status.is_carry());
                 dbg!("{}CMC", self.code_to_str(1));
             }
             CMP_B => {
@@ -559,7 +652,7 @@ impl Cpu {
                 self.call();
             }
             CNZ => {
-                if !self.psw.is_zero() {
+                if !self.status.is_zero() {
                     if self.debug {
                         let addr = self.memory.read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
@@ -573,7 +666,7 @@ impl Cpu {
                 }
             }
             CZ => {
-                if self.psw.is_zero() {
+                if self.status.is_zero() {
                     if self.debug {
                         let addr = self.memory.read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
@@ -587,7 +680,7 @@ impl Cpu {
                 }
             }
             CNC => {
-                if !self.psw.is_carry() {
+                if !self.status.is_carry() {
                     if self.debug {
                         let addr = self.memory.read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
@@ -601,7 +694,7 @@ impl Cpu {
                 }
             }
             CC => {
-                if self.psw.is_carry() {
+                if self.status.is_carry() {
                     if self.debug {
                         let addr = self.memory.read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
@@ -615,7 +708,7 @@ impl Cpu {
                 }
             }
             CPO => {
-                if !self.psw.is_parity() {
+                if !self.status.is_parity() {
                     if self.debug {
                         let addr = self.memory.read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
@@ -629,7 +722,7 @@ impl Cpu {
                 }
             }
             CPE => {
-                if self.psw.is_parity() {
+                if self.status.is_parity() {
                     if self.debug {
                         let addr = self.memory.read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
@@ -643,7 +736,7 @@ impl Cpu {
                 }
             }
             CP => {
-                if !self.psw.is_negative() {
+                if !self.status.is_negative() {
                     if self.debug {
                         let addr = self.memory.read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
@@ -657,7 +750,7 @@ impl Cpu {
                 }
             }
             CM => {
-                if self.psw.is_negative() {
+                if self.status.is_negative() {
                     if self.debug {
                         let addr = self.memory.read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
@@ -807,7 +900,7 @@ impl Cpu {
                 dbg!("{}INX SP", self.code_to_str(1));
             }
             JNZ => {
-                if !self.psw.is_zero() {
+                if !self.status.is_zero() {
                     if self.debug {
                         let addr = self.memory.read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
@@ -821,7 +914,7 @@ impl Cpu {
                 }
             }
             JZ => {
-                if self.psw.is_zero() {
+                if self.status.is_zero() {
                     if self.debug {
                         let addr = self.memory.read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
@@ -835,7 +928,7 @@ impl Cpu {
                 }
             }
             JNC => {
-                if !self.psw.is_carry() {
+                if !self.status.is_carry() {
                     if self.debug {
                         let addr = self.memory.read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
@@ -849,7 +942,7 @@ impl Cpu {
                 }
             }
             JC => {
-                if self.psw.is_carry() {
+                if self.status.is_carry() {
                     if self.debug {
                         let addr = self.memory.read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
@@ -863,7 +956,7 @@ impl Cpu {
                 }
             }
             JPO => {
-                if !self.psw.is_parity() {
+                if !self.status.is_parity() {
                     if self.debug {
                         let addr = self.memory.read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
@@ -877,7 +970,7 @@ impl Cpu {
                 }
             }
             JPE => {
-                if self.psw.is_parity() {
+                if self.status.is_parity() {
                     if self.debug {
                         let addr = self.memory.read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
@@ -891,7 +984,7 @@ impl Cpu {
                 }
             }
             JP => {
-                if !self.psw.is_negative() {
+                if !self.status.is_negative() {
                     if self.debug {
                         let addr = self.memory.read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
@@ -905,7 +998,7 @@ impl Cpu {
                 }
             }
             JM => {
-                if self.psw.is_negative() {
+                if self.status.is_negative() {
                     if self.debug {
                         let addr = self.memory.read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
@@ -1038,11 +1131,9 @@ impl Cpu {
                 dbg!("{}MOV A,M", self.code_to_str(1));
             }
             MOV_A_A => {
-                self.a = self.a;
                 dbg!("{}MOV A,A", self.code_to_str(1));
             }
             MOV_B_B => {
-                self.b = self.b;
                 dbg!("{}MOV B,B", self.code_to_str(1));
             }
             MOV_B_C => {
@@ -1078,7 +1169,6 @@ impl Cpu {
                 dbg!("{}MOV C,B", self.code_to_str(1));
             }
             MOV_C_C => {
-                self.c = self.c;
                 dbg!("{}MOV C,C", self.code_to_str(1));
             }
             MOV_C_D => {
@@ -1114,7 +1204,6 @@ impl Cpu {
                 dbg!("{}MOV D,C", self.code_to_str(1));
             }
             MOV_D_D => {
-                self.d = self.d;
                 dbg!("{}MOV D,D", self.code_to_str(1));
             }
             MOV_D_E => {
@@ -1150,7 +1239,6 @@ impl Cpu {
                 dbg!("{}MOV E,D", self.code_to_str(1));
             }
             MOV_E_E => {
-                self.e = self.e;
                 dbg!("{}MOV E,E", self.code_to_str(1));
             }
             MOV_E_H => {
@@ -1186,7 +1274,6 @@ impl Cpu {
                 dbg!("{}MOV H,E", self.code_to_str(1));
             }
             MOV_H_H => {
-                self.h = self.h;
                 dbg!("{}MOV H,H", self.code_to_str(1));
             }
             MOV_H_L => {
@@ -1222,7 +1309,6 @@ impl Cpu {
                 dbg!("{}MOV L,H", self.code_to_str(1));
             }
             MOV_L_L => {
-                self.l = self.l;
                 dbg!("{}MOV L,L", self.code_to_str(1));
             }
             MOV_L_M => {
@@ -1338,11 +1424,11 @@ impl Cpu {
             POP_PSW => {
                 let mut addr = self.sp;
                 let value = self.memory.read_byte(addr);
-                self.psw.set_negative((value & SIGN) != 0);
-                self.psw.set_zero((value & ZERO) != 0);
-                self.psw.set_ac((value & AUX_CARRY) != 0);
-                self.psw.set_parity((value & PARITY) != 0);
-                self.psw.set_carry((value & CARRY) != 0);
+                self.status.set_negative((value & SIGN) != 0);
+                self.status.set_zero((value & ZERO) != 0);
+                self.status.set_ac((value & AUX_CARRY) != 0);
+                self.status.set_parity((value & PARITY) != 0);
+                self.status.set_carry((value & CARRY) != 0);
                 addr = addr.wrapping_add(1);
                 self.a = self.memory.read_byte(addr);
                 self.sp = self.sp.wrapping_add(2);
@@ -1361,24 +1447,24 @@ impl Cpu {
                 dbg!("{}PUSH H", self.code_to_str(1));
             }
             PUSH_PSW => {
-                self.push(self.a, self.psw.value);
+                self.push(self.a, self.status.value);
                 dbg!("{}PUSH B", self.code_to_str(1));
             }
             RAL => {
                 let mut val = (self.a as u16) << 1;
-                if self.psw.is_carry() {
+                if self.status.is_carry() {
                     val |= 0b1u16;
                 }
-                self.psw.set_carry((self.a & 0x80) != 0);
+                self.status.set_carry((self.a & 0x80) != 0);
                 self.a = val as u8;
                 dbg!("{}RAL", self.code_to_str(1));
             }
             RAR => {
                 let mut val = (self.a as u16) >> 1;
-                if self.psw.is_carry() {
+                if self.status.is_carry() {
                     val |= 0b1000_0000u16;
                 }
-                self.psw.set_carry((self.a & 0x01) != 0);
+                self.status.set_carry((self.a & 0x01) != 0);
                 self.a = val as u8;
                 dbg!("{}RAR", self.code_to_str(1));
             }
@@ -1387,7 +1473,7 @@ impl Cpu {
                 if self.a & 0x80 != 0 {
                     val |= 0b1u16;
                 }
-                self.psw.set_carry(self.a & 0x80 != 0);
+                self.status.set_carry(self.a & 0x80 != 0);
                 self.a = val as u8;
                 dbg!("{}RLC", self.code_to_str(1));
             }
@@ -1396,7 +1482,7 @@ impl Cpu {
                 if self.a & 0x01 != 0 {
                     val |= 0b1000_0000u16;
                 }
-                self.psw.set_carry(self.a & 0x01 != 0);
+                self.status.set_carry(self.a & 0x01 != 0);
                 self.a = val as u8;
                 dbg!("{}RRC", self.code_to_str(1));
             }
@@ -1405,49 +1491,49 @@ impl Cpu {
                 self.ret();
             }
             RNZ => {
-                if !self.psw.is_zero() {
+                if !self.status.is_zero() {
                     dbg!("{}RNZ", self.code_to_str(1));
                     self.ret();
                 }
             }
             RZ => {
-                if self.psw.is_zero() {
+                if self.status.is_zero() {
                     dbg!("{}RZ", self.code_to_str(1));
                     self.ret();
                 }
             }
             RNC => {
-                if !self.psw.is_carry() {
+                if !self.status.is_carry() {
                     dbg!("{}RNC", self.code_to_str(1));
                     self.ret();
                 }
             }
             RC => {
-                if self.psw.is_carry() {
+                if self.status.is_carry() {
                     dbg!("{}RC", self.code_to_str(1));
                     self.ret();
                 }
             }
             RPO => {
-                if !self.psw.is_parity() {
+                if !self.status.is_parity() {
                     dbg!("{}RPO", self.code_to_str(1));
                     self.ret();
                 }
             }
             RPE => {
-                if self.psw.is_parity() {
+                if self.status.is_parity() {
                     dbg!("{}RPE", self.code_to_str(1));
                     self.ret();
                 }
             }
             RP => {
-                if !self.psw.is_negative() {
+                if !self.status.is_negative() {
                     dbg!("{}RP", self.code_to_str(1));
                     self.ret();
                 }
             }
             RM => {
-                if self.psw.is_negative() {
+                if self.status.is_negative() {
                     dbg!("{}RM", self.code_to_str(1));
                     self.ret();
                 }
@@ -1654,7 +1740,7 @@ impl Cpu {
                 let addr = self.sp;
                 let hl = self.get_hl();
                 self.l = self.memory.read_byte(addr);
-                self.h = self.memory.read_byte(addr+1);
+                self.h = self.memory.read_byte(addr + 1);
                 self.memory.write_word(addr, hl);
                 dbg!("{}XTHL", self.code_to_str(1));
             }

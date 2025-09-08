@@ -1,13 +1,18 @@
+//! Disassembler for specific CPU
 pub mod i8080;
-pub mod i8080_opcodes;
-pub mod i8080_opcodes_const;
+pub mod i8080_opcode;
+pub mod i8080_opcode_consts;
+pub mod mos6502_opcode_consts;
 pub mod mos6502;
-pub mod mos6502_opcodes;
+pub mod mos6502_opcode;
 pub mod opcode_viewer;
 use crate::disassembler::opcode_viewer::OpcodeViewer;
 use ratatui::Frame;
 
+/// Draws description of opcode in terminal
 pub trait DrawOpcode<T> {
+    /// Draws opcode descriptions on terminal screen
     fn draw(&self, viewer: &OpcodeViewer<T>, frame: &mut Frame);
+    /// List of opcode's descriptions to be drawn on terminal
     fn opcodes(&self) -> &Vec<T>;
 }

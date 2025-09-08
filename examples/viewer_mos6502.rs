@@ -3,7 +3,7 @@ use sbc8micro::disassembler::mos6502_opcode::OpcodeView as op_mos6502; // Use mo
 use sbc8micro::disassembler::opcode_viewer::view;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let i8080 = true;
+    let i8080 = false;
     if i8080 {
         let op_view = op_i8080::new();
         view(&op_view)

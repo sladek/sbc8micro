@@ -1,7 +1,8 @@
+#![doc(hidden)]
 #[cfg(test)]
 use crate::cpu::i8080::Cpu;
 #[cfg(test)]
-use crate::disassembler::i8080_opcodes_const::*;
+use crate::disassembler::i8080_opcode_consts::*;
 
 #[test]
 ///
@@ -20,7 +21,7 @@ fn aci_no_c_neg_p() {
         }
     }
     assert_eq!(cpu.a, 0xc9u8);
-    assert_eq!(cpu.psw.value, 0x86);
+    assert_eq!(cpu.status.value, 0x86);
 }
 #[test]
 ///
@@ -38,7 +39,7 @@ fn aci_c_ac_p() {
         }
     }
     assert_eq!(cpu.a, 0x10u8);
-    assert_eq!(cpu.psw.value, 0x13);
+    assert_eq!(cpu.status.value, 0x13);
 }
 #[test]
 ///
@@ -60,7 +61,7 @@ fn aci_z_c_ac_p() {
         }
     }
     assert_eq!(cpu.a, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x57);
+    assert_eq!(cpu.status.value, 0x57);
 }
 #[test]
 ///
@@ -68,7 +69,7 @@ fn aci_z_c_ac_p() {
 ///
 fn aci_2_z_c_ac_p() {
     let mut cpu = Cpu::new();
-    cpu.psw.set_carry(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0x55, ACI, 0xAA, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
@@ -79,7 +80,7 @@ fn aci_2_z_c_ac_p() {
         }
     }
     assert_eq!(cpu.a, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x57);
+    assert_eq!(cpu.status.value, 0x57);
 }
 #[test]
 ///
@@ -87,7 +88,7 @@ fn aci_2_z_c_ac_p() {
 ///
 fn adc_b_z_ac_p() {
     let mut cpu = Cpu::new();
-    cpu.psw.set_carry(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0x55, MVI_B, 0xaa, ADC_B, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
@@ -98,7 +99,7 @@ fn adc_b_z_ac_p() {
         }
     }
     assert_eq!(cpu.a, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x57);
+    assert_eq!(cpu.status.value, 0x57);
 }
 #[test]
 ///
@@ -116,7 +117,7 @@ fn adc_c_neg_p() {
         }
     }
     assert_eq!(cpu.a, 0xFFu8);
-    assert_eq!(cpu.psw.value, 0x86);
+    assert_eq!(cpu.status.value, 0x86);
 }
 #[test]
 ///
@@ -134,7 +135,7 @@ fn adc_d_neg_p() {
         }
     }
     assert_eq!(cpu.a, 0xFFu8);
-    assert_eq!(cpu.psw.value, 0x86);
+    assert_eq!(cpu.status.value, 0x86);
 }
 #[test]
 ///
@@ -142,7 +143,7 @@ fn adc_d_neg_p() {
 ///
 fn adc_e_z_ac_p() {
     let mut cpu = Cpu::new();
-    cpu.psw.set_carry(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0x55, MVI_E, 0xaa, ADC_E, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
@@ -153,7 +154,7 @@ fn adc_e_z_ac_p() {
         }
     }
     assert_eq!(cpu.a, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x57);
+    assert_eq!(cpu.status.value, 0x57);
 }
 #[test]
 ///
@@ -161,7 +162,7 @@ fn adc_e_z_ac_p() {
 ///
 fn adc_h_z_ac_p() {
     let mut cpu = Cpu::new();
-    cpu.psw.set_carry(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0x55, MVI_H, 0xaa, ADC_H, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
@@ -172,7 +173,7 @@ fn adc_h_z_ac_p() {
         }
     }
     assert_eq!(cpu.a, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x57);
+    assert_eq!(cpu.status.value, 0x57);
 }
 #[test]
 ///
@@ -190,7 +191,7 @@ fn adc_l_neg_p() {
         }
     }
     assert_eq!(cpu.a, 0xffu8);
-    assert_eq!(cpu.psw.value, 0x86);
+    assert_eq!(cpu.status.value, 0x86);
 }
 #[test]
 ///
@@ -198,7 +199,7 @@ fn adc_l_neg_p() {
 ///
 fn adc_a_c_ac_neg() {
     let mut cpu = Cpu::new();
-    cpu.psw.set_carry(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0x55, ADC_A, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
@@ -209,7 +210,7 @@ fn adc_a_c_ac_neg() {
         }
     }
     assert_eq!(cpu.a, 0xABu8);
-    assert_eq!(cpu.psw.value, 0x82);
+    assert_eq!(cpu.status.value, 0x82);
 }
 #[test]
 ///
@@ -218,7 +219,7 @@ fn adc_a_c_ac_neg() {
 fn adc_m_p() {
     let mut cpu = Cpu::new();
     cpu.memory.write_byte(0x1234, 0x12);
-    cpu.psw.set_carry(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_H, 0x12, MVI_L, 0x34, MVI_A, 0x34, ADC_M, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
@@ -229,7 +230,7 @@ fn adc_m_p() {
         }
     }
     assert_eq!(cpu.a, 0x47u8);
-    assert_eq!(cpu.psw.value, 0x06);
+    assert_eq!(cpu.status.value, 0x06);
 }
 #[test]
 ///
@@ -238,7 +239,7 @@ fn adc_m_p() {
 fn adc_m_neg_ac_p_c() {
     let mut cpu = Cpu::new();
     cpu.memory.write_byte(0x1234, 0xff);
-    cpu.psw.set_carry(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_H, 0x12, MVI_L, 0x34, MVI_A, 0xAA, ADC_M, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
@@ -249,7 +250,7 @@ fn adc_m_neg_ac_p_c() {
         }
     }
     assert_eq!(cpu.a, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x97);
+    assert_eq!(cpu.status.value, 0x97);
 }
 #[test]
 ///
@@ -258,7 +259,7 @@ fn adc_m_neg_ac_p_c() {
 fn adc_m_neg_ac_p_c_2() {
     let mut cpu = Cpu::new();
     cpu.memory.write_byte(0x1234, 0xff);
-    cpu.psw.set_carry(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_H, 0x12, MVI_L, 0x34, MVI_A, 0xFF, ADC_M, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
@@ -269,7 +270,7 @@ fn adc_m_neg_ac_p_c_2() {
         }
     }
     assert_eq!(cpu.a, 0xffu8);
-    assert_eq!(cpu.psw.value, 0x97);
+    assert_eq!(cpu.status.value, 0x97);
 }
 #[test]
 ///
@@ -278,7 +279,7 @@ fn adc_m_neg_ac_p_c_2() {
 fn adc_m_ac_p_c() {
     let mut cpu = Cpu::new();
     cpu.memory.write_byte(0x1234, 0xaa);
-    cpu.psw.set_carry(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_H, 0x12, MVI_L, 0x34, MVI_A, 0xaa, ADC_M, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
@@ -289,7 +290,7 @@ fn adc_m_ac_p_c() {
         }
     }
     assert_eq!(cpu.a, 0x55u8);
-    assert_eq!(cpu.psw.value, 0x17);
+    assert_eq!(cpu.status.value, 0x17);
 }
 #[test]
 ///
@@ -308,7 +309,7 @@ fn adc_m_neg_ac_c() {
         }
     }
     assert_eq!(cpu.a, 0xfeu8);
-    assert_eq!(cpu.psw.value, 0x93);
+    assert_eq!(cpu.status.value, 0x93);
 }
 #[test]
 ///
@@ -327,7 +328,7 @@ fn adc_m_ac_c() {
         }
     }
     assert_eq!(cpu.a, 0x54u8);
-    assert_eq!(cpu.psw.value, 0x13);
+    assert_eq!(cpu.status.value, 0x13);
 }
 
 #[test]
@@ -336,7 +337,7 @@ fn adc_m_ac_c() {
 ///
 fn add_b_neg_p() {
     let mut cpu = Cpu::new();
-    cpu.psw.set_carry(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0x55, MVI_B, 0xaa, ADD_B, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
@@ -347,7 +348,7 @@ fn add_b_neg_p() {
         }
     }
     assert_eq!(cpu.a, 0xffu8);
-    assert_eq!(cpu.psw.value, 0x86);
+    assert_eq!(cpu.status.value, 0x86);
 }
 
 #[test]
@@ -366,7 +367,7 @@ fn add_c_neg_p() {
         }
     }
     assert_eq!(cpu.a, 0xFFu8);
-    assert_eq!(cpu.psw.value, 0x86);
+    assert_eq!(cpu.status.value, 0x86);
 }
 #[test]
 ///
@@ -384,7 +385,7 @@ fn add_d_neg_p() {
         }
     }
     assert_eq!(cpu.a, 0xFFu8);
-    assert_eq!(cpu.psw.value, 0x86);
+    assert_eq!(cpu.status.value, 0x86);
 }
 #[test]
 ///
@@ -402,7 +403,7 @@ fn add_d_acc_c() {
         }
     }
     assert_eq!(cpu.a, 0x10u8);
-    assert_eq!(cpu.psw.value, 0x13);
+    assert_eq!(cpu.status.value, 0x13);
 }
 #[test]
 ///
@@ -421,7 +422,7 @@ fn add_e_z_ac_p_c() {
         }
     }
     assert_eq!(cpu.a, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x57);
+    assert_eq!(cpu.status.value, 0x57);
 }
 #[test]
 ///
@@ -429,7 +430,7 @@ fn add_e_z_ac_p_c() {
 ///
 fn add_h_z_ac_p() {
     let mut cpu = Cpu::new();
-    cpu.psw.set_carry(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0xff, MVI_H, 0xff, ADD_H, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
@@ -440,7 +441,7 @@ fn add_h_z_ac_p() {
         }
     }
     assert_eq!(cpu.a, 0xfeu8);
-    assert_eq!(cpu.psw.value, 0x93);
+    assert_eq!(cpu.status.value, 0x93);
 }
 #[test]
 ///
@@ -458,7 +459,7 @@ fn add_l_p() {
         }
     }
     assert_eq!(cpu.a, 0x54u8);
-    assert_eq!(cpu.psw.value, 0x13);
+    assert_eq!(cpu.status.value, 0x13);
 }
 #[test]
 ///
@@ -466,7 +467,7 @@ fn add_l_p() {
 ///
 fn add_a_c_ac_neg() {
     let mut cpu = Cpu::new();
-    cpu.psw.set_carry(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0x55, ADD_A, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
@@ -477,7 +478,7 @@ fn add_a_c_ac_neg() {
         }
     }
     assert_eq!(cpu.a, 0xAAu8);
-    assert_eq!(cpu.psw.value, 0x86);
+    assert_eq!(cpu.status.value, 0x86);
 }
 #[test]
 ///
@@ -486,7 +487,7 @@ fn add_a_c_ac_neg() {
 fn add_m_p() {
     let mut cpu = Cpu::new();
     cpu.memory.write_byte(0x1234, 0x12);
-    cpu.psw.set_carry(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_H, 0x12, MVI_L, 0x34, MVI_A, 0x35, ADD_M, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
@@ -497,7 +498,7 @@ fn add_m_p() {
         }
     }
     assert_eq!(cpu.a, 0x47u8);
-    assert_eq!(cpu.psw.value, 0x06);
+    assert_eq!(cpu.status.value, 0x06);
 }
 #[test]
 ///
@@ -506,7 +507,7 @@ fn add_m_p() {
 fn add_m() {
     let mut cpu = Cpu::new();
     cpu.memory.write_byte(0x1234, 0x12);
-    cpu.psw.set_carry(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_H, 0x12, MVI_L, 0x34, MVI_A, 0x34, ADD_M, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
@@ -517,7 +518,7 @@ fn add_m() {
         }
     }
     assert_eq!(cpu.a, 0x46u8);
-    assert_eq!(cpu.psw.value, 0x02);
+    assert_eq!(cpu.status.value, 0x02);
 }
 #[test]
 ///
@@ -526,7 +527,7 @@ fn add_m() {
 fn adi_p() {
     let mut cpu = Cpu::new();
     cpu.memory.write_byte(0x1234, 0x12);
-    cpu.psw.set_carry(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0x34, ADI, 0x34, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
@@ -537,7 +538,7 @@ fn adi_p() {
         }
     }
     assert_eq!(cpu.a, 0x68u8);
-    assert_eq!(cpu.psw.value, 0x02);
+    assert_eq!(cpu.status.value, 0x02);
 }
 #[test]
 ///
@@ -555,7 +556,7 @@ fn ana_b() {
         }
     }
     assert_eq!(cpu.a, 0x34u8);
-    assert_eq!(cpu.psw.value, 0x02);
+    assert_eq!(cpu.status.value, 0x02);
 }
 #[test]
 ///
@@ -576,7 +577,7 @@ fn ana_b_2() {
         }
     }
     assert_eq!(cpu.a, 0x10u8);
-    assert_eq!(cpu.psw.value, 0x02);
+    assert_eq!(cpu.status.value, 0x02);
 }
 #[test]
 ///
@@ -597,7 +598,7 @@ fn ana_c_p() {
         }
     }
     assert_eq!(cpu.a, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x56);
+    assert_eq!(cpu.status.value, 0x56);
 }
 #[test]
 ///
@@ -615,7 +616,7 @@ fn ana_d_z_p() {
         }
     }
     assert_eq!(cpu.a, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x56);
+    assert_eq!(cpu.status.value, 0x56);
 }
 #[test]
 ///
@@ -633,7 +634,7 @@ fn ana_e_z_p() {
         }
     }
     assert_eq!(cpu.a, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x56);
+    assert_eq!(cpu.status.value, 0x56);
 }
 #[test]
 ///
@@ -651,7 +652,7 @@ fn ana_h() {
         }
     }
     assert_eq!(cpu.a, 0x34u8);
-    assert_eq!(cpu.psw.value, 0x02);
+    assert_eq!(cpu.status.value, 0x02);
 }
 #[test]
 ///
@@ -669,7 +670,7 @@ fn ana_l() {
         }
     }
     assert_eq!(cpu.a, 0x10u8);
-    assert_eq!(cpu.psw.value, 0x02);
+    assert_eq!(cpu.status.value, 0x02);
 }
 #[test]
 ///
@@ -688,7 +689,7 @@ fn ana_m() {
         }
     }
     assert_eq!(cpu.a, 0x10u8);
-    assert_eq!(cpu.psw.value, 0x02);
+    assert_eq!(cpu.status.value, 0x02);
 }
 #[test]
 ///
@@ -706,7 +707,7 @@ fn ana_a() {
         }
     }
     assert_eq!(cpu.a, 0x55u8);
-    assert_eq!(cpu.psw.value, 0x06);
+    assert_eq!(cpu.status.value, 0x06);
 }
 #[test]
 ///
@@ -724,7 +725,7 @@ fn ani_no_z() {
         }
     }
     assert_eq!(cpu.a, 0x08u8);
-    assert_eq!(cpu.psw.value, 0x12);
+    assert_eq!(cpu.status.value, 0x12);
 }
 #[test]
 ///
@@ -742,7 +743,7 @@ fn ani_08_00() {
         }
     }
     assert_eq!(cpu.a, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x56);
+    assert_eq!(cpu.status.value, 0x56);
 }
 #[test]
 ///
@@ -760,7 +761,7 @@ fn ani_ff_ff() {
         }
     }
     assert_eq!(cpu.a, 0xFFu8);
-    assert_eq!(cpu.psw.value, 0x96);
+    assert_eq!(cpu.status.value, 0x96);
 }
 #[test]
 ///
@@ -778,7 +779,7 @@ fn ani_ff_0f() {
         }
     }
     assert_eq!(cpu.a, 0x0Fu8);
-    assert_eq!(cpu.psw.value, 0x16);
+    assert_eq!(cpu.status.value, 0x16);
 }
 #[test]
 ///
@@ -796,7 +797,7 @@ fn cma() {
         }
     }
     assert_eq!(cpu.a, 0xAAu8);
-    assert_eq!(cpu.psw.value, 0x02);
+    assert_eq!(cpu.status.value, 0x02);
 }
 #[test]
 ///
@@ -814,7 +815,7 @@ fn cmc() {
         }
     }
     assert_eq!(cpu.a, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x03);
+    assert_eq!(cpu.status.value, 0x03);
 }
 #[test]
 /// This and following tests use directly psw.value for assertions
@@ -834,7 +835,7 @@ fn cmp_b_ff_aa() {
         }
     }
     assert_eq!(cpu.a, 0xffu8);
-    assert_eq!(cpu.psw.value, 0x16);
+    assert_eq!(cpu.status.value, 0x16);
 }
 #[test]
 ///
@@ -852,7 +853,7 @@ fn cmp_b_aa_ff() {
         }
     }
     assert_eq!(cpu.a, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x83);
+    assert_eq!(cpu.status.value, 0x83);
 }
 #[test]
 ///
@@ -870,7 +871,7 @@ fn cmp_c_80_70() {
         }
     }
     assert_eq!(cpu.a, 0x80u8);
-    assert_eq!(cpu.psw.value, 0x12);
+    assert_eq!(cpu.status.value, 0x12);
 }
 #[test]
 ///
@@ -888,7 +889,7 @@ fn cmp_c_70_80() {
         }
     }
     assert_eq!(cpu.a, 0x70u8);
-    assert_eq!(cpu.psw.value, 0x97);
+    assert_eq!(cpu.status.value, 0x97);
 }
 #[test]
 ///
@@ -906,7 +907,7 @@ fn cmp_c_55_aa() {
         }
     }
     assert_eq!(cpu.a, 0x55u8);
-    assert_eq!(cpu.psw.value, 0x83);
+    assert_eq!(cpu.status.value, 0x83);
 }
 #[test]
 ///
@@ -924,7 +925,7 @@ fn cmp_e_aa_55() {
         }
     }
     assert_eq!(cpu.a, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x16);
+    assert_eq!(cpu.status.value, 0x16);
 }
 #[test]
 ///
@@ -942,7 +943,7 @@ fn cmp_e_20_10() {
         }
     }
     assert_eq!(cpu.a, 0x20u8);
-    assert_eq!(cpu.psw.value, 0x12);
+    assert_eq!(cpu.status.value, 0x12);
 }
 #[test]
 ///
@@ -960,7 +961,7 @@ fn cmp_h_10_20() {
         }
     }
     assert_eq!(cpu.a, 0x10u8);
-    assert_eq!(cpu.psw.value, 0x97);
+    assert_eq!(cpu.status.value, 0x97);
 }
 #[test]
 ///
@@ -978,7 +979,7 @@ fn cmp_h_05_0a() {
         }
     }
     assert_eq!(cpu.a, 0x05u8);
-    assert_eq!(cpu.psw.value, 0x83);
+    assert_eq!(cpu.status.value, 0x83);
 }
 #[test]
 ///
@@ -996,7 +997,7 @@ fn cmp_h_0a_05() {
         }
     }
     assert_eq!(cpu.a, 0x0au8);
-    assert_eq!(cpu.psw.value, 0x16);
+    assert_eq!(cpu.status.value, 0x16);
 }
 #[test]
 ///
@@ -1014,7 +1015,7 @@ fn cmp_l_05_05() {
         }
     }
     assert_eq!(cpu.a, 0x05u8);
-    assert_eq!(cpu.psw.value, 0x56);
+    assert_eq!(cpu.status.value, 0x56);
 }
 #[test]
 ///
@@ -1032,7 +1033,7 @@ fn cmp_l_55_55() {
         }
     }
     assert_eq!(cpu.a, 0x55u8);
-    assert_eq!(cpu.psw.value, 0x56);
+    assert_eq!(cpu.status.value, 0x56);
 }
 #[test]
 ///
@@ -1051,7 +1052,7 @@ fn cmp_m_05_01() {
         }
     }
     assert_eq!(cpu.a, 0x01u8);
-    assert_eq!(cpu.psw.value, 0x87);
+    assert_eq!(cpu.status.value, 0x87);
 }
 #[test]
 ///
@@ -1070,7 +1071,7 @@ fn cmp_m_01_05() {
         }
     }
     assert_eq!(cpu.a, 0x05u8);
-    assert_eq!(cpu.psw.value, 0x12);
+    assert_eq!(cpu.status.value, 0x12);
 }
 #[test]
 ///
@@ -1088,7 +1089,7 @@ fn cmp_a_aa_aa() {
         }
     }
     assert_eq!(cpu.a, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x56);
+    assert_eq!(cpu.status.value, 0x56);
 }
 #[test]
 ///
@@ -1107,7 +1108,7 @@ fn cpi_55_aa() {
         }
     }
     assert_eq!(cpu.a, 0x55u8);
-    assert_eq!(cpu.psw.value, 0x83);
+    assert_eq!(cpu.status.value, 0x83);
 }
 #[test]
 ///
@@ -1484,7 +1485,7 @@ fn cm_m() {
 ///
 fn daa_00() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     let program: Vec<u8> = vec![MVI_A, 0x00, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -1495,7 +1496,7 @@ fn daa_00() {
         }
     }
     assert_eq!(cpu.a, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x46u8);
+    assert_eq!(cpu.status.value, 0x46u8);
 }
 #[test]
 ///
@@ -1503,7 +1504,7 @@ fn daa_00() {
 ///
 fn daa_05() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     let program: Vec<u8> = vec![MVI_A, 0x05, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -1514,7 +1515,7 @@ fn daa_05() {
         }
     }
     assert_eq!(cpu.a, 0x05u8);
-    assert_eq!(cpu.psw.value, 0x06u8);
+    assert_eq!(cpu.status.value, 0x06u8);
 }
 #[test]
 ///
@@ -1522,7 +1523,7 @@ fn daa_05() {
 ///
 fn daa_0a() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     let program: Vec<u8> = vec![MVI_A, 0x0A, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -1533,7 +1534,7 @@ fn daa_0a() {
         }
     }
     assert_eq!(cpu.a, 0x10u8);
-    assert_eq!(cpu.psw.value, 0x12u8);
+    assert_eq!(cpu.status.value, 0x12u8);
 }
 #[test]
 ///
@@ -1541,7 +1542,7 @@ fn daa_0a() {
 ///
 fn daa_0f() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     let program: Vec<u8> = vec![MVI_A, 0x0f, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -1552,7 +1553,7 @@ fn daa_0f() {
         }
     }
     assert_eq!(cpu.a, 0x15u8);
-    assert_eq!(cpu.psw.value, 0x12u8);
+    assert_eq!(cpu.status.value, 0x12u8);
 }
 #[test]
 ///
@@ -1560,7 +1561,7 @@ fn daa_0f() {
 ///
 fn daa_50() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     let program: Vec<u8> = vec![MVI_A, 0x50, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -1571,7 +1572,7 @@ fn daa_50() {
         }
     }
     assert_eq!(cpu.a, 0x50u8);
-    assert_eq!(cpu.psw.value, 0x06u8);
+    assert_eq!(cpu.status.value, 0x06u8);
 }
 #[test]
 ///
@@ -1579,7 +1580,7 @@ fn daa_50() {
 ///
 fn daa_a0() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     let program: Vec<u8> = vec![MVI_A, 0xa0, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -1590,7 +1591,7 @@ fn daa_a0() {
         }
     }
     assert_eq!(cpu.a, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x47u8);
+    assert_eq!(cpu.status.value, 0x47u8);
 }
 #[test]
 ///
@@ -1598,7 +1599,7 @@ fn daa_a0() {
 ///
 fn daa_f0() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     let program: Vec<u8> = vec![MVI_A, 0xf0, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -1609,7 +1610,7 @@ fn daa_f0() {
         }
     }
     assert_eq!(cpu.a, 0x50u8);
-    assert_eq!(cpu.psw.value, 0x07u8);
+    assert_eq!(cpu.status.value, 0x07u8);
 }
 #[test]
 ///
@@ -1617,7 +1618,7 @@ fn daa_f0() {
 ///
 fn daa_55() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     let program: Vec<u8> = vec![MVI_A, 0x55, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -1628,7 +1629,7 @@ fn daa_55() {
         }
     }
     assert_eq!(cpu.a, 0x55u8);
-    assert_eq!(cpu.psw.value, 0x06u8);
+    assert_eq!(cpu.status.value, 0x06u8);
 }
 #[test]
 ///
@@ -1636,7 +1637,7 @@ fn daa_55() {
 ///
 fn daa_aa() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     let program: Vec<u8> = vec![MVI_A, 0xaa, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -1647,7 +1648,7 @@ fn daa_aa() {
         }
     }
     assert_eq!(cpu.a, 0x10u8);
-    assert_eq!(cpu.psw.value, 0x13u8);
+    assert_eq!(cpu.status.value, 0x13u8);
 }
 #[test]
 ///
@@ -1655,7 +1656,7 @@ fn daa_aa() {
 ///
 fn daa_ff() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     let program: Vec<u8> = vec![MVI_A, 0xff, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -1666,7 +1667,7 @@ fn daa_ff() {
         }
     }
     assert_eq!(cpu.a, 0x65u8);
-    assert_eq!(cpu.psw.value, 0x17u8);
+    assert_eq!(cpu.status.value, 0x17u8);
 }
 #[test]
 ///
@@ -1674,7 +1675,7 @@ fn daa_ff() {
 ///
 fn daa_33() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     let program: Vec<u8> = vec![MVI_A, 0x33, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -1685,7 +1686,7 @@ fn daa_33() {
         }
     }
     assert_eq!(cpu.a, 0x33u8);
-    assert_eq!(cpu.psw.value, 0x06u8);
+    assert_eq!(cpu.status.value, 0x06u8);
 }
 #[test]
 ///
@@ -1693,8 +1694,8 @@ fn daa_33() {
 ///
 fn daa_00_ac() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_ac(true);
+    cpu.status.clear_flags();
+    cpu.status.set_ac(true);
     let program: Vec<u8> = vec![MVI_A, 0x00, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -1705,7 +1706,7 @@ fn daa_00_ac() {
         }
     }
     assert_eq!(cpu.a, 0x06u8);
-    assert_eq!(cpu.psw.value, 0x06u8);
+    assert_eq!(cpu.status.value, 0x06u8);
 }
 #[test]
 ///
@@ -1713,8 +1714,8 @@ fn daa_00_ac() {
 ///
 fn daa_05_ac() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_ac(true);
+    cpu.status.clear_flags();
+    cpu.status.set_ac(true);
     let program: Vec<u8> = vec![MVI_A, 0x05, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -1725,7 +1726,7 @@ fn daa_05_ac() {
         }
     }
     assert_eq!(cpu.a, 0x0bu8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -1733,8 +1734,8 @@ fn daa_05_ac() {
 ///
 fn daa_0a_ac() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_ac(true);
+    cpu.status.clear_flags();
+    cpu.status.set_ac(true);
     let program: Vec<u8> = vec![MVI_A, 0x0A, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -1745,7 +1746,7 @@ fn daa_0a_ac() {
         }
     }
     assert_eq!(cpu.a, 0x10u8);
-    assert_eq!(cpu.psw.value, 0x12u8);
+    assert_eq!(cpu.status.value, 0x12u8);
 }
 #[test]
 ///
@@ -1753,8 +1754,8 @@ fn daa_0a_ac() {
 ///
 fn daa_0f_ac() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_ac(true);
+    cpu.status.clear_flags();
+    cpu.status.set_ac(true);
     let program: Vec<u8> = vec![MVI_A, 0x0f, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -1765,7 +1766,7 @@ fn daa_0f_ac() {
         }
     }
     assert_eq!(cpu.a, 0x15u8);
-    assert_eq!(cpu.psw.value, 0x12u8);
+    assert_eq!(cpu.status.value, 0x12u8);
 }
 #[test]
 ///
@@ -1773,8 +1774,8 @@ fn daa_0f_ac() {
 ///
 fn daa_50_ac() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_ac(true);
+    cpu.status.clear_flags();
+    cpu.status.set_ac(true);
     let program: Vec<u8> = vec![MVI_A, 0x50, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -1785,7 +1786,7 @@ fn daa_50_ac() {
         }
     }
     assert_eq!(cpu.a, 0x56u8);
-    assert_eq!(cpu.psw.value, 0x06u8);
+    assert_eq!(cpu.status.value, 0x06u8);
 }
 #[test]
 ///
@@ -1793,8 +1794,8 @@ fn daa_50_ac() {
 ///
 fn daa_a0_ac() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_ac(true);
+    cpu.status.clear_flags();
+    cpu.status.set_ac(true);
     let program: Vec<u8> = vec![MVI_A, 0xa0, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -1805,7 +1806,7 @@ fn daa_a0_ac() {
         }
     }
     assert_eq!(cpu.a, 0x06u8);
-    assert_eq!(cpu.psw.value, 0x07u8);
+    assert_eq!(cpu.status.value, 0x07u8);
 }
 #[test]
 ///
@@ -1813,8 +1814,8 @@ fn daa_a0_ac() {
 ///
 fn daa_f0_ac() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_ac(true);
+    cpu.status.clear_flags();
+    cpu.status.set_ac(true);
     let program: Vec<u8> = vec![MVI_A, 0xf0, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -1825,7 +1826,7 @@ fn daa_f0_ac() {
         }
     }
     assert_eq!(cpu.a, 0x56u8);
-    assert_eq!(cpu.psw.value, 0x07u8);
+    assert_eq!(cpu.status.value, 0x07u8);
 }
 #[test]
 ///
@@ -1833,8 +1834,8 @@ fn daa_f0_ac() {
 ///
 fn daa_55_ac() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_ac(true);
+    cpu.status.clear_flags();
+    cpu.status.set_ac(true);
     let program: Vec<u8> = vec![MVI_A, 0x55, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -1845,7 +1846,7 @@ fn daa_55_ac() {
         }
     }
     assert_eq!(cpu.a, 0x5bu8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -1853,8 +1854,8 @@ fn daa_55_ac() {
 ///
 fn daa_aa_ac() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_ac(true);
+    cpu.status.clear_flags();
+    cpu.status.set_ac(true);
     let program: Vec<u8> = vec![MVI_A, 0xaa, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -1865,7 +1866,7 @@ fn daa_aa_ac() {
         }
     }
     assert_eq!(cpu.a, 0x10u8);
-    assert_eq!(cpu.psw.value, 0x13u8);
+    assert_eq!(cpu.status.value, 0x13u8);
 }
 #[test]
 ///
@@ -1873,8 +1874,8 @@ fn daa_aa_ac() {
 ///
 fn daa_ff_ac() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_ac(true);
+    cpu.status.clear_flags();
+    cpu.status.set_ac(true);
     let program: Vec<u8> = vec![MVI_A, 0xff, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -1885,7 +1886,7 @@ fn daa_ff_ac() {
         }
     }
     assert_eq!(cpu.a, 0x65u8);
-    assert_eq!(cpu.psw.value, 0x17u8);
+    assert_eq!(cpu.status.value, 0x17u8);
 }
 #[test]
 ///
@@ -1893,8 +1894,8 @@ fn daa_ff_ac() {
 ///
 fn daa_33_ac() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_ac(true);
+    cpu.status.clear_flags();
+    cpu.status.set_ac(true);
     let program: Vec<u8> = vec![MVI_A, 0x33, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -1905,7 +1906,7 @@ fn daa_33_ac() {
         }
     }
     assert_eq!(cpu.a, 0x39u8);
-    assert_eq!(cpu.psw.value, 0x06u8);
+    assert_eq!(cpu.status.value, 0x06u8);
 }
 #[test]
 ///
@@ -1913,8 +1914,8 @@ fn daa_33_ac() {
 ///
 fn daa_00_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_carry(true);
+    cpu.status.clear_flags();
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0x00, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -1925,7 +1926,7 @@ fn daa_00_c() {
         }
     }
     assert_eq!(cpu.a, 0x60u8);
-    assert_eq!(cpu.psw.value, 0x07u8);
+    assert_eq!(cpu.status.value, 0x07u8);
 }
 #[test]
 ///
@@ -1933,8 +1934,8 @@ fn daa_00_c() {
 ///
 fn daa_05_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_carry(true);
+    cpu.status.clear_flags();
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0x05, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -1945,7 +1946,7 @@ fn daa_05_c() {
         }
     }
     assert_eq!(cpu.a, 0x65u8);
-    assert_eq!(cpu.psw.value, 0x07u8);
+    assert_eq!(cpu.status.value, 0x07u8);
 }
 #[test]
 ///
@@ -1953,8 +1954,8 @@ fn daa_05_c() {
 ///
 fn daa_0a_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_carry(true);
+    cpu.status.clear_flags();
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0x0A, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -1965,7 +1966,7 @@ fn daa_0a_c() {
         }
     }
     assert_eq!(cpu.a, 0x70u8);
-    assert_eq!(cpu.psw.value, 0x13u8);
+    assert_eq!(cpu.status.value, 0x13u8);
 }
 #[test]
 ///
@@ -1973,8 +1974,8 @@ fn daa_0a_c() {
 ///
 fn daa_0f_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_carry(true);
+    cpu.status.clear_flags();
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0x0f, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -1985,7 +1986,7 @@ fn daa_0f_c() {
         }
     }
     assert_eq!(cpu.a, 0x75u8);
-    assert_eq!(cpu.psw.value, 0x13u8);
+    assert_eq!(cpu.status.value, 0x13u8);
 }
 #[test]
 ///
@@ -1993,8 +1994,8 @@ fn daa_0f_c() {
 ///
 fn daa_50_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_carry(true);
+    cpu.status.clear_flags();
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0x50, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -2005,7 +2006,7 @@ fn daa_50_c() {
         }
     }
     assert_eq!(cpu.a, 0xb0u8);
-    assert_eq!(cpu.psw.value, 0x83u8);
+    assert_eq!(cpu.status.value, 0x83u8);
 }
 #[test]
 ///
@@ -2013,8 +2014,8 @@ fn daa_50_c() {
 ///
 fn daa_a0_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_carry(true);
+    cpu.status.clear_flags();
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0xa0, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -2025,7 +2026,7 @@ fn daa_a0_c() {
         }
     }
     assert_eq!(cpu.a, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x47u8);
+    assert_eq!(cpu.status.value, 0x47u8);
 }
 #[test]
 ///
@@ -2033,8 +2034,8 @@ fn daa_a0_c() {
 ///
 fn daa_f0_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_carry(true);
+    cpu.status.clear_flags();
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0xf0, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -2045,7 +2046,7 @@ fn daa_f0_c() {
         }
     }
     assert_eq!(cpu.a, 0x50u8);
-    assert_eq!(cpu.psw.value, 0x07u8);
+    assert_eq!(cpu.status.value, 0x07u8);
 }
 #[test]
 ///
@@ -2053,8 +2054,8 @@ fn daa_f0_c() {
 ///
 fn daa_55_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_carry(true);
+    cpu.status.clear_flags();
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0x55, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -2065,7 +2066,7 @@ fn daa_55_c() {
         }
     }
     assert_eq!(cpu.a, 0xb5u8);
-    assert_eq!(cpu.psw.value, 0x83u8);
+    assert_eq!(cpu.status.value, 0x83u8);
 }
 #[test]
 ///
@@ -2073,8 +2074,8 @@ fn daa_55_c() {
 ///
 fn daa_aa_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_carry(true);
+    cpu.status.clear_flags();
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0xaa, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -2085,7 +2086,7 @@ fn daa_aa_c() {
         }
     }
     assert_eq!(cpu.a, 0x10u8);
-    assert_eq!(cpu.psw.value, 0x13u8);
+    assert_eq!(cpu.status.value, 0x13u8);
 }
 #[test]
 ///
@@ -2093,8 +2094,8 @@ fn daa_aa_c() {
 ///
 fn daa_ff_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_carry(true);
+    cpu.status.clear_flags();
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0xff, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -2105,7 +2106,7 @@ fn daa_ff_c() {
         }
     }
     assert_eq!(cpu.a, 0x65u8);
-    assert_eq!(cpu.psw.value, 0x17u8);
+    assert_eq!(cpu.status.value, 0x17u8);
 }
 #[test]
 ///
@@ -2113,9 +2114,9 @@ fn daa_ff_c() {
 ///
 fn daa_00_ac_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_ac(true);
-    cpu.psw.set_carry(true);
+    cpu.status.clear_flags();
+    cpu.status.set_ac(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0x00, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -2126,7 +2127,7 @@ fn daa_00_ac_c() {
         }
     }
     assert_eq!(cpu.a, 0x66u8);
-    assert_eq!(cpu.psw.value, 0x07u8);
+    assert_eq!(cpu.status.value, 0x07u8);
 }
 #[test]
 ///
@@ -2134,9 +2135,9 @@ fn daa_00_ac_c() {
 ///
 fn daa_05_ac_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_ac(true);
-    cpu.psw.set_carry(true);
+    cpu.status.clear_flags();
+    cpu.status.set_ac(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0x05, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -2147,7 +2148,7 @@ fn daa_05_ac_c() {
         }
     }
     assert_eq!(cpu.a, 0x6bu8);
-    assert_eq!(cpu.psw.value, 0x03u8);
+    assert_eq!(cpu.status.value, 0x03u8);
 }
 #[test]
 ///
@@ -2155,9 +2156,9 @@ fn daa_05_ac_c() {
 ///
 fn daa_0a_ac_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_ac(true);
-    cpu.psw.set_carry(true);
+    cpu.status.clear_flags();
+    cpu.status.set_ac(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0x0A, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -2168,7 +2169,7 @@ fn daa_0a_ac_c() {
         }
     }
     assert_eq!(cpu.a, 0x70u8);
-    assert_eq!(cpu.psw.value, 0x13u8);
+    assert_eq!(cpu.status.value, 0x13u8);
 }
 #[test]
 ///
@@ -2176,9 +2177,9 @@ fn daa_0a_ac_c() {
 ///
 fn daa_0f_ac_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_ac(true);
-    cpu.psw.set_carry(true);
+    cpu.status.clear_flags();
+    cpu.status.set_ac(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0x0f, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -2189,7 +2190,7 @@ fn daa_0f_ac_c() {
         }
     }
     assert_eq!(cpu.a, 0x75u8);
-    assert_eq!(cpu.psw.value, 0x13u8);
+    assert_eq!(cpu.status.value, 0x13u8);
 }
 #[test]
 ///
@@ -2197,9 +2198,9 @@ fn daa_0f_ac_c() {
 ///
 fn daa_50_ac_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_ac(true);
-    cpu.psw.set_carry(true);
+    cpu.status.clear_flags();
+    cpu.status.set_ac(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0x50, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -2210,7 +2211,7 @@ fn daa_50_ac_c() {
         }
     }
     assert_eq!(cpu.a, 0xb6u8);
-    assert_eq!(cpu.psw.value, 0x83u8);
+    assert_eq!(cpu.status.value, 0x83u8);
 }
 #[test]
 ///
@@ -2218,9 +2219,9 @@ fn daa_50_ac_c() {
 ///
 fn daa_a0_ac_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_ac(true);
-    cpu.psw.set_carry(true);
+    cpu.status.clear_flags();
+    cpu.status.set_ac(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0xa0, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -2231,7 +2232,7 @@ fn daa_a0_ac_c() {
         }
     }
     assert_eq!(cpu.a, 0x06u8);
-    assert_eq!(cpu.psw.value, 0x07u8);
+    assert_eq!(cpu.status.value, 0x07u8);
 }
 #[test]
 ///
@@ -2239,9 +2240,9 @@ fn daa_a0_ac_c() {
 ///
 fn daa_f0_ac_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_ac(true);
-    cpu.psw.set_carry(true);
+    cpu.status.clear_flags();
+    cpu.status.set_ac(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0xf0, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -2252,7 +2253,7 @@ fn daa_f0_ac_c() {
         }
     }
     assert_eq!(cpu.a, 0x56u8);
-    assert_eq!(cpu.psw.value, 0x07u8);
+    assert_eq!(cpu.status.value, 0x07u8);
 }
 #[test]
 ///
@@ -2260,9 +2261,9 @@ fn daa_f0_ac_c() {
 ///
 fn daa_55_ac_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_ac(true);
-    cpu.psw.set_carry(true);
+    cpu.status.clear_flags();
+    cpu.status.set_ac(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0x55, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -2273,7 +2274,7 @@ fn daa_55_ac_c() {
         }
     }
     assert_eq!(cpu.a, 0xbbu8);
-    assert_eq!(cpu.psw.value, 0x87u8);
+    assert_eq!(cpu.status.value, 0x87u8);
 }
 #[test]
 ///
@@ -2281,9 +2282,9 @@ fn daa_55_ac_c() {
 ///
 fn daa_aa_ac_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_ac(true);
-    cpu.psw.set_carry(true);
+    cpu.status.clear_flags();
+    cpu.status.set_ac(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0xaa, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -2294,7 +2295,7 @@ fn daa_aa_ac_c() {
         }
     }
     assert_eq!(cpu.a, 0x10u8);
-    assert_eq!(cpu.psw.value, 0x13u8);
+    assert_eq!(cpu.status.value, 0x13u8);
 }
 #[test]
 ///
@@ -2302,9 +2303,9 @@ fn daa_aa_ac_c() {
 ///
 fn daa_ff_ac_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_ac(true);
-    cpu.psw.set_carry(true);
+    cpu.status.clear_flags();
+    cpu.status.set_ac(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0xff, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -2315,7 +2316,7 @@ fn daa_ff_ac_c() {
         }
     }
     assert_eq!(cpu.a, 0x65u8);
-    assert_eq!(cpu.psw.value, 0x17u8);
+    assert_eq!(cpu.status.value, 0x17u8);
 }
 #[test]
 ///
@@ -2323,9 +2324,9 @@ fn daa_ff_ac_c() {
 ///
 fn daa_33_ac_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
-    cpu.psw.set_ac(true);
-    cpu.psw.set_carry(true);
+    cpu.status.clear_flags();
+    cpu.status.set_ac(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0x33, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -2336,7 +2337,7 @@ fn daa_33_ac_c() {
         }
     }
     assert_eq!(cpu.a, 0x99u8);
-    assert_eq!(cpu.psw.value, 0x87u8);
+    assert_eq!(cpu.status.value, 0x87u8);
 }
 #[test]
 ///
@@ -2344,7 +2345,7 @@ fn daa_33_ac_c() {
 ///
 fn dad_b_1() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.h = 0x00;
     cpu.l = 0x00;
     cpu.b = 0x00;
@@ -2360,7 +2361,7 @@ fn dad_b_1() {
     }
     assert_eq!(cpu.h, 0x00u8);
     assert_eq!(cpu.l, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x46u8);
+    assert_eq!(cpu.status.value, 0x46u8);
 }
 #[test]
 ///
@@ -2368,7 +2369,7 @@ fn dad_b_1() {
 ///
 fn dad_b_2() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.h = 0x00;
     cpu.l = 0x00;
     cpu.b = 0x12;
@@ -2384,7 +2385,7 @@ fn dad_b_2() {
     }
     assert_eq!(cpu.h, 0x12u8);
     assert_eq!(cpu.l, 0x34u8);
-    assert_eq!(cpu.psw.value, 0x46u8);
+    assert_eq!(cpu.status.value, 0x46u8);
 }
 #[test]
 ///
@@ -2392,7 +2393,7 @@ fn dad_b_2() {
 ///
 fn dad_b_3() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.h = 0x00;
     cpu.l = 0x00;
     cpu.b = 0x55;
@@ -2408,7 +2409,7 @@ fn dad_b_3() {
     }
     assert_eq!(cpu.h, 0x55u8);
     assert_eq!(cpu.l, 0x55u8);
-    assert_eq!(cpu.psw.value, 0x46u8);
+    assert_eq!(cpu.status.value, 0x46u8);
 }
 #[test]
 ///
@@ -2416,7 +2417,7 @@ fn dad_b_3() {
 ///
 fn dad_b_4() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.h = 0x00;
     cpu.l = 0x00;
     cpu.b = 0xAA;
@@ -2432,7 +2433,7 @@ fn dad_b_4() {
     }
     assert_eq!(cpu.h, 0xAAu8);
     assert_eq!(cpu.l, 0xAAu8);
-    assert_eq!(cpu.psw.value, 0x46u8);
+    assert_eq!(cpu.status.value, 0x46u8);
 }
 #[test]
 ///
@@ -2441,7 +2442,7 @@ fn dad_b_4() {
 ///
 fn dad_b_5() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.h = 0x00;
     cpu.l = 0x00;
     cpu.b = 0xff;
@@ -2457,7 +2458,7 @@ fn dad_b_5() {
     }
     assert_eq!(cpu.h, 0xffu8);
     assert_eq!(cpu.l, 0xffu8);
-    assert_eq!(cpu.psw.value, 0x46u8);
+    assert_eq!(cpu.status.value, 0x46u8);
 }
 #[test]
 ///
@@ -2465,7 +2466,7 @@ fn dad_b_5() {
 ///
 fn dad_d_1() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.h = 0xf0;
     cpu.l = 0xf0;
     cpu.d = 0x00;
@@ -2481,7 +2482,7 @@ fn dad_d_1() {
     }
     assert_eq!(cpu.h, 0xf0u8);
     assert_eq!(cpu.l, 0xf0u8);
-    assert_eq!(cpu.psw.value, 0x46u8);
+    assert_eq!(cpu.status.value, 0x46u8);
 }
 #[test]
 ///
@@ -2489,7 +2490,7 @@ fn dad_d_1() {
 ///
 fn dad_d_2() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.h = 0xf0;
     cpu.l = 0xf0;
     cpu.d = 0x12;
@@ -2505,7 +2506,7 @@ fn dad_d_2() {
     }
     assert_eq!(cpu.h, 0x03u8);
     assert_eq!(cpu.l, 0x24u8);
-    assert_eq!(cpu.psw.value, 0x47u8);
+    assert_eq!(cpu.status.value, 0x47u8);
 }
 #[test]
 ///
@@ -2513,7 +2514,7 @@ fn dad_d_2() {
 ///
 fn dad_d_3() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.h = 0xf0;
     cpu.l = 0xf0;
     cpu.d = 0x55;
@@ -2529,7 +2530,7 @@ fn dad_d_3() {
     }
     assert_eq!(cpu.h, 0x46u8);
     assert_eq!(cpu.l, 0x45u8);
-    assert_eq!(cpu.psw.value, 0x47u8);
+    assert_eq!(cpu.status.value, 0x47u8);
 }
 #[test]
 ///
@@ -2537,7 +2538,7 @@ fn dad_d_3() {
 ///
 fn dad_d_4() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.h = 0xf0;
     cpu.l = 0xf0;
     cpu.d = 0xAA;
@@ -2553,7 +2554,7 @@ fn dad_d_4() {
     }
     assert_eq!(cpu.h, 0x9bu8);
     assert_eq!(cpu.l, 0x9au8);
-    assert_eq!(cpu.psw.value, 0x47u8);
+    assert_eq!(cpu.status.value, 0x47u8);
 }
 #[test]
 ///
@@ -2562,7 +2563,7 @@ fn dad_d_4() {
 ///
 fn dad_d_5() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.h = 0xf0;
     cpu.l = 0xf0;
     cpu.d = 0xff;
@@ -2578,7 +2579,7 @@ fn dad_d_5() {
     }
     assert_eq!(cpu.h, 0xf0u8);
     assert_eq!(cpu.l, 0xefu8);
-    assert_eq!(cpu.psw.value, 0x47u8);
+    assert_eq!(cpu.status.value, 0x47u8);
 }
 #[test]
 ///
@@ -2586,7 +2587,7 @@ fn dad_d_5() {
 ///
 fn dad_h_1() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.h = 0x00;
     cpu.l = 0x00;
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_H, HLT];
@@ -2600,7 +2601,7 @@ fn dad_h_1() {
     }
     assert_eq!(cpu.h, 0x00u8);
     assert_eq!(cpu.l, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x46u8);
+    assert_eq!(cpu.status.value, 0x46u8);
 }
 #[test]
 ///
@@ -2608,7 +2609,7 @@ fn dad_h_1() {
 ///
 fn dad_h_2() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.h = 0x12;
     cpu.l = 0x34;
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_H, HLT];
@@ -2622,7 +2623,7 @@ fn dad_h_2() {
     }
     assert_eq!(cpu.h, 0x24u8);
     assert_eq!(cpu.l, 0x68u8);
-    assert_eq!(cpu.psw.value, 0x46u8);
+    assert_eq!(cpu.status.value, 0x46u8);
 }
 #[test]
 ///
@@ -2630,7 +2631,7 @@ fn dad_h_2() {
 ///
 fn dad_h_3() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.h = 0x55;
     cpu.l = 0x55;
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_H, HLT];
@@ -2644,7 +2645,7 @@ fn dad_h_3() {
     }
     assert_eq!(cpu.h, 0xaau8);
     assert_eq!(cpu.l, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x46u8);
+    assert_eq!(cpu.status.value, 0x46u8);
 }
 #[test]
 ///
@@ -2652,7 +2653,7 @@ fn dad_h_3() {
 ///
 fn dad_h_4() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.h = 0xAA;
     cpu.l = 0xAA;
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_H, HLT];
@@ -2666,7 +2667,7 @@ fn dad_h_4() {
     }
     assert_eq!(cpu.h, 0x55u8);
     assert_eq!(cpu.l, 0x54u8);
-    assert_eq!(cpu.psw.value, 0x47u8);
+    assert_eq!(cpu.status.value, 0x47u8);
 }
 #[test]
 ///
@@ -2675,7 +2676,7 @@ fn dad_h_4() {
 ///
 fn dad_h_5() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.h = 0xff;
     cpu.l = 0xff;
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_H, HLT];
@@ -2689,7 +2690,7 @@ fn dad_h_5() {
     }
     assert_eq!(cpu.h, 0xffu8);
     assert_eq!(cpu.l, 0xfeu8);
-    assert_eq!(cpu.psw.value, 0x47u8);
+    assert_eq!(cpu.status.value, 0x47u8);
 }
 #[test]
 ///
@@ -2697,7 +2698,7 @@ fn dad_h_5() {
 ///
 fn dad_sp_1() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.h = 0x0f;
     cpu.l = 0x0f;
     cpu.sp = 0x0000;
@@ -2712,7 +2713,7 @@ fn dad_sp_1() {
     }
     assert_eq!(cpu.h, 0x0fu8);
     assert_eq!(cpu.l, 0x0fu8);
-    assert_eq!(cpu.psw.value, 0x46u8);
+    assert_eq!(cpu.status.value, 0x46u8);
 }
 #[test]
 ///
@@ -2720,7 +2721,7 @@ fn dad_sp_1() {
 ///
 fn dad_sp_2() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.h = 0x0f;
     cpu.l = 0x0f;
     cpu.sp = 0x1234;
@@ -2735,7 +2736,7 @@ fn dad_sp_2() {
     }
     assert_eq!(cpu.h, 0x21u8);
     assert_eq!(cpu.l, 0x43u8);
-    assert_eq!(cpu.psw.value, 0x46u8);
+    assert_eq!(cpu.status.value, 0x46u8);
 }
 #[test]
 ///
@@ -2743,7 +2744,7 @@ fn dad_sp_2() {
 ///
 fn dad_sp_3() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.h = 0x0f;
     cpu.l = 0x0f;
     cpu.sp = 0x5555;
@@ -2758,7 +2759,7 @@ fn dad_sp_3() {
     }
     assert_eq!(cpu.h, 0x64u8);
     assert_eq!(cpu.l, 0x64u8);
-    assert_eq!(cpu.psw.value, 0x46u8);
+    assert_eq!(cpu.status.value, 0x46u8);
 }
 #[test]
 ///
@@ -2766,7 +2767,7 @@ fn dad_sp_3() {
 ///
 fn dad_sp_4() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.h = 0x0f;
     cpu.l = 0x0f;
     cpu.sp = 0xaaaa;
@@ -2781,7 +2782,7 @@ fn dad_sp_4() {
     }
     assert_eq!(cpu.h, 0xb9u8);
     assert_eq!(cpu.l, 0xb9u8);
-    assert_eq!(cpu.psw.value, 0x46u8);
+    assert_eq!(cpu.status.value, 0x46u8);
 }
 #[test]
 ///
@@ -2790,7 +2791,7 @@ fn dad_sp_4() {
 ///
 fn dad_sp_5() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.h = 0x0f;
     cpu.l = 0x0f;
     cpu.sp = 0xffff;
@@ -2805,7 +2806,7 @@ fn dad_sp_5() {
     }
     assert_eq!(cpu.h, 0x0fu8);
     assert_eq!(cpu.l, 0x0eu8);
-    assert_eq!(cpu.psw.value, 0x47u8);
+    assert_eq!(cpu.status.value, 0x47u8);
 }
 #[test]
 ///
@@ -2813,7 +2814,7 @@ fn dad_sp_5() {
 ///
 fn dcr_b() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     let program: Vec<u8> = vec![MVI_B, 0x01, DCR_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -2824,7 +2825,7 @@ fn dcr_b() {
         }
     }
     assert_eq!(cpu.b, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x56u8);
+    assert_eq!(cpu.status.value, 0x56u8);
 }
 #[test]
 ///
@@ -2832,7 +2833,7 @@ fn dcr_b() {
 ///
 fn dcr_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     let program: Vec<u8> = vec![MVI_C, 0x10, DCR_C, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -2843,7 +2844,7 @@ fn dcr_c() {
         }
     }
     assert_eq!(cpu.c, 0x0fu8);
-    assert_eq!(cpu.psw.value, 0x06u8);
+    assert_eq!(cpu.status.value, 0x06u8);
 }
 #[test]
 ///
@@ -2851,7 +2852,7 @@ fn dcr_c() {
 ///
 fn dcr_d() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     let program: Vec<u8> = vec![MVI_D, 0x00, DCR_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -2862,7 +2863,7 @@ fn dcr_d() {
         }
     }
     assert_eq!(cpu.d, 0xffu8);
-    assert_eq!(cpu.psw.value, 0x86u8);
+    assert_eq!(cpu.status.value, 0x86u8);
 }
 #[test]
 ///
@@ -2870,7 +2871,7 @@ fn dcr_d() {
 ///
 fn dcr_e() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     let program: Vec<u8> = vec![MVI_E, 0xFF, DCR_E, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -2881,7 +2882,7 @@ fn dcr_e() {
         }
     }
     assert_eq!(cpu.e, 0xfeu8);
-    assert_eq!(cpu.psw.value, 0x92u8);
+    assert_eq!(cpu.status.value, 0x92u8);
 }
 #[test]
 ///
@@ -2889,7 +2890,7 @@ fn dcr_e() {
 ///
 fn dcr_h() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     let program: Vec<u8> = vec![MVI_H, 0x0F, DCR_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -2900,7 +2901,7 @@ fn dcr_h() {
         }
     }
     assert_eq!(cpu.h, 0x0eu8);
-    assert_eq!(cpu.psw.value, 0x12u8);
+    assert_eq!(cpu.status.value, 0x12u8);
 }
 #[test]
 ///
@@ -2908,7 +2909,7 @@ fn dcr_h() {
 ///
 fn dcr_l() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     let program: Vec<u8> = vec![MVI_L, 0x90, DCR_L, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -2919,7 +2920,7 @@ fn dcr_l() {
         }
     }
     assert_eq!(cpu.l, 0x8fu8);
-    assert_eq!(cpu.psw.value, 0x82u8);
+    assert_eq!(cpu.status.value, 0x82u8);
 }
 #[test]
 ///
@@ -2929,7 +2930,7 @@ fn dcr_m() {
     let addr = 0x210;
     let mut cpu = Cpu::new();
     cpu.memory.write_byte(0x0210, 0xff);
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.h = 0x02;
     cpu.l = 0x10;
     let program: Vec<u8> = vec![DCR_M, HLT];
@@ -2943,7 +2944,7 @@ fn dcr_m() {
     }
     let result = cpu.memory.read_byte(addr);
     assert_eq!(result, 0xfeu8);
-    assert_eq!(cpu.psw.value, 0x92u8);
+    assert_eq!(cpu.status.value, 0x92u8);
 }
 #[test]
 ///
@@ -2951,7 +2952,7 @@ fn dcr_m() {
 ///
 fn dcr_a() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     let program: Vec<u8> = vec![MVI_A, 0xfe, DCR_A, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -2962,7 +2963,7 @@ fn dcr_a() {
         }
     }
     assert_eq!(cpu.a, 0xfdu8);
-    assert_eq!(cpu.psw.value, 0x92u8);
+    assert_eq!(cpu.status.value, 0x92u8);
 }
 #[test]
 ///
@@ -2970,7 +2971,7 @@ fn dcr_a() {
 ///
 fn dcx_b_1() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.b = 0x12u8;
     cpu.c = 0x34u8;
     let program: Vec<u8> = vec![DCX_B, HLT];
@@ -2984,7 +2985,7 @@ fn dcx_b_1() {
     }
     assert_eq!(cpu.b, 0x12u8);
     assert_eq!(cpu.c, 0x33u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -2992,7 +2993,7 @@ fn dcx_b_1() {
 ///
 fn dcx_b_2() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.b = 0x00u8;
     cpu.c = 0x00u8;
     let program: Vec<u8> = vec![DCX_B, HLT];
@@ -3006,7 +3007,7 @@ fn dcx_b_2() {
     }
     assert_eq!(cpu.b, 0xffu8);
     assert_eq!(cpu.c, 0xffu8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3014,7 +3015,7 @@ fn dcx_b_2() {
 ///
 fn dcx_d_1() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.d = 0x12u8;
     cpu.e = 0x34u8;
     let program: Vec<u8> = vec![DCX_D, HLT];
@@ -3028,7 +3029,7 @@ fn dcx_d_1() {
     }
     assert_eq!(cpu.d, 0x12u8);
     assert_eq!(cpu.e, 0x33u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3036,7 +3037,7 @@ fn dcx_d_1() {
 ///
 fn dcx_d_2() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.d = 0x00u8;
     cpu.e = 0x00u8;
     let program: Vec<u8> = vec![DCX_D, HLT];
@@ -3050,7 +3051,7 @@ fn dcx_d_2() {
     }
     assert_eq!(cpu.d, 0xffu8);
     assert_eq!(cpu.e, 0xffu8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3058,7 +3059,7 @@ fn dcx_d_2() {
 ///
 fn dcx_h_1() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.h = 0x12u8;
     cpu.l = 0x34u8;
     let program: Vec<u8> = vec![DCX_H, HLT];
@@ -3072,7 +3073,7 @@ fn dcx_h_1() {
     }
     assert_eq!(cpu.h, 0x12u8);
     assert_eq!(cpu.l, 0x33u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3080,7 +3081,7 @@ fn dcx_h_1() {
 ///
 fn dcx_h_2() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.h = 0x00u8;
     cpu.l = 0x00u8;
     let program: Vec<u8> = vec![DCX_H, HLT];
@@ -3094,7 +3095,7 @@ fn dcx_h_2() {
     }
     assert_eq!(cpu.h, 0xffu8);
     assert_eq!(cpu.l, 0xffu8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3102,7 +3103,7 @@ fn dcx_h_2() {
 ///
 fn dcx_sp_1() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0x1234u16;
     let program: Vec<u8> = vec![DCX_SP, HLT];
     cpu.load_program(&program, 0x0200);
@@ -3114,7 +3115,7 @@ fn dcx_sp_1() {
         }
     }
     assert_eq!(cpu.sp, 0x1233u16);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3122,7 +3123,7 @@ fn dcx_sp_1() {
 ///
 fn dcx_sp_2() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0x0000u16;
     let program: Vec<u8> = vec![DCX_SP, HLT];
     cpu.load_program(&program, 0x0200);
@@ -3134,7 +3135,7 @@ fn dcx_sp_2() {
         }
     }
     assert_eq!(cpu.sp, 0xffffu16);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3142,7 +3143,7 @@ fn dcx_sp_2() {
 ///
 fn di() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.inte = true;
     let program: Vec<u8> = vec![DI, HLT];
     cpu.load_program(&program, 0x0200);
@@ -3154,7 +3155,7 @@ fn di() {
         }
     }
     assert_eq!(cpu.inte, false);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3162,7 +3163,7 @@ fn di() {
 ///
 fn ei() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.inte = false;
     let program: Vec<u8> = vec![EI, HLT];
     cpu.load_program(&program, 0x0200);
@@ -3174,7 +3175,7 @@ fn ei() {
         }
     }
     assert_eq!(cpu.inte, true);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3182,7 +3183,7 @@ fn ei() {
 ///
 fn inp() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.a = 0x00;
     let program: Vec<u8> = vec![IN, 0x0f, HLT];
     cpu.load_program(&program, 0x0200);
@@ -3194,7 +3195,7 @@ fn inp() {
         }
     }
     assert_eq!(cpu.a, 0xffu8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3202,7 +3203,7 @@ fn inp() {
 ///
 fn inr_b() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     let program: Vec<u8> = vec![MVI_B, 0x0f, INR_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -3213,7 +3214,7 @@ fn inr_b() {
         }
     }
     assert_eq!(cpu.b, 0x10u8);
-    assert_eq!(cpu.psw.value, 0x12u8);
+    assert_eq!(cpu.status.value, 0x12u8);
 }
 #[test]
 ///
@@ -3221,7 +3222,7 @@ fn inr_b() {
 ///
 fn inr_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     let program: Vec<u8> = vec![MVI_C, 0xef, INR_C, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -3232,7 +3233,7 @@ fn inr_c() {
         }
     }
     assert_eq!(cpu.c, 0xf0u8);
-    assert_eq!(cpu.psw.value, 0x96u8);
+    assert_eq!(cpu.status.value, 0x96u8);
 }
 #[test]
 ///
@@ -3240,7 +3241,7 @@ fn inr_c() {
 ///
 fn inr_d() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     let program: Vec<u8> = vec![MVI_D, 0x1f, INR_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -3251,7 +3252,7 @@ fn inr_d() {
         }
     }
     assert_eq!(cpu.d, 0x20u8);
-    assert_eq!(cpu.psw.value, 0x12u8);
+    assert_eq!(cpu.status.value, 0x12u8);
 }
 #[test]
 ///
@@ -3259,7 +3260,7 @@ fn inr_d() {
 ///
 fn inr_e() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     let program: Vec<u8> = vec![MVI_E, 0xf0, INR_E, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -3270,7 +3271,7 @@ fn inr_e() {
         }
     }
     assert_eq!(cpu.e, 0xf1u8);
-    assert_eq!(cpu.psw.value, 0x82u8);
+    assert_eq!(cpu.status.value, 0x82u8);
 }
 #[test]
 ///
@@ -3278,7 +3279,7 @@ fn inr_e() {
 ///
 fn inr_h() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     let program: Vec<u8> = vec![MVI_H, 0xff, INR_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -3289,7 +3290,7 @@ fn inr_h() {
         }
     }
     assert_eq!(cpu.h, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x56u8);
+    assert_eq!(cpu.status.value, 0x56u8);
 }
 #[test]
 ///
@@ -3297,7 +3298,7 @@ fn inr_h() {
 ///
 fn inr_l() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     let program: Vec<u8> = vec![MVI_L, 0xef, INR_L, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -3308,7 +3309,7 @@ fn inr_l() {
         }
     }
     assert_eq!(cpu.l, 0xf0u8);
-    assert_eq!(cpu.psw.value, 0x96u8);
+    assert_eq!(cpu.status.value, 0x96u8);
 }
 #[test]
 ///
@@ -3318,7 +3319,7 @@ fn inr_m() {
     let addr = 0x210;
     let mut cpu = Cpu::new();
     cpu.memory.write_byte(0x0210, 0xff);
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.h = 0x02;
     cpu.l = 0x10;
     let program: Vec<u8> = vec![INR_M, HLT];
@@ -3332,7 +3333,7 @@ fn inr_m() {
     }
     let result = cpu.memory.read_byte(addr);
     assert_eq!(result, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x56u8);
+    assert_eq!(cpu.status.value, 0x56u8);
 }
 #[test]
 ///
@@ -3340,7 +3341,7 @@ fn inr_m() {
 ///
 fn inr_a() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     let program: Vec<u8> = vec![MVI_A, 0xff, INR_A, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -3351,7 +3352,7 @@ fn inr_a() {
         }
     }
     assert_eq!(cpu.a, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x56u8);
+    assert_eq!(cpu.status.value, 0x56u8);
 }
 
 #[test]
@@ -3360,7 +3361,7 @@ fn inr_a() {
 ///
 fn inx_b_1() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.b = 0x12u8;
     cpu.c = 0x34u8;
     let program: Vec<u8> = vec![INX_B, HLT];
@@ -3374,7 +3375,7 @@ fn inx_b_1() {
     }
     assert_eq!(cpu.b, 0x12u8);
     assert_eq!(cpu.c, 0x35u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3382,7 +3383,7 @@ fn inx_b_1() {
 ///
 fn inx_b_2() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.b = 0xffu8;
     cpu.c = 0xffu8;
     let program: Vec<u8> = vec![INX_B, HLT];
@@ -3396,7 +3397,7 @@ fn inx_b_2() {
     }
     assert_eq!(cpu.b, 0x00u8);
     assert_eq!(cpu.c, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3404,7 +3405,7 @@ fn inx_b_2() {
 ///
 fn inx_d_1() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.d = 0x12u8;
     cpu.e = 0x34u8;
     let program: Vec<u8> = vec![INX_D, HLT];
@@ -3418,7 +3419,7 @@ fn inx_d_1() {
     }
     assert_eq!(cpu.d, 0x12u8);
     assert_eq!(cpu.e, 0x35u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3426,7 +3427,7 @@ fn inx_d_1() {
 ///
 fn inx_d_2() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.d = 0xffu8;
     cpu.e = 0xffu8;
     let program: Vec<u8> = vec![INX_D, HLT];
@@ -3440,7 +3441,7 @@ fn inx_d_2() {
     }
     assert_eq!(cpu.d, 0x00u8);
     assert_eq!(cpu.e, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3448,7 +3449,7 @@ fn inx_d_2() {
 ///
 fn inx_h_1() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.h = 0x12u8;
     cpu.l = 0x34u8;
     let program: Vec<u8> = vec![INX_H, HLT];
@@ -3462,7 +3463,7 @@ fn inx_h_1() {
     }
     assert_eq!(cpu.h, 0x12u8);
     assert_eq!(cpu.l, 0x35u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3470,7 +3471,7 @@ fn inx_h_1() {
 ///
 fn inx_h_2() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.h = 0xffu8;
     cpu.l = 0xffu8;
     let program: Vec<u8> = vec![INX_H, HLT];
@@ -3484,7 +3485,7 @@ fn inx_h_2() {
     }
     assert_eq!(cpu.h, 0x00u8);
     assert_eq!(cpu.l, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3492,7 +3493,7 @@ fn inx_h_2() {
 ///
 fn inx_sp_1() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0x1234u16;
     let program: Vec<u8> = vec![INX_SP, HLT];
     cpu.load_program(&program, 0x0200);
@@ -3504,7 +3505,7 @@ fn inx_sp_1() {
         }
     }
     assert_eq!(cpu.sp, 0x1235u16);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3512,7 +3513,7 @@ fn inx_sp_1() {
 ///
 fn inx_sp_2() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![INX_SP, HLT];
     cpu.load_program(&program, 0x0200);
@@ -3524,7 +3525,7 @@ fn inx_sp_2() {
         }
     }
     assert_eq!(cpu.sp, 0x0000u16);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3532,7 +3533,7 @@ fn inx_sp_2() {
 ///
 fn jnz_1() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_A, 0x0f, ANA_A, JNZ, 0x07, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
@@ -3544,7 +3545,7 @@ fn jnz_1() {
         }
     }
     assert_eq!(cpu.pc, 0x0209u16);
-    assert_eq!(cpu.psw.value, 0x16u8);
+    assert_eq!(cpu.status.value, 0x16u8);
 }
 #[test]
 ///
@@ -3552,7 +3553,7 @@ fn jnz_1() {
 ///
 fn jnz_2() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, JNZ, 0x07, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
@@ -3564,7 +3565,7 @@ fn jnz_2() {
         }
     }
     assert_eq!(cpu.pc, 0x0207u16);
-    assert_eq!(cpu.psw.value, 0x46u8);
+    assert_eq!(cpu.status.value, 0x46u8);
 }
 #[test]
 ///
@@ -3572,7 +3573,7 @@ fn jnz_2() {
 ///
 fn jz_1() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_A, 0x0f, ANA_A, JZ, 0x07, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
@@ -3584,7 +3585,7 @@ fn jz_1() {
         }
     }
     assert_eq!(cpu.pc, 0x0207u16);
-    assert_eq!(cpu.psw.value, 0x16u8);
+    assert_eq!(cpu.status.value, 0x16u8);
 }
 #[test]
 ///
@@ -3592,7 +3593,7 @@ fn jz_1() {
 ///
 fn jz_2() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, JZ, 0x07, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
@@ -3604,7 +3605,7 @@ fn jz_2() {
         }
     }
     assert_eq!(cpu.pc, 0x0209u16);
-    assert_eq!(cpu.psw.value, 0x46u8);
+    assert_eq!(cpu.status.value, 0x46u8);
 }
 #[test]
 ///
@@ -3612,9 +3613,9 @@ fn jz_2() {
 ///
 fn jnc_1() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
-    cpu.psw.set_carry(false);
+    cpu.status.set_carry(false);
     let program: Vec<u8> = vec![MVI_A, 0x0f, JNC, 0x06, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -3625,7 +3626,7 @@ fn jnc_1() {
         }
     }
     assert_eq!(cpu.pc, 0x0208u16);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3633,9 +3634,9 @@ fn jnc_1() {
 ///
 fn jnc_2() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
-    cpu.psw.set_carry(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0x0f, JNC, 0x06, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -3646,7 +3647,7 @@ fn jnc_2() {
         }
     }
     assert_eq!(cpu.pc, 0x0206u16);
-    assert_eq!(cpu.psw.value, 0x03u8);
+    assert_eq!(cpu.status.value, 0x03u8);
 }
 #[test]
 ///
@@ -3654,9 +3655,9 @@ fn jnc_2() {
 ///
 fn jc_1() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
-    cpu.psw.set_carry(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0x0f, JC, 0x06, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -3667,7 +3668,7 @@ fn jc_1() {
         }
     }
     assert_eq!(cpu.pc, 0x0208u16);
-    assert_eq!(cpu.psw.value, 0x03u8);
+    assert_eq!(cpu.status.value, 0x03u8);
 }
 #[test]
 ///
@@ -3675,9 +3676,9 @@ fn jc_1() {
 ///
 fn jc_2() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
-    cpu.psw.set_carry(false);
+    cpu.status.set_carry(false);
     let program: Vec<u8> = vec![MVI_A, 0x0f, JC, 0x06, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -3688,7 +3689,7 @@ fn jc_2() {
         }
     }
     assert_eq!(cpu.pc, 0x0206u16);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3696,9 +3697,9 @@ fn jc_2() {
 ///
 fn jpo_1() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
-    cpu.psw.set_parity(false);
+    cpu.status.set_parity(false);
     let program: Vec<u8> = vec![MVI_A, 0x00, JPO, 0x06, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -3709,7 +3710,7 @@ fn jpo_1() {
         }
     }
     assert_eq!(cpu.pc, 0x0208u16);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3717,7 +3718,7 @@ fn jpo_1() {
 ///
 fn jpo_2() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, JPO, 0x07, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
@@ -3729,7 +3730,7 @@ fn jpo_2() {
         }
     }
     assert_eq!(cpu.pc, 0x0207u16);
-    assert_eq!(cpu.psw.value, 0x46u8);
+    assert_eq!(cpu.status.value, 0x46u8);
 }
 #[test]
 ///
@@ -3737,9 +3738,9 @@ fn jpo_2() {
 ///
 fn jpe_1() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
-    cpu.psw.set_parity(false);
+    cpu.status.set_parity(false);
     let program: Vec<u8> = vec![MVI_A, 0x00, JPE, 0x06, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -3750,7 +3751,7 @@ fn jpe_1() {
         }
     }
     assert_eq!(cpu.pc, 0x0206u16);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3758,9 +3759,9 @@ fn jpe_1() {
 ///
 fn jpe_2() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
-    cpu.psw.set_parity(false);
+    cpu.status.set_parity(false);
     let program: Vec<u8> = vec![MVI_A, 0x00, JPE, 0x06, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -3771,7 +3772,7 @@ fn jpe_2() {
         }
     }
     assert_eq!(cpu.pc, 0x0206u16);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3779,7 +3780,7 @@ fn jpe_2() {
 ///
 fn jp_1() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_A, 0x0F, ANA_A, JP, 0x07, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
@@ -3791,7 +3792,7 @@ fn jp_1() {
         }
     }
     assert_eq!(cpu.pc, 0x0209u16);
-    assert_eq!(cpu.psw.value, 0x16u8);
+    assert_eq!(cpu.status.value, 0x16u8);
 }
 #[test]
 ///
@@ -3799,7 +3800,7 @@ fn jp_1() {
 ///
 fn jp_2() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_A, 0xFF, ANA_A, JP, 0x07, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
@@ -3811,7 +3812,7 @@ fn jp_2() {
         }
     }
     assert_eq!(cpu.pc, 0x0207u16);
-    assert_eq!(cpu.psw.value, 0x96u8);
+    assert_eq!(cpu.status.value, 0x96u8);
 }
 #[test]
 ///
@@ -3819,7 +3820,7 @@ fn jp_2() {
 ///
 fn jm_1() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_A, 0x0F, ANA_A, JM, 0x07, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
@@ -3831,7 +3832,7 @@ fn jm_1() {
         }
     }
     assert_eq!(cpu.pc, 0x0207u16);
-    assert_eq!(cpu.psw.value, 0x16u8);
+    assert_eq!(cpu.status.value, 0x16u8);
 }
 #[test]
 ///
@@ -3839,7 +3840,7 @@ fn jm_1() {
 ///
 fn jm_2() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_A, 0xFF, ANA_A, JM, 0x07, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
@@ -3851,7 +3852,7 @@ fn jm_2() {
         }
     }
     assert_eq!(cpu.pc, 0x0209u16);
-    assert_eq!(cpu.psw.value, 0x96u8);
+    assert_eq!(cpu.status.value, 0x96u8);
 }
 #[test]
 ///
@@ -3859,7 +3860,7 @@ fn jm_2() {
 ///
 fn jmp() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![JMP, 0x04, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
@@ -3871,7 +3872,7 @@ fn jmp() {
         }
     }
     assert_eq!(cpu.pc, 0x0206u16);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3879,7 +3880,7 @@ fn jmp() {
 ///
 fn lda() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.memory.write_byte(0x220, 0x55);
     let program: Vec<u8> = vec![LDA, 0x20, 0x02, HLT];
@@ -3892,7 +3893,7 @@ fn lda() {
         }
     }
     assert_eq!(cpu.a, 0x55u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3900,7 +3901,7 @@ fn lda() {
 ///
 fn ldax_b() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.b = 0x12;
     cpu.c = 0x34;
@@ -3915,7 +3916,7 @@ fn ldax_b() {
         }
     }
     assert_eq!(cpu.a, 0x55u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3923,7 +3924,7 @@ fn ldax_b() {
 ///
 fn ldax_d() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.d = 0x12;
     cpu.e = 0x34;
@@ -3938,7 +3939,7 @@ fn ldax_d() {
         }
     }
     assert_eq!(cpu.a, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3946,7 +3947,7 @@ fn ldax_d() {
 ///
 fn lhld() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.d = 0x12;
     cpu.e = 0x34;
@@ -3963,7 +3964,7 @@ fn lhld() {
     }
     assert_eq!(cpu.l, 0x55u8);
     assert_eq!(cpu.h, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3971,7 +3972,7 @@ fn lhld() {
 ///
 fn lxi_b() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![LXI_B, 0x34, 0x12, HLT];
     cpu.load_program(&program, 0x0200);
@@ -3984,7 +3985,7 @@ fn lxi_b() {
     }
     assert_eq!(cpu.b, 0x12u8);
     assert_eq!(cpu.c, 0x34u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -3992,7 +3993,7 @@ fn lxi_b() {
 ///
 fn lxi_d() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![LXI_D, 0x34, 0x12, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4005,7 +4006,7 @@ fn lxi_d() {
     }
     assert_eq!(cpu.d, 0x12u8);
     assert_eq!(cpu.e, 0x34u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4013,7 +4014,7 @@ fn lxi_d() {
 ///
 fn lxi_h() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![LXI_H, 0x34, 0x12, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4026,7 +4027,7 @@ fn lxi_h() {
     }
     assert_eq!(cpu.h, 0x12u8);
     assert_eq!(cpu.l, 0x34u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4034,7 +4035,7 @@ fn lxi_h() {
 ///
 fn lxi_sp() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![LXI_SP, 0x34, 0x12, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4046,7 +4047,7 @@ fn lxi_sp() {
         }
     }
     assert_eq!(cpu.sp, 0x1234u16);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4054,7 +4055,7 @@ fn lxi_sp() {
 ///
 fn mvi_b() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_B, 0x12, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4066,7 +4067,7 @@ fn mvi_b() {
         }
     }
     assert_eq!(cpu.b, 0x12u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4074,7 +4075,7 @@ fn mvi_b() {
 ///
 fn mvi_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_C, 0x34, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4086,7 +4087,7 @@ fn mvi_c() {
         }
     }
     assert_eq!(cpu.c, 0x34u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4094,7 +4095,7 @@ fn mvi_c() {
 ///
 fn mvi_d() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_D, 0x55, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4106,7 +4107,7 @@ fn mvi_d() {
         }
     }
     assert_eq!(cpu.d, 0x55u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4114,7 +4115,7 @@ fn mvi_d() {
 ///
 fn mvi_e() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_E, 0xaa, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4126,7 +4127,7 @@ fn mvi_e() {
         }
     }
     assert_eq!(cpu.e, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4134,7 +4135,7 @@ fn mvi_e() {
 ///
 fn mvi_h() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_H, 0x12, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4146,7 +4147,7 @@ fn mvi_h() {
         }
     }
     assert_eq!(cpu.h, 0x12u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4154,7 +4155,7 @@ fn mvi_h() {
 ///
 fn mvi_l() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_L, 0x34, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4166,7 +4167,7 @@ fn mvi_l() {
         }
     }
     assert_eq!(cpu.l, 0x34u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4174,7 +4175,7 @@ fn mvi_l() {
 ///
 fn mvi_m() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
@@ -4189,7 +4190,7 @@ fn mvi_m() {
     }
     let val = cpu.memory.read_byte(0x1234);
     assert_eq!(val, 0x55u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4197,7 +4198,7 @@ fn mvi_m() {
 ///
 fn mvi_a() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_A, 0xaa, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4209,7 +4210,7 @@ fn mvi_a() {
         }
     }
     assert_eq!(cpu.a, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4217,7 +4218,7 @@ fn mvi_a() {
 ///
 fn mov_a_b() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_B, 0xaa, MOV_A_B, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4229,7 +4230,7 @@ fn mov_a_b() {
         }
     }
     assert_eq!(cpu.a, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4237,7 +4238,7 @@ fn mov_a_b() {
 ///
 fn mov_a_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_C, 0x55, MOV_A_C, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4249,7 +4250,7 @@ fn mov_a_c() {
         }
     }
     assert_eq!(cpu.a, 0x55u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4257,7 +4258,7 @@ fn mov_a_c() {
 ///
 fn mov_a_d() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_D, 0xaa, MOV_A_D, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4269,7 +4270,7 @@ fn mov_a_d() {
         }
     }
     assert_eq!(cpu.a, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4277,7 +4278,7 @@ fn mov_a_d() {
 ///
 fn mov_a_e() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_E, 0xaa, MOV_A_E, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4289,7 +4290,7 @@ fn mov_a_e() {
         }
     }
     assert_eq!(cpu.a, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4297,7 +4298,7 @@ fn mov_a_e() {
 ///
 fn mov_a_h() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_H, 0xaa, MOV_A_H, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4309,7 +4310,7 @@ fn mov_a_h() {
         }
     }
     assert_eq!(cpu.a, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4317,7 +4318,7 @@ fn mov_a_h() {
 ///
 fn mov_a_l() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_L, 0xaa, MOV_A_L, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4329,7 +4330,7 @@ fn mov_a_l() {
         }
     }
     assert_eq!(cpu.a, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4337,7 +4338,7 @@ fn mov_a_l() {
 ///
 fn mov_a_m() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
@@ -4352,7 +4353,7 @@ fn mov_a_m() {
         }
     }
     assert_eq!(cpu.a, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4360,7 +4361,7 @@ fn mov_a_m() {
 ///
 fn mov_a_a() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_A, 0xaa, MOV_A_A, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4372,7 +4373,7 @@ fn mov_a_a() {
         }
     }
     assert_eq!(cpu.a, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4380,7 +4381,7 @@ fn mov_a_a() {
 ///
 fn mov_b_b() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_B, 0xaa, MOV_B_B, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4392,7 +4393,7 @@ fn mov_b_b() {
         }
     }
     assert_eq!(cpu.b, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4400,7 +4401,7 @@ fn mov_b_b() {
 ///
 fn mov_b_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_C, 0x55, MOV_B_C, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4412,7 +4413,7 @@ fn mov_b_c() {
         }
     }
     assert_eq!(cpu.b, 0x55u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4420,7 +4421,7 @@ fn mov_b_c() {
 ///
 fn mov_b_d() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_D, 0xaa, MOV_B_D, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4432,7 +4433,7 @@ fn mov_b_d() {
         }
     }
     assert_eq!(cpu.b, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4440,7 +4441,7 @@ fn mov_b_d() {
 ///
 fn mov_b_e() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_E, 0xaa, MOV_B_E, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4452,7 +4453,7 @@ fn mov_b_e() {
         }
     }
     assert_eq!(cpu.b, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4460,7 +4461,7 @@ fn mov_b_e() {
 ///
 fn mov_b_h() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_H, 0xaa, MOV_B_H, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4472,7 +4473,7 @@ fn mov_b_h() {
         }
     }
     assert_eq!(cpu.b, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4480,7 +4481,7 @@ fn mov_b_h() {
 ///
 fn mov_b_l() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_L, 0xaa, MOV_B_L, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4492,7 +4493,7 @@ fn mov_b_l() {
         }
     }
     assert_eq!(cpu.b, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4500,7 +4501,7 @@ fn mov_b_l() {
 ///
 fn mov_b_m() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
@@ -4515,7 +4516,7 @@ fn mov_b_m() {
         }
     }
     assert_eq!(cpu.b, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4523,7 +4524,7 @@ fn mov_b_m() {
 ///
 fn mov_b_a() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_A, 0xaa, MOV_B_A, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4535,7 +4536,7 @@ fn mov_b_a() {
         }
     }
     assert_eq!(cpu.b, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4543,7 +4544,7 @@ fn mov_b_a() {
 ///
 fn mov_c_b() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_B, 0xaa, MOV_C_B, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4555,7 +4556,7 @@ fn mov_c_b() {
         }
     }
     assert_eq!(cpu.c, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4563,7 +4564,7 @@ fn mov_c_b() {
 ///
 fn mov_c_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_C, 0x55, MOV_C_C, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4575,7 +4576,7 @@ fn mov_c_c() {
         }
     }
     assert_eq!(cpu.c, 0x55u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4583,7 +4584,7 @@ fn mov_c_c() {
 ///
 fn mov_c_d() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_D, 0xaa, MOV_C_D, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4595,7 +4596,7 @@ fn mov_c_d() {
         }
     }
     assert_eq!(cpu.c, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4603,7 +4604,7 @@ fn mov_c_d() {
 ///
 fn mov_c_e() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_E, 0xaa, MOV_C_E, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4615,7 +4616,7 @@ fn mov_c_e() {
         }
     }
     assert_eq!(cpu.c, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4623,7 +4624,7 @@ fn mov_c_e() {
 ///
 fn mov_c_h() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_H, 0xaa, MOV_C_H, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4635,7 +4636,7 @@ fn mov_c_h() {
         }
     }
     assert_eq!(cpu.c, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4643,7 +4644,7 @@ fn mov_c_h() {
 ///
 fn mov_c_l() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_L, 0xaa, MOV_C_L, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4655,7 +4656,7 @@ fn mov_c_l() {
         }
     }
     assert_eq!(cpu.c, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4663,7 +4664,7 @@ fn mov_c_l() {
 ///
 fn mov_c_m() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
@@ -4678,7 +4679,7 @@ fn mov_c_m() {
         }
     }
     assert_eq!(cpu.c, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4686,7 +4687,7 @@ fn mov_c_m() {
 ///
 fn mov_c_a() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_A, 0xaa, MOV_C_A, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4698,7 +4699,7 @@ fn mov_c_a() {
         }
     }
     assert_eq!(cpu.c, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4706,7 +4707,7 @@ fn mov_c_a() {
 ///
 fn mov_d_b() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_B, 0xaa, MOV_D_B, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4718,7 +4719,7 @@ fn mov_d_b() {
         }
     }
     assert_eq!(cpu.d, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4726,7 +4727,7 @@ fn mov_d_b() {
 ///
 fn mov_d_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_C, 0x55, MOV_D_C, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4738,7 +4739,7 @@ fn mov_d_c() {
         }
     }
     assert_eq!(cpu.d, 0x55u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4746,7 +4747,7 @@ fn mov_d_c() {
 ///
 fn mov_d_d() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_D, 0xaa, MOV_D_D, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4758,7 +4759,7 @@ fn mov_d_d() {
         }
     }
     assert_eq!(cpu.d, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4766,7 +4767,7 @@ fn mov_d_d() {
 ///
 fn mov_d_e() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_E, 0xaa, MOV_D_E, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4778,7 +4779,7 @@ fn mov_d_e() {
         }
     }
     assert_eq!(cpu.d, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4786,7 +4787,7 @@ fn mov_d_e() {
 ///
 fn mov_d_h() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_H, 0xaa, MOV_D_H, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4798,7 +4799,7 @@ fn mov_d_h() {
         }
     }
     assert_eq!(cpu.d, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4806,7 +4807,7 @@ fn mov_d_h() {
 ///
 fn mov_d_l() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_L, 0xaa, MOV_D_L, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4818,7 +4819,7 @@ fn mov_d_l() {
         }
     }
     assert_eq!(cpu.d, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4826,7 +4827,7 @@ fn mov_d_l() {
 ///
 fn mov_d_m() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
@@ -4841,7 +4842,7 @@ fn mov_d_m() {
         }
     }
     assert_eq!(cpu.d, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4849,7 +4850,7 @@ fn mov_d_m() {
 ///
 fn mov_d_a() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_A, 0xaa, MOV_D_A, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4861,7 +4862,7 @@ fn mov_d_a() {
         }
     }
     assert_eq!(cpu.d, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4869,7 +4870,7 @@ fn mov_d_a() {
 ///
 fn mov_e_b() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_B, 0xaa, MOV_E_B, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4881,7 +4882,7 @@ fn mov_e_b() {
         }
     }
     assert_eq!(cpu.e, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4889,7 +4890,7 @@ fn mov_e_b() {
 ///
 fn mov_e_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_C, 0x55, MOV_E_C, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4901,7 +4902,7 @@ fn mov_e_c() {
         }
     }
     assert_eq!(cpu.e, 0x55u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4909,7 +4910,7 @@ fn mov_e_c() {
 ///
 fn mov_e_d() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_D, 0xaa, MOV_E_D, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4921,7 +4922,7 @@ fn mov_e_d() {
         }
     }
     assert_eq!(cpu.e, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4929,7 +4930,7 @@ fn mov_e_d() {
 ///
 fn mov_e_e() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_E, 0xaa, MOV_E_E, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4941,7 +4942,7 @@ fn mov_e_e() {
         }
     }
     assert_eq!(cpu.e, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4949,7 +4950,7 @@ fn mov_e_e() {
 ///
 fn mov_e_h() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_H, 0xaa, MOV_E_H, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4961,7 +4962,7 @@ fn mov_e_h() {
         }
     }
     assert_eq!(cpu.e, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4969,7 +4970,7 @@ fn mov_e_h() {
 ///
 fn mov_e_l() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_L, 0xaa, MOV_E_L, HLT];
     cpu.load_program(&program, 0x0200);
@@ -4981,7 +4982,7 @@ fn mov_e_l() {
         }
     }
     assert_eq!(cpu.e, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -4989,7 +4990,7 @@ fn mov_e_l() {
 ///
 fn mov_e_m() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
@@ -5004,7 +5005,7 @@ fn mov_e_m() {
         }
     }
     assert_eq!(cpu.e, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5012,7 +5013,7 @@ fn mov_e_m() {
 ///
 fn mov_e_a() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_A, 0xaa, MOV_E_A, HLT];
     cpu.load_program(&program, 0x0200);
@@ -5024,7 +5025,7 @@ fn mov_e_a() {
         }
     }
     assert_eq!(cpu.e, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5032,7 +5033,7 @@ fn mov_e_a() {
 ///
 fn mov_h_b() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_B, 0xaa, MOV_H_B, HLT];
     cpu.load_program(&program, 0x0200);
@@ -5044,7 +5045,7 @@ fn mov_h_b() {
         }
     }
     assert_eq!(cpu.h, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5052,7 +5053,7 @@ fn mov_h_b() {
 ///
 fn mov_h_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_C, 0x55, MOV_H_C, HLT];
     cpu.load_program(&program, 0x0200);
@@ -5064,7 +5065,7 @@ fn mov_h_c() {
         }
     }
     assert_eq!(cpu.h, 0x55u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5072,7 +5073,7 @@ fn mov_h_c() {
 ///
 fn mov_h_d() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_D, 0xaa, MOV_H_D, HLT];
     cpu.load_program(&program, 0x0200);
@@ -5084,7 +5085,7 @@ fn mov_h_d() {
         }
     }
     assert_eq!(cpu.h, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5092,7 +5093,7 @@ fn mov_h_d() {
 ///
 fn mov_h_e() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_E, 0xaa, MOV_H_E, HLT];
     cpu.load_program(&program, 0x0200);
@@ -5104,7 +5105,7 @@ fn mov_h_e() {
         }
     }
     assert_eq!(cpu.h, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5112,7 +5113,7 @@ fn mov_h_e() {
 ///
 fn mov_h_h() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_H, 0xaa, MOV_H_H, HLT];
     cpu.load_program(&program, 0x0200);
@@ -5124,7 +5125,7 @@ fn mov_h_h() {
         }
     }
     assert_eq!(cpu.h, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5132,7 +5133,7 @@ fn mov_h_h() {
 ///
 fn mov_h_l() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_L, 0xaa, MOV_H_L, HLT];
     cpu.load_program(&program, 0x0200);
@@ -5144,7 +5145,7 @@ fn mov_h_l() {
         }
     }
     assert_eq!(cpu.h, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5152,7 +5153,7 @@ fn mov_h_l() {
 ///
 fn mov_h_m() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
@@ -5167,7 +5168,7 @@ fn mov_h_m() {
         }
     }
     assert_eq!(cpu.h, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5175,7 +5176,7 @@ fn mov_h_m() {
 ///
 fn mov_h_a() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_A, 0xaa, MOV_H_A, HLT];
     cpu.load_program(&program, 0x0200);
@@ -5187,7 +5188,7 @@ fn mov_h_a() {
         }
     }
     assert_eq!(cpu.h, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 //------------------------
 #[test]
@@ -5196,7 +5197,7 @@ fn mov_h_a() {
 ///
 fn mov_l_b() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_B, 0xaa, MOV_L_B, HLT];
     cpu.load_program(&program, 0x0200);
@@ -5208,7 +5209,7 @@ fn mov_l_b() {
         }
     }
     assert_eq!(cpu.l, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5216,7 +5217,7 @@ fn mov_l_b() {
 ///
 fn mov_l_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_C, 0x55, MOV_L_C, HLT];
     cpu.load_program(&program, 0x0200);
@@ -5228,7 +5229,7 @@ fn mov_l_c() {
         }
     }
     assert_eq!(cpu.l, 0x55u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5236,7 +5237,7 @@ fn mov_l_c() {
 ///
 fn mov_l_d() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_D, 0xaa, MOV_L_D, HLT];
     cpu.load_program(&program, 0x0200);
@@ -5248,7 +5249,7 @@ fn mov_l_d() {
         }
     }
     assert_eq!(cpu.l, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5256,7 +5257,7 @@ fn mov_l_d() {
 ///
 fn mov_l_e() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_E, 0xaa, MOV_L_E, HLT];
     cpu.load_program(&program, 0x0200);
@@ -5268,7 +5269,7 @@ fn mov_l_e() {
         }
     }
     assert_eq!(cpu.l, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5276,7 +5277,7 @@ fn mov_l_e() {
 ///
 fn mov_l_h() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_H, 0xaa, MOV_L_H, HLT];
     cpu.load_program(&program, 0x0200);
@@ -5288,7 +5289,7 @@ fn mov_l_h() {
         }
     }
     assert_eq!(cpu.l, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5296,7 +5297,7 @@ fn mov_l_h() {
 ///
 fn mov_l_l() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_L, 0xaa, MOV_L_L, HLT];
     cpu.load_program(&program, 0x0200);
@@ -5308,7 +5309,7 @@ fn mov_l_l() {
         }
     }
     assert_eq!(cpu.l, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5316,7 +5317,7 @@ fn mov_l_l() {
 ///
 fn mov_l_m() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
@@ -5331,7 +5332,7 @@ fn mov_l_m() {
         }
     }
     assert_eq!(cpu.l, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5339,7 +5340,7 @@ fn mov_l_m() {
 ///
 fn mov_l_a() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     let program: Vec<u8> = vec![MVI_A, 0xaa, MOV_L_A, HLT];
     cpu.load_program(&program, 0x0200);
@@ -5351,7 +5352,7 @@ fn mov_l_a() {
         }
     }
     assert_eq!(cpu.l, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5359,7 +5360,7 @@ fn mov_l_a() {
 ///
 fn mov_m_b() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
@@ -5374,7 +5375,7 @@ fn mov_m_b() {
     }
     let value = cpu.memory.read_byte(0x1234);
     assert_eq!(value, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5382,7 +5383,7 @@ fn mov_m_b() {
 ///
 fn mov_m_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
@@ -5397,7 +5398,7 @@ fn mov_m_c() {
     }
     let value = cpu.memory.read_byte(0x1234);
     assert_eq!(value, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5405,7 +5406,7 @@ fn mov_m_c() {
 ///
 fn mov_m_d() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
@@ -5420,7 +5421,7 @@ fn mov_m_d() {
     }
     let value = cpu.memory.read_byte(0x1234);
     assert_eq!(value, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5428,7 +5429,7 @@ fn mov_m_d() {
 ///
 fn mov_m_e() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
@@ -5443,7 +5444,7 @@ fn mov_m_e() {
     }
     let value = cpu.memory.read_byte(0x1234);
     assert_eq!(value, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5451,7 +5452,7 @@ fn mov_m_e() {
 ///
 fn mov_m_h() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
@@ -5466,7 +5467,7 @@ fn mov_m_h() {
     }
     let value = cpu.memory.read_byte(0x1234);
     assert_eq!(value, 0x12u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5474,7 +5475,7 @@ fn mov_m_h() {
 ///
 fn mov_m_l() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
@@ -5489,7 +5490,7 @@ fn mov_m_l() {
     }
     let value = cpu.memory.read_byte(0x1234);
     assert_eq!(value, 0x34u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5497,7 +5498,7 @@ fn mov_m_l() {
 ///
 fn mov_m_a() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
@@ -5512,7 +5513,7 @@ fn mov_m_a() {
     }
     let value = cpu.memory.read_byte(0x1234);
     assert_eq!(value, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5520,7 +5521,7 @@ fn mov_m_a() {
 ///
 fn ora_b() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
@@ -5534,7 +5535,7 @@ fn ora_b() {
         }
     }
     assert_eq!(cpu.a, 0xffu8);
-    assert_eq!(cpu.psw.value, 0x86u8);
+    assert_eq!(cpu.status.value, 0x86u8);
 }
 #[test]
 ///
@@ -5542,7 +5543,7 @@ fn ora_b() {
 ///
 fn ora_c() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
@@ -5556,7 +5557,7 @@ fn ora_c() {
         }
     }
     assert_eq!(cpu.a, 0xffu8);
-    assert_eq!(cpu.psw.value, 0x86u8);
+    assert_eq!(cpu.status.value, 0x86u8);
 }
 #[test]
 ///
@@ -5564,7 +5565,7 @@ fn ora_c() {
 ///
 fn ora_d() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
@@ -5578,7 +5579,7 @@ fn ora_d() {
         }
     }
     assert_eq!(cpu.a, 0x55u8);
-    assert_eq!(cpu.psw.value, 0x06u8);
+    assert_eq!(cpu.status.value, 0x06u8);
 }
 #[test]
 ///
@@ -5586,7 +5587,7 @@ fn ora_d() {
 ///
 fn ora_e() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
@@ -5600,7 +5601,7 @@ fn ora_e() {
         }
     }
     assert_eq!(cpu.a, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x86u8);
+    assert_eq!(cpu.status.value, 0x86u8);
 }
 #[test]
 ///
@@ -5608,7 +5609,7 @@ fn ora_e() {
 ///
 fn ora_h() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
@@ -5622,7 +5623,7 @@ fn ora_h() {
         }
     }
     assert_eq!(cpu.a, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x46u8);
+    assert_eq!(cpu.status.value, 0x46u8);
 }
 #[test]
 ///
@@ -5630,7 +5631,7 @@ fn ora_h() {
 ///
 fn ora_l() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
@@ -5644,7 +5645,7 @@ fn ora_l() {
         }
     }
     assert_eq!(cpu.a, 0xffu8);
-    assert_eq!(cpu.psw.value, 0x86u8);
+    assert_eq!(cpu.status.value, 0x86u8);
 }
 #[test]
 ///
@@ -5652,7 +5653,7 @@ fn ora_l() {
 ///
 fn ora_m() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
@@ -5667,7 +5668,7 @@ fn ora_m() {
         }
     }
     assert_eq!(cpu.a, 0xffu8);
-    assert_eq!(cpu.psw.value, 0x86u8);
+    assert_eq!(cpu.status.value, 0x86u8);
 }
 #[test]
 ///
@@ -5675,7 +5676,7 @@ fn ora_m() {
 ///
 fn ora_a() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
@@ -5689,7 +5690,7 @@ fn ora_a() {
         }
     }
     assert_eq!(cpu.a, 0x55u8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5697,7 +5698,7 @@ fn ora_a() {
 ///
 fn ori() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
@@ -5711,7 +5712,7 @@ fn ori() {
         }
     }
     assert_eq!(cpu.a, 0xffu8);
-    assert_eq!(cpu.psw.value, 0x86u8);
+    assert_eq!(cpu.status.value, 0x86u8);
 }
 #[test]
 ///
@@ -5719,7 +5720,7 @@ fn ori() {
 ///
 fn pchl() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
@@ -5733,7 +5734,7 @@ fn pchl() {
         }
     }
     assert_eq!(cpu.a, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5741,7 +5742,7 @@ fn pchl() {
 ///
 fn pop_b() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0x1234u16;
     cpu.memory.write_byte(0x1234, 0x55);
     cpu.memory.write_byte(0x1235, 0xaa);
@@ -5757,7 +5758,7 @@ fn pop_b() {
     assert_eq!(cpu.b, 0xaau8);
     assert_eq!(cpu.c, 0x55u8);
     assert_eq!(cpu.sp, 0x1236);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5765,7 +5766,7 @@ fn pop_b() {
 ///
 fn pop_d() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0x1234u16;
     cpu.memory.write_byte(0x1234, 0x12);
     cpu.memory.write_byte(0x1235, 0x34);
@@ -5781,7 +5782,7 @@ fn pop_d() {
     assert_eq!(cpu.d, 0x34u8);
     assert_eq!(cpu.e, 0x12u8);
     assert_eq!(cpu.sp, 0x1236);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5789,7 +5790,7 @@ fn pop_d() {
 ///
 fn pop_h() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0x1234u16;
     cpu.memory.write_byte(0x1234, 0xaa);
     cpu.memory.write_byte(0x1235, 0x55);
@@ -5805,7 +5806,7 @@ fn pop_h() {
     assert_eq!(cpu.d, 0x55u8);
     assert_eq!(cpu.e, 0xaau8);
     assert_eq!(cpu.sp, 0x1236);
-    assert_eq!(cpu.psw.value, 0x02u8);
+    assert_eq!(cpu.status.value, 0x02u8);
 }
 #[test]
 ///
@@ -5813,7 +5814,7 @@ fn pop_h() {
 ///
 fn pop_psw() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0x1234u16;
     cpu.memory.write_byte(0x1234, 0x56);
     cpu.memory.write_byte(0x1235, 0xaa);
@@ -5827,7 +5828,7 @@ fn pop_psw() {
         }
     }
     assert_eq!(cpu.a, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x56u8);
+    assert_eq!(cpu.status.value, 0x56u8);
     assert_eq!(cpu.sp, 0x1236);
 }
 #[test]
@@ -5836,7 +5837,7 @@ fn pop_psw() {
 ///
 fn push_b() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0x1234u16;
     let program: Vec<u8> = vec![LXI_B, 0x12, 0x34, PUSH_B, HLT];
     cpu.load_program(&program, 0x0200);
@@ -5859,7 +5860,7 @@ fn push_b() {
 ///
 fn push_d() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0x1234u16;
     let program: Vec<u8> = vec![LXI_D, 0x55, 0xaa, PUSH_D, HLT];
     cpu.load_program(&program, 0x0200);
@@ -5882,7 +5883,7 @@ fn push_d() {
 ///
 fn push_h() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0x1234u16;
     let program: Vec<u8> = vec![LXI_H, 0x34, 0x12, PUSH_H, HLT];
     cpu.load_program(&program, 0x0200);
@@ -5905,7 +5906,7 @@ fn push_h() {
 ///
 fn push_psw() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0x1234u16;
     let program: Vec<u8> = vec![MVI_A, 0x55, PUSH_PSW, HLT];
     cpu.load_program(&program, 0x0200);
@@ -5928,7 +5929,7 @@ fn push_psw() {
 ///
 fn ral_1() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0x1234u16;
     let program: Vec<u8> = vec![MVI_A, 0x55, RAL, HLT];
     cpu.load_program(&program, 0x0200);
@@ -5940,7 +5941,7 @@ fn ral_1() {
         }
     }
     assert_eq!(cpu.a, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02);
+    assert_eq!(cpu.status.value, 0x02);
 }
 #[test]
 ///
@@ -5948,9 +5949,9 @@ fn ral_1() {
 ///
 fn ral_2() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0x1234u16;
-    cpu.psw.set_carry(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0x55, RAL, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -5961,7 +5962,7 @@ fn ral_2() {
         }
     }
     assert_eq!(cpu.a, 0xabu8);
-    assert_eq!(cpu.psw.value, 0x02);
+    assert_eq!(cpu.status.value, 0x02);
 }
 #[test]
 ///
@@ -5969,9 +5970,9 @@ fn ral_2() {
 ///
 fn ral_3() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0x1234u16;
-    cpu.psw.set_carry(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0xaa, RAL, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -5982,7 +5983,7 @@ fn ral_3() {
         }
     }
     assert_eq!(cpu.a, 0x55u8);
-    assert_eq!(cpu.psw.value, 0x03);
+    assert_eq!(cpu.status.value, 0x03);
 }
 #[test]
 ///
@@ -5990,7 +5991,7 @@ fn ral_3() {
 ///
 fn rar_1() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0x1234u16;
     let program: Vec<u8> = vec![MVI_A, 0xaa, RAR, HLT];
     cpu.load_program(&program, 0x0200);
@@ -6002,7 +6003,7 @@ fn rar_1() {
         }
     }
     assert_eq!(cpu.a, 0x55u8);
-    assert_eq!(cpu.psw.value, 0x02);
+    assert_eq!(cpu.status.value, 0x02);
 }
 #[test]
 ///
@@ -6010,9 +6011,9 @@ fn rar_1() {
 ///
 fn rar_2() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0x1234u16;
-    cpu.psw.set_carry(true);
+    cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0xab, RAR, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -6023,7 +6024,7 @@ fn rar_2() {
         }
     }
     assert_eq!(cpu.a, 0xd5u8);
-    assert_eq!(cpu.psw.value, 0x03);
+    assert_eq!(cpu.status.value, 0x03);
 }
 #[test]
 ///
@@ -6031,9 +6032,9 @@ fn rar_2() {
 ///
 fn rlc_1() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0x1234u16;
-    cpu.psw.set_carry(false);
+    cpu.status.set_carry(false);
     let program: Vec<u8> = vec![MVI_A, 0xaa, RLC, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -6044,7 +6045,7 @@ fn rlc_1() {
         }
     }
     assert_eq!(cpu.a, 0x55u8);
-    assert_eq!(cpu.psw.value, 0x03);
+    assert_eq!(cpu.status.value, 0x03);
 }
 #[test]
 ///
@@ -6052,9 +6053,9 @@ fn rlc_1() {
 ///
 fn rlc_2() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0x1234u16;
-    cpu.psw.set_carry(false);
+    cpu.status.set_carry(false);
     let program: Vec<u8> = vec![MVI_A, 0x55, RLC, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -6065,7 +6066,7 @@ fn rlc_2() {
         }
     }
     assert_eq!(cpu.a, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x02);
+    assert_eq!(cpu.status.value, 0x02);
 }
 #[test]
 ///
@@ -6073,9 +6074,9 @@ fn rlc_2() {
 ///
 fn rrc_1() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0x1234u16;
-    cpu.psw.set_carry(false);
+    cpu.status.set_carry(false);
     let program: Vec<u8> = vec![MVI_A, 0xaa, RRC, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -6086,7 +6087,7 @@ fn rrc_1() {
         }
     }
     assert_eq!(cpu.a, 0x55u8);
-    assert_eq!(cpu.psw.value, 0x02);
+    assert_eq!(cpu.status.value, 0x02);
 }
 #[test]
 ///
@@ -6094,9 +6095,9 @@ fn rrc_1() {
 ///
 fn rrc_2() {
     let mut cpu = Cpu::new();
-    cpu.psw.clear_flags();
+    cpu.status.clear_flags();
     cpu.sp = 0x1234u16;
-    cpu.psw.set_carry(false);
+    cpu.status.set_carry(false);
     let program: Vec<u8> = vec![MVI_A, 0xab, RRC, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
@@ -6107,7 +6108,7 @@ fn rrc_2() {
         }
     }
     assert_eq!(cpu.a, 0xd5u8);
-    assert_eq!(cpu.psw.value, 0x03);
+    assert_eq!(cpu.status.value, 0x03);
 }
 #[test]
 ///
@@ -6525,9 +6526,7 @@ fn rst_0() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
     let rst = vec![MVI_A, 0x55, ANI, 0xff, RET];
-    let program: Vec<u8> = vec![
-        MVI_A, 0xff, RST_0, HLT
-    ];
+    let program: Vec<u8> = vec![MVI_A, 0xff, RST_0, HLT];
     cpu.load_program(&rst, 0x0000);
     cpu.load_program(&program, 0x0200);
     loop {
@@ -6547,9 +6546,7 @@ fn rst_1() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
     let rst = vec![MVI_A, 0x55, ANI, 0xaa, RZ, MVI_A, 0xaa, RET];
-    let program: Vec<u8> = vec![
-        MVI_A, 0xff, RST_1, NOP, HLT
-    ];
+    let program: Vec<u8> = vec![MVI_A, 0xff, RST_1, NOP, HLT];
     cpu.load_program(&rst, 0x0008);
     cpu.load_program(&program, 0x0200);
     loop {
@@ -6569,9 +6566,7 @@ fn rst_2() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
     let rst = vec![MVI_A, 0x55, ANI, 0x55, RZ, MVI_A, 0xaa, RET];
-    let program: Vec<u8> = vec![
-        MVI_A, 0xff, RST_2, NOP, HLT
-    ];
+    let program: Vec<u8> = vec![MVI_A, 0xff, RST_2, NOP, HLT];
     cpu.load_program(&rst, 0x0010);
     cpu.load_program(&program, 0x0200);
     loop {
@@ -6591,9 +6586,7 @@ fn rst_3() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
     let rst = vec![MVI_A, 0xff, ADI, 0x01, RC, MVI_A, 0xaa, RET];
-    let program: Vec<u8> = vec![
-        MVI_A, 0xff, RST_3, NOP, HLT
-    ];
+    let program: Vec<u8> = vec![MVI_A, 0xff, RST_3, NOP, HLT];
     cpu.load_program(&rst, 0x018);
     cpu.load_program(&program, 0x0200);
     loop {
@@ -6613,9 +6606,7 @@ fn rst_4() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
     let rst = vec![MVI_A, 0xff, ADI, 0x00, RNC, MVI_A, 0xaa, RET];
-    let program: Vec<u8> = vec![
-        MVI_A, 0xff, RST_4, NOP, HLT
-    ];
+    let program: Vec<u8> = vec![MVI_A, 0xff, RST_4, NOP, HLT];
     cpu.load_program(&rst, 0x0020);
     cpu.load_program(&program, 0x0200);
     loop {
@@ -6635,9 +6626,7 @@ fn rst_5() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
     let rst = vec![MVI_A, 0xff, ADI, 0x02, RPO, MVI_A, 0xaa, RET];
-    let program: Vec<u8> = vec![
-        MVI_A, 0xff, RST_5, NOP, HLT
-    ];
+    let program: Vec<u8> = vec![MVI_A, 0xff, RST_5, NOP, HLT];
     cpu.load_program(&rst, 0x0028);
     cpu.load_program(&program, 0x0200);
     loop {
@@ -6657,9 +6646,7 @@ fn rst_6() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
     let rst = vec![MVI_A, 0xff, ADI, 0x02, RPE, MVI_A, 0xaa, RET];
-    let program: Vec<u8> = vec![
-        MVI_A, 0xff, RST_6, NOP, HLT
-    ];
+    let program: Vec<u8> = vec![MVI_A, 0xff, RST_6, NOP, HLT];
     cpu.load_program(&rst, 0x0030);
     cpu.load_program(&program, 0x0200);
     loop {
@@ -6679,9 +6666,7 @@ fn rst_7() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
     let rst = vec![MVI_A, 0xff, ADI, 0x02, RP, MVI_A, 0xaa, RET];
-    let program: Vec<u8> = vec![
-        MVI_A, 0xff, RST_7, NOP, HLT
-    ];
+    let program: Vec<u8> = vec![MVI_A, 0xff, RST_7, NOP, HLT];
     cpu.load_program(&rst, 0x0038);
     cpu.load_program(&program, 0x0200);
     loop {
@@ -6700,10 +6685,8 @@ fn rst_7() {
 fn sbb_b_1() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x0f, MVI_B, 0x0f, SBB_B,  HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x0f, MVI_B, 0x0f, SBB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -6713,7 +6696,7 @@ fn sbb_b_1() {
         }
     }
     assert_eq!(cpu.a, 0x0u8);
-    assert_eq!(cpu.psw.value, 0x56u8);
+    assert_eq!(cpu.status.value, 0x56u8);
 }
 #[test]
 ///
@@ -6722,10 +6705,8 @@ fn sbb_b_1() {
 fn sbb_b_2() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(true);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x0f, MVI_B, 0x0f, SBB_B,  HLT,
-    ];
+    cpu.status.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0x0f, MVI_B, 0x0f, SBB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -6735,7 +6716,7 @@ fn sbb_b_2() {
         }
     }
     assert_eq!(cpu.a, 0xffu8);
-    assert_eq!(cpu.psw.value, 0x87u8);
+    assert_eq!(cpu.status.value, 0x87u8);
 }
 #[test]
 ///
@@ -6744,10 +6725,8 @@ fn sbb_b_2() {
 fn sbb_b_3() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x00, MVI_B, 0x0f, SBB_B,  HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x00, MVI_B, 0x0f, SBB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -6757,7 +6736,7 @@ fn sbb_b_3() {
         }
     }
     assert_eq!(cpu.a, 0xf1u8);
-    assert_eq!(cpu.psw.value, 0x83u8);
+    assert_eq!(cpu.status.value, 0x83u8);
 }
 #[test]
 ///
@@ -6766,10 +6745,8 @@ fn sbb_b_3() {
 fn sbb_b_4() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(true);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x00, MVI_B, 0x0f, SBB_B,  HLT,
-    ];
+    cpu.status.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0x00, MVI_B, 0x0f, SBB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -6779,7 +6756,7 @@ fn sbb_b_4() {
         }
     }
     assert_eq!(cpu.a, 0xf0u8);
-    assert_eq!(cpu.psw.value, 0x87u8);
+    assert_eq!(cpu.status.value, 0x87u8);
 }
 #[test]
 ///
@@ -6788,10 +6765,8 @@ fn sbb_b_4() {
 fn sbb_b_5() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x0f, MVI_B, 0x00, SBB_B,  HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x0f, MVI_B, 0x00, SBB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -6801,7 +6776,7 @@ fn sbb_b_5() {
         }
     }
     assert_eq!(cpu.a, 0x0fu8);
-    assert_eq!(cpu.psw.value, 0x16u8);
+    assert_eq!(cpu.status.value, 0x16u8);
 }
 #[test]
 ///
@@ -6810,10 +6785,8 @@ fn sbb_b_5() {
 fn sbb_b_6() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(true);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x0f, MVI_B, 0x00, SBB_B,  HLT,
-    ];
+    cpu.status.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0x0f, MVI_B, 0x00, SBB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -6823,7 +6796,7 @@ fn sbb_b_6() {
         }
     }
     assert_eq!(cpu.a, 0x0eu8);
-    assert_eq!(cpu.psw.value, 0x12u8);
+    assert_eq!(cpu.status.value, 0x12u8);
 }
 #[test]
 ///
@@ -6832,10 +6805,8 @@ fn sbb_b_6() {
 fn sbb_b_7() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x00, MVI_B, 0xff, SBB_B,  HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x00, MVI_B, 0xff, SBB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -6845,7 +6816,7 @@ fn sbb_b_7() {
         }
     }
     assert_eq!(cpu.a, 0x01u8);
-    assert_eq!(cpu.psw.value, 0x03u8);
+    assert_eq!(cpu.status.value, 0x03u8);
 }
 #[test]
 ///
@@ -6854,10 +6825,8 @@ fn sbb_b_7() {
 fn sbb_b_8() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(true);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x00, MVI_B, 0xff, SBB_B,  HLT,
-    ];
+    cpu.status.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0x00, MVI_B, 0xff, SBB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -6867,7 +6836,7 @@ fn sbb_b_8() {
         }
     }
     assert_eq!(cpu.a, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x47u8);
+    assert_eq!(cpu.status.value, 0x47u8);
 }
 #[test]
 ///
@@ -6876,10 +6845,8 @@ fn sbb_b_8() {
 fn sbb_b_9() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x20, MVI_B, 0x10, SBB_B,  HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x20, MVI_B, 0x10, SBB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -6889,7 +6856,7 @@ fn sbb_b_9() {
         }
     }
     assert_eq!(cpu.a, 0x10u8);
-    assert_eq!(cpu.psw.value, 0x12u8);
+    assert_eq!(cpu.status.value, 0x12u8);
 }
 #[test]
 ///
@@ -6898,10 +6865,8 @@ fn sbb_b_9() {
 fn sbb_c_1() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x0f, MVI_C, 0x0ff, SBB_C,  HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x0f, MVI_C, 0x0ff, SBB_C, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -6911,7 +6876,7 @@ fn sbb_c_1() {
         }
     }
     assert_eq!(cpu.a, 0x10u8);
-    assert_eq!(cpu.psw.value, 0x13u8);
+    assert_eq!(cpu.status.value, 0x13u8);
 }
 #[test]
 ///
@@ -6920,10 +6885,8 @@ fn sbb_c_1() {
 fn sbb_c_2() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(true);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x0f, MVI_C, 0x0ff, SBB_C,  HLT,
-    ];
+    cpu.status.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0x0f, MVI_C, 0x0ff, SBB_C, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -6933,7 +6896,7 @@ fn sbb_c_2() {
         }
     }
     assert_eq!(cpu.a, 0x0fu8);
-    assert_eq!(cpu.psw.value, 0x07u8);
+    assert_eq!(cpu.status.value, 0x07u8);
 }
 #[test]
 ///
@@ -6942,10 +6905,8 @@ fn sbb_c_2() {
 fn sbb_d_1() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x0ff, MVI_D, 0x0f, SBB_D,  HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x0ff, MVI_D, 0x0f, SBB_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -6955,7 +6916,7 @@ fn sbb_d_1() {
         }
     }
     assert_eq!(cpu.a, 0xf0u8);
-    assert_eq!(cpu.psw.value, 0x96u8);
+    assert_eq!(cpu.status.value, 0x96u8);
 }
 #[test]
 ///
@@ -6964,10 +6925,8 @@ fn sbb_d_1() {
 fn sbb_d_2() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(true);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x0ff, MVI_D, 0x0f, SBB_D,  HLT,
-    ];
+    cpu.status.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0x0ff, MVI_D, 0x0f, SBB_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -6977,7 +6936,7 @@ fn sbb_d_2() {
         }
     }
     assert_eq!(cpu.a, 0xefu8);
-    assert_eq!(cpu.psw.value, 0x82u8);
+    assert_eq!(cpu.status.value, 0x82u8);
 }
 #[test]
 ///
@@ -6986,10 +6945,8 @@ fn sbb_d_2() {
 fn sbb_e_1() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x04, MVI_E, 0x02, SBB_E,  HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x04, MVI_E, 0x02, SBB_E, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -6999,7 +6956,7 @@ fn sbb_e_1() {
         }
     }
     assert_eq!(cpu.a, 0x02u8);
-    assert_eq!(cpu.psw.value, 0x12u8);
+    assert_eq!(cpu.status.value, 0x12u8);
 }
 #[test]
 ///
@@ -7008,10 +6965,8 @@ fn sbb_e_1() {
 fn sbb_e_2() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(true);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x04, MVI_E, 0x02, SBB_E,  HLT,
-    ];
+    cpu.status.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0x04, MVI_E, 0x02, SBB_E, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7021,7 +6976,7 @@ fn sbb_e_2() {
         }
     }
     assert_eq!(cpu.a, 0x01u8);
-    assert_eq!(cpu.psw.value, 0x12u8);
+    assert_eq!(cpu.status.value, 0x12u8);
 }
 #[test]
 ///
@@ -7030,10 +6985,8 @@ fn sbb_e_2() {
 fn sbb_h_1() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x02, MVI_H, 0x04, SBB_H,  HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x02, MVI_H, 0x04, SBB_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7043,7 +6996,7 @@ fn sbb_h_1() {
         }
     }
     assert_eq!(cpu.a, 0xfeu8);
-    assert_eq!(cpu.psw.value, 0x83u8);
+    assert_eq!(cpu.status.value, 0x83u8);
 }
 #[test]
 ///
@@ -7052,10 +7005,8 @@ fn sbb_h_1() {
 fn sbb_h_2() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(true);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x02, MVI_H, 0x04, SBB_H,  HLT,
-    ];
+    cpu.status.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0x02, MVI_H, 0x04, SBB_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7065,7 +7016,7 @@ fn sbb_h_2() {
         }
     }
     assert_eq!(cpu.a, 0xfdu8);
-    assert_eq!(cpu.psw.value, 0x83u8);
+    assert_eq!(cpu.status.value, 0x83u8);
 }
 #[test]
 ///
@@ -7074,10 +7025,8 @@ fn sbb_h_2() {
 fn sbb_l_1() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x55, MVI_L, 0xaa, SBB_L,  HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x55, MVI_L, 0xaa, SBB_L, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7087,7 +7036,7 @@ fn sbb_l_1() {
         }
     }
     assert_eq!(cpu.a, 0xabu8);
-    assert_eq!(cpu.psw.value, 0x83u8);
+    assert_eq!(cpu.status.value, 0x83u8);
 }
 #[test]
 ///
@@ -7096,10 +7045,8 @@ fn sbb_l_1() {
 fn sbb_l_2() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(true);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x55, MVI_L, 0xaa, SBB_L,  HLT,
-    ];
+    cpu.status.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0x55, MVI_L, 0xaa, SBB_L, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7109,7 +7056,7 @@ fn sbb_l_2() {
         }
     }
     assert_eq!(cpu.a, 0xaau8);
-    assert_eq!(cpu.psw.value, 0x87u8);
+    assert_eq!(cpu.status.value, 0x87u8);
 }
 #[test]
 ///
@@ -7118,13 +7065,11 @@ fn sbb_l_2() {
 fn sbb_m_1() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
+    cpu.status.set_carry(false);
     cpu.h = 0x12;
     cpu.l = 0x34;
     cpu.memory.write_byte(0x1234, 0x55);
-    let program: Vec<u8> = vec![
-        MVI_A, 0xaa, SBB_M,  HLT,
-    ];
+    let program: Vec<u8> = vec![MVI_A, 0xaa, SBB_M, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7134,7 +7079,7 @@ fn sbb_m_1() {
         }
     }
     assert_eq!(cpu.a, 0x55u8);
-    assert_eq!(cpu.psw.value, 0x16u8);
+    assert_eq!(cpu.status.value, 0x16u8);
 }
 #[test]
 ///
@@ -7143,13 +7088,11 @@ fn sbb_m_1() {
 fn sbb_m_2() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(true);
+    cpu.status.set_carry(true);
     cpu.h = 0x12;
     cpu.l = 0x34;
     cpu.memory.write_byte(0x1234, 0x55);
-    let program: Vec<u8> = vec![
-        MVI_A, 0xaa, SBB_M,  HLT,
-    ];
+    let program: Vec<u8> = vec![MVI_A, 0xaa, SBB_M, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7159,7 +7102,7 @@ fn sbb_m_2() {
         }
     }
     assert_eq!(cpu.a, 0x54u8);
-    assert_eq!(cpu.psw.value, 0x12u8);
+    assert_eq!(cpu.status.value, 0x12u8);
 }
 #[test]
 ///
@@ -7168,10 +7111,8 @@ fn sbb_m_2() {
 fn sbb_a_1() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x00, SBB_A,  HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x00, SBB_A, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7181,7 +7122,7 @@ fn sbb_a_1() {
         }
     }
     assert_eq!(cpu.a, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x56u8);
+    assert_eq!(cpu.status.value, 0x56u8);
 }
 #[test]
 ///
@@ -7190,10 +7131,8 @@ fn sbb_a_1() {
 fn sbb_a_2() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(true);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x00, SBB_A,  HLT,
-    ];
+    cpu.status.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0x00, SBB_A, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7203,7 +7142,7 @@ fn sbb_a_2() {
         }
     }
     assert_eq!(cpu.a, 0xffu8);
-    assert_eq!(cpu.psw.value, 0x87u8);
+    assert_eq!(cpu.status.value, 0x87u8);
 }
 #[test]
 ///
@@ -7212,10 +7151,8 @@ fn sbb_a_2() {
 fn sbi_1() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x04, SBI, 0x02,  HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x04, SBI, 0x02, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7225,7 +7162,7 @@ fn sbi_1() {
         }
     }
     assert_eq!(cpu.a, 0x02u8);
-    assert_eq!(cpu.psw.value, 0x12u8);
+    assert_eq!(cpu.status.value, 0x12u8);
 }
 #[test]
 ///
@@ -7234,10 +7171,8 @@ fn sbi_1() {
 fn sbi_2() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(true);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x04, SBI, 0x02,  HLT,
-    ];
+    cpu.status.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0x04, SBI, 0x02, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7247,7 +7182,7 @@ fn sbi_2() {
         }
     }
     assert_eq!(cpu.a, 0x01u8);
-    assert_eq!(cpu.psw.value, 0x12u8);
+    assert_eq!(cpu.status.value, 0x12u8);
 }
 #[test]
 ///
@@ -7256,10 +7191,8 @@ fn sbi_2() {
 fn sbi_3() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x00, SBI, 0x00,  HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x00, SBI, 0x00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7269,7 +7202,7 @@ fn sbi_3() {
         }
     }
     assert_eq!(cpu.a, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x56u8);
+    assert_eq!(cpu.status.value, 0x56u8);
 }
 #[test]
 ///
@@ -7278,10 +7211,8 @@ fn sbi_3() {
 fn sbi_4() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(true);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x00, SBI, 0x00,  HLT,
-    ];
+    cpu.status.set_carry(true);
+    let program: Vec<u8> = vec![MVI_A, 0x00, SBI, 0x00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7291,7 +7222,7 @@ fn sbi_4() {
         }
     }
     assert_eq!(cpu.a, 0xffu8);
-    assert_eq!(cpu.psw.value, 0x87u8);
+    assert_eq!(cpu.status.value, 0x87u8);
 }
 #[test]
 ///
@@ -7300,10 +7231,8 @@ fn sbi_4() {
 fn sub_b_1() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x0f, MVI_B, 0x0f, SUB_B,  HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x0f, MVI_B, 0x0f, SUB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7313,7 +7242,7 @@ fn sub_b_1() {
         }
     }
     assert_eq!(cpu.a, 0x0u8);
-    assert_eq!(cpu.psw.value, 0x56u8);
+    assert_eq!(cpu.status.value, 0x56u8);
 }
 #[test]
 ///
@@ -7322,10 +7251,8 @@ fn sub_b_1() {
 fn sub_b_3() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x00, MVI_B, 0x0f, SUB_B,  HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x00, MVI_B, 0x0f, SUB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7335,7 +7262,7 @@ fn sub_b_3() {
         }
     }
     assert_eq!(cpu.a, 0xf1u8);
-    assert_eq!(cpu.psw.value, 0x83u8);
+    assert_eq!(cpu.status.value, 0x83u8);
 }
 #[test]
 ///
@@ -7344,10 +7271,8 @@ fn sub_b_3() {
 fn sub_b_5() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x0f, MVI_B, 0x00, SUB_B,  HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x0f, MVI_B, 0x00, SUB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7357,7 +7282,7 @@ fn sub_b_5() {
         }
     }
     assert_eq!(cpu.a, 0x0fu8);
-    assert_eq!(cpu.psw.value, 0x16u8);
+    assert_eq!(cpu.status.value, 0x16u8);
 }
 #[test]
 ///
@@ -7366,10 +7291,8 @@ fn sub_b_5() {
 fn sub_b_7() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x00, MVI_B, 0xff, SUB_B,  HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x00, MVI_B, 0xff, SUB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7379,7 +7302,7 @@ fn sub_b_7() {
         }
     }
     assert_eq!(cpu.a, 0x01u8);
-    assert_eq!(cpu.psw.value, 0x03u8);
+    assert_eq!(cpu.status.value, 0x03u8);
 }
 #[test]
 ///
@@ -7388,10 +7311,8 @@ fn sub_b_7() {
 fn sub_b_9() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x20, MVI_B, 0x10, SUB_B,  HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x20, MVI_B, 0x10, SUB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7401,7 +7322,7 @@ fn sub_b_9() {
         }
     }
     assert_eq!(cpu.a, 0x10u8);
-    assert_eq!(cpu.psw.value, 0x12u8);
+    assert_eq!(cpu.status.value, 0x12u8);
 }
 #[test]
 ///
@@ -7410,10 +7331,8 @@ fn sub_b_9() {
 fn sub_c_1() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x0f, MVI_C, 0x0ff, SUB_C,  HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x0f, MVI_C, 0x0ff, SUB_C, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7423,7 +7342,7 @@ fn sub_c_1() {
         }
     }
     assert_eq!(cpu.a, 0x10u8);
-    assert_eq!(cpu.psw.value, 0x13u8);
+    assert_eq!(cpu.status.value, 0x13u8);
 }
 #[test]
 ///
@@ -7432,10 +7351,8 @@ fn sub_c_1() {
 fn sub_d_1() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x0ff, MVI_D, 0x0f, SUB_D,  HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x0ff, MVI_D, 0x0f, SUB_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7445,7 +7362,7 @@ fn sub_d_1() {
         }
     }
     assert_eq!(cpu.a, 0xf0u8);
-    assert_eq!(cpu.psw.value, 0x96u8);
+    assert_eq!(cpu.status.value, 0x96u8);
 }
 #[test]
 ///
@@ -7454,10 +7371,8 @@ fn sub_d_1() {
 fn sub_e_1() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x04, MVI_E, 0x02, SUB_E,  HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x04, MVI_E, 0x02, SUB_E, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7467,7 +7382,7 @@ fn sub_e_1() {
         }
     }
     assert_eq!(cpu.a, 0x02u8);
-    assert_eq!(cpu.psw.value, 0x12u8);
+    assert_eq!(cpu.status.value, 0x12u8);
 }
 #[test]
 ///
@@ -7476,10 +7391,8 @@ fn sub_e_1() {
 fn sub_h_1() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x02, MVI_H, 0x04, SUB_H,  HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x02, MVI_H, 0x04, SUB_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7489,7 +7402,7 @@ fn sub_h_1() {
         }
     }
     assert_eq!(cpu.a, 0xfeu8);
-    assert_eq!(cpu.psw.value, 0x83u8);
+    assert_eq!(cpu.status.value, 0x83u8);
 }
 #[test]
 ///
@@ -7498,10 +7411,8 @@ fn sub_h_1() {
 fn sub_l_1() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x55, MVI_L, 0xaa, SUB_L,  HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x55, MVI_L, 0xaa, SUB_L, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7511,7 +7422,7 @@ fn sub_l_1() {
         }
     }
     assert_eq!(cpu.a, 0xabu8);
-    assert_eq!(cpu.psw.value, 0x83u8);
+    assert_eq!(cpu.status.value, 0x83u8);
 }
 #[test]
 ///
@@ -7520,13 +7431,11 @@ fn sub_l_1() {
 fn sub_m_1() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
+    cpu.status.set_carry(false);
     cpu.h = 0x12;
     cpu.l = 0x34;
     cpu.memory.write_byte(0x1234, 0x55);
-    let program: Vec<u8> = vec![
-        MVI_A, 0xaa, SUB_M,  HLT,
-    ];
+    let program: Vec<u8> = vec![MVI_A, 0xaa, SUB_M, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7536,7 +7445,7 @@ fn sub_m_1() {
         }
     }
     assert_eq!(cpu.a, 0x55u8);
-    assert_eq!(cpu.psw.value, 0x16u8);
+    assert_eq!(cpu.status.value, 0x16u8);
 }
 #[test]
 ///
@@ -7545,10 +7454,8 @@ fn sub_m_1() {
 fn sub_a_1() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x00, SUB_A,  HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x00, SUB_A, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7558,7 +7465,7 @@ fn sub_a_1() {
         }
     }
     assert_eq!(cpu.a, 0x00u8);
-    assert_eq!(cpu.psw.value, 0x56u8);
+    assert_eq!(cpu.status.value, 0x56u8);
 }
 #[test]
 ///
@@ -7567,10 +7474,8 @@ fn sub_a_1() {
 fn sui_1() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x04, SUI, 0x02,  HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x04, SUI, 0x02, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7580,7 +7485,7 @@ fn sui_1() {
         }
     }
     assert_eq!(cpu.a, 0x02u8);
-    assert_eq!(cpu.psw.value, 0x12u8);
+    assert_eq!(cpu.status.value, 0x12u8);
 }
 #[test]
 ///
@@ -7589,10 +7494,8 @@ fn sui_1() {
 fn shld_1() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_H, 0x12, MVI_L, 0x34, SHLD , 0x10, 0x02, HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_H, 0x12, MVI_L, 0x34, SHLD, 0x10, 0x02, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7603,7 +7506,7 @@ fn shld_1() {
     }
     let addr = 0x0210;
     assert_eq!(cpu.memory.read_byte(addr), 0x34);
-    assert_eq!(cpu.memory.read_byte(addr+1), 0x12);
+    assert_eq!(cpu.memory.read_byte(addr + 1), 0x12);
 }
 #[test]
 ///
@@ -7612,10 +7515,8 @@ fn shld_1() {
 fn shld_2() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_H, 0x12, MVI_L, 0x34, SHLD , 0xff, 0xff, HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_H, 0x12, MVI_L, 0x34, SHLD, 0xff, 0xff, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7635,10 +7536,8 @@ fn shld_2() {
 fn sta() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x55, STA , 0x10, 0x02, HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x55, STA, 0x10, 0x02, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7647,7 +7546,7 @@ fn sta() {
             break;
         }
     }
-    let addr = 0x0210 ;
+    let addr = 0x0210;
     assert_eq!(cpu.memory.read_byte(addr), 0x55);
 }
 #[test]
@@ -7657,10 +7556,8 @@ fn sta() {
 fn stax_b() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_B, 0x02, MVI_C, 0x10, MVI_A, 0x55, STAX_B, HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_B, 0x02, MVI_C, 0x10, MVI_A, 0x55, STAX_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7669,7 +7566,7 @@ fn stax_b() {
             break;
         }
     }
-    let addr = 0x0210 ;
+    let addr = 0x0210;
     assert_eq!(cpu.memory.read_byte(addr), 0x55);
 }
 #[test]
@@ -7679,10 +7576,8 @@ fn stax_b() {
 fn stax_d() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_D, 0x02, MVI_E, 0x10, MVI_A, 0xaa, STAX_D, HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_D, 0x02, MVI_E, 0x10, MVI_A, 0xaa, STAX_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7691,7 +7586,7 @@ fn stax_d() {
             break;
         }
     }
-    let addr = 0x0210 ;
+    let addr = 0x0210;
     assert_eq!(cpu.memory.read_byte(addr), 0xaa);
 }
 #[test]
@@ -7701,10 +7596,8 @@ fn stax_d() {
 fn sphl() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_H, 0x02, MVI_L, 0x10, SPHL, HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_H, 0x02, MVI_L, 0x10, SPHL, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7722,7 +7615,7 @@ fn sphl() {
 fn xchg() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
+    cpu.status.set_carry(false);
     let program: Vec<u8> = vec![
         MVI_H, 0x12, MVI_L, 0x34, MVI_D, 0x34, MVI_E, 0x56, XCHG, HLT,
     ];
@@ -7746,10 +7639,8 @@ fn xchg() {
 fn xra_b() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x55, MVI_B, 0xaa, XRA_B, HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x55, MVI_B, 0xaa, XRA_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7759,7 +7650,7 @@ fn xra_b() {
         }
     }
     assert_eq!(cpu.a, 0xFF);
-    assert_eq!(cpu.psw.value, 0x86 );
+    assert_eq!(cpu.status.value, 0x86);
 }
 #[test]
 ///
@@ -7768,10 +7659,8 @@ fn xra_b() {
 fn xra_c() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x00, MVI_C, 0x00, XRA_C, HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x00, MVI_C, 0x00, XRA_C, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7781,7 +7670,7 @@ fn xra_c() {
         }
     }
     assert_eq!(cpu.a, 0x00);
-    assert_eq!(cpu.psw.value, 0x46 );
+    assert_eq!(cpu.status.value, 0x46);
 }
 #[test]
 ///
@@ -7790,10 +7679,8 @@ fn xra_c() {
 fn xra_d() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x0f, MVI_D, 0xf0, XRA_D, HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x0f, MVI_D, 0xf0, XRA_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7803,7 +7690,7 @@ fn xra_d() {
         }
     }
     assert_eq!(cpu.a, 0xff);
-    assert_eq!(cpu.psw.value, 0x86 );
+    assert_eq!(cpu.status.value, 0x86);
 }
 #[test]
 ///
@@ -7812,10 +7699,8 @@ fn xra_d() {
 fn xra_e() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x12, MVI_E, 0x34, XRA_E, HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x12, MVI_E, 0x34, XRA_E, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7825,7 +7710,7 @@ fn xra_e() {
         }
     }
     assert_eq!(cpu.a, 0x26);
-    assert_eq!(cpu.psw.value, 0x02 );
+    assert_eq!(cpu.status.value, 0x02);
 }
 #[test]
 ///
@@ -7834,10 +7719,8 @@ fn xra_e() {
 fn xra_h() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x34, MVI_H, 0x12, XRA_H, HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x34, MVI_H, 0x12, XRA_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7847,7 +7730,7 @@ fn xra_h() {
         }
     }
     assert_eq!(cpu.a, 0x26);
-    assert_eq!(cpu.psw.value, 0x02 );
+    assert_eq!(cpu.status.value, 0x02);
 }
 #[test]
 ///
@@ -7856,10 +7739,8 @@ fn xra_h() {
 fn xra_l() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x80, MVI_L, 0x08, XRA_L, HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x80, MVI_L, 0x08, XRA_L, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7869,7 +7750,7 @@ fn xra_l() {
         }
     }
     assert_eq!(cpu.a, 0x88);
-    assert_eq!(cpu.psw.value, 0x86);
+    assert_eq!(cpu.status.value, 0x86);
 }
 #[test]
 ///
@@ -7878,11 +7759,9 @@ fn xra_l() {
 fn xra_m() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
+    cpu.status.set_carry(false);
     cpu.memory.write_byte(0x1234, 0x08);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x80, MVI_H, 0x12, MVI_L, 0x34, XRA_M, HLT,
-    ];
+    let program: Vec<u8> = vec![MVI_A, 0x80, MVI_H, 0x12, MVI_L, 0x34, XRA_M, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7892,7 +7771,7 @@ fn xra_m() {
         }
     }
     assert_eq!(cpu.a, 0x88);
-    assert_eq!(cpu.psw.value, 0x86);
+    assert_eq!(cpu.status.value, 0x86);
 }
 #[test]
 ///
@@ -7901,10 +7780,8 @@ fn xra_m() {
 fn xra_a() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x0F, XRA_A, HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x0F, XRA_A, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7914,7 +7791,7 @@ fn xra_a() {
         }
     }
     assert_eq!(cpu.a, 0x00);
-    assert_eq!(cpu.psw.value, 0x46);
+    assert_eq!(cpu.status.value, 0x46);
 }
 #[test]
 ///
@@ -7923,10 +7800,8 @@ fn xra_a() {
 fn xri() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
-    let program: Vec<u8> = vec![
-        MVI_A, 0x0f, XRI, 0x0f, HLT,
-    ];
+    cpu.status.set_carry(false);
+    let program: Vec<u8> = vec![MVI_A, 0x0f, XRI, 0x0f, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
         let opcode = cpu.memory.read_byte(cpu.pc);
@@ -7936,7 +7811,7 @@ fn xri() {
         }
     }
     assert_eq!(cpu.a, 0x00);
-    assert_eq!(cpu.psw.value, 0x46);
+    assert_eq!(cpu.status.value, 0x46);
 }
 #[test]
 ///
@@ -7945,7 +7820,7 @@ fn xri() {
 fn xthl() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
-    cpu.psw.set_carry(false);
+    cpu.status.set_carry(false);
     cpu.sp = 0x210;
     let program: Vec<u8> = vec![
         LXI_D, 0x34, 0x12, LXI_H, 0x78, 0x56, PUSH_D, XTHL, PUSH_H, HLT,
@@ -7960,7 +7835,7 @@ fn xthl() {
     }
     let addr = 0x020c;
     assert_eq!(cpu.memory.read_byte(addr), 0x34);
-    assert_eq!(cpu.memory.read_byte(addr+1), 0x12);
-    assert_eq!(cpu.memory.read_byte(addr+2), 0x78);
-    assert_eq!(cpu.memory.read_byte(addr+3), 0x56);
+    assert_eq!(cpu.memory.read_byte(addr + 1), 0x12);
+    assert_eq!(cpu.memory.read_byte(addr + 2), 0x78);
+    assert_eq!(cpu.memory.read_byte(addr + 3), 0x56);
 }
