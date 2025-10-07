@@ -2,11 +2,12 @@
 pub mod i8080;
 pub mod i8080_opcode;
 pub mod i8080_opcode_consts;
-pub mod mos6502_opcode_consts;
 pub mod mos6502;
 pub mod mos6502_opcode;
+pub mod mos6502_opcode_consts;
 pub mod opcode_viewer;
-use crate::disassembler::opcode_viewer::OpcodeViewer;
+
+use opcode_viewer::OpcodeViewer;
 use ratatui::Frame;
 
 /// Draws description of opcode in terminal
@@ -15,4 +16,6 @@ pub trait DrawOpcode<T> {
     fn draw(&self, viewer: &OpcodeViewer<T>, frame: &mut Frame);
     /// List of opcode's descriptions to be drawn on terminal
     fn opcodes(&self) -> &Vec<T>;
+    /// Find index of the opcode where mnemonic starts with character ch.
+    fn find_index_by_char(&self, ch: char) -> Option<usize>;
 }

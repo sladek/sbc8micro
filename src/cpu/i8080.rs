@@ -1,7 +1,7 @@
 //! Intel I8080 CPU
 //!
 //! Emulates Intel 8080 CPU at register level. No timing is emulated
-//! 
+//!
 //! Below is an example of its usage
 //! ```
 //! use sbc8micro::memory;
@@ -24,12 +24,15 @@
 //! assert_eq!(cpu.a, 0x47u8);
 //! assert_eq!(cpu.status.value, 0x06);
 //!```
+//use crate::command::memory::Memory;
+use crate::cpu::CpuUi;
+use crate::disassembler::i8080::disassemble;
 use crate::disassembler::i8080_opcode_consts::*;
 use crate::memory::Memory;
 use crate::status::i8080::*;
 
 /// CPU registers, flags, counters and memory
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Cpu {
     /// Accumulater
     pub a: u8,
@@ -67,7 +70,7 @@ impl Cpu {
     ///
     /// Returns initialised instance of CPU 8080
     ///
-    pub fn new() -> Self {
+    pub fn new() -> Cpu {
         Self {
             a: 0,
             b: 0,
@@ -84,11 +87,14 @@ impl Cpu {
             debug: true,
         }
     }
+    pub fn get_cpu_ui() -> Option<Box<dyn CpuUi>> {
+        Some(Box::new(Self::new()))
+    }
     ///
     /// Loads program to the memory and set PC to start address of the programm
     ///
     pub fn load_program(&mut self, program: &[u8], start_addr: u16) {
-        self.memory.load_program(program, start_addr);
+        let _ = self.memory.load_program(program, start_addr);
         self.pc = start_addr;
     }
     ///
@@ -205,11 +211,9 @@ impl Cpu {
             };
             mask <<= 1;
         }
-        self.status.set_parity(result % 2 == 0)
+        self.status.set_parity(result.is_multiple_of(2))
     }
     fn addc(&mut self, value: u8) {
-        //        let carry = if self.psw.is_carry() { 1 } else { 0 };
-        //        let sum = value as u16 + carry as u16;
         self.add(value, true);
     }
     fn add(&mut self, value: u8, with_carry: bool) {
@@ -1681,6 +1685,10 @@ impl Cpu {
                 self.memory.write_byte(addr, self.a);
                 dbg!("{}STAX B", self.code_to_str(1));
             }
+            STC => {
+                self.status.set_carry(true);
+                dbg!("{}STC", self.code_to_str(1));
+            }
             SPHL => {
                 self.sp = self.get_hl();
                 dbg!("{}SPHL", self.code_to_str(1));
@@ -1749,5 +1757,18 @@ impl Cpu {
                 dbg!("{}!byte {:02X}H", self.code_to_str(1), opcode);
             }
         }
+    }
+}
+
+use crate::disassembler::i8080::load_opcodes_table;
+impl CpuUi for Cpu {
+    fn memory_dump(&mut self, start: u16, end: u16) -> Vec<String> {
+        self.memory.hex_dump(start, end)
+    }
+    fn get_memory(&mut self) -> &mut Memory {
+        &mut self.memory
+    }
+    fn disasm(&mut self, start: u16, end: u16) -> Vec<String> {
+        disassemble(&self.memory, start, end, &load_opcodes_table())
     }
 }

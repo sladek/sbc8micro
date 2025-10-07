@@ -1,5 +1,5 @@
 //! Shortcuts of mnemonics for mos6502
-//! 
+//!
 //! These constants can simplify testing, when some short program needs to be written
 //! like in the following example
 //! ```

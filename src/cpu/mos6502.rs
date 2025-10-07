@@ -9,7 +9,7 @@
 //! use sbc8micro::memory;
 //! use sbc8micro::cpu;
 //! use sbc8micro::status;
-//! 
+//!
 //!
 //! let mut cpu = cpu::mos6502::Cpu::new();
 //! let program = vec![
@@ -37,6 +37,7 @@
 //! A = 00, X = FF<br/>
 //! Flags: Z=false, N=true
 //!
+use crate::cpu::CpuUi;
 use crate::disassembler::mos6502_opcode_consts::*;
 use crate::memory::Memory;
 use crate::status::mos6502;
@@ -80,9 +81,12 @@ impl Cpu {
             debug: true,
         }
     }
+    pub fn get_cpu_ui() -> Option<Box<dyn CpuUi>> {
+        Some(Box::new(Self::new()))
+    }
     /// Loads program to the memory and set PC to start address of the programm
     pub fn load_program(&mut self, program: &[u8], start_addr: u16) {
-        self.memory.load_program(program, start_addr);
+        let _ = self.memory.load_program(program, start_addr);
         self.pc = start_addr;
     }
     ///
@@ -1582,5 +1586,19 @@ impl Cpu {
                 dbg!("{}!byte ${:02X}", self.code_to_str(1), opcode);
             }
         }
+    }
+}
+
+use crate::disassembler::mos6502::disassemble;
+use crate::disassembler::mos6502::load_opcodes_table;
+impl CpuUi for Cpu {
+    fn memory_dump(&mut self, start: u16, end: u16) -> Vec<String> {
+        self.memory.hex_dump(start, end)
+    }
+    fn get_memory(&mut self) -> &mut Memory {
+        &mut self.memory
+    }
+    fn disasm(&mut self, start: u16, end: u16) -> Vec<String> {
+        disassemble(&self.memory, start, end, &load_opcodes_table())
     }
 }

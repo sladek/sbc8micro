@@ -51,9 +51,9 @@ fn main() {
     }
     print!("{}", cpu.print_registers());
     println!("Test area");
-    cpu.memory.hex_dump(0x0200, 0x0200 + 31);
+    cpu.memory.print_hex_dump(0x0200, 0x0200 + 31);
     println!("Upper stack:");
-    cpu.memory.hex_dump(0xffff - 0x5f, 0xffff);
+    cpu.memory.print_hex_dump(0xffff - 0x5f, 0xffff);
     //    log::set_max_level(log::LevelFilter::Debug);
     log::info!("Hahaha {:02X}", 0x34);
     log::debug!("I am here!");

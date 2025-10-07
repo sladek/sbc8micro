@@ -1,5 +1,5 @@
 //! Disassembler for MOS Technology 6502 CPU
-//! 
+//!
 //! ```
 //! use sbc8micro::disassembler::mos6502::{load_opcodes_table,disassemble};
 //! use sbc8micro::memory;

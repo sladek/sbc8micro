@@ -1,5 +1,5 @@
 //! Shortcuts of mnemonics for i8080
-//! 
+//!
 //! These constants can simplify testing, when some short program needs to be written
 //! like in the following example
 //! ```
@@ -295,6 +295,8 @@ pub const STA: u8 = 0x32;
 // STAX
 pub const STAX_B: u8 = 0x02;
 pub const STAX_D: u8 = 0x12;
+// STC
+pub const STC: u8 = 0x37;
 // SPHL
 pub const SPHL: u8 = 0xF9;
 // XCHG

@@ -11,7 +11,7 @@ fn main() {
         .memory
         .load_program_from_acme_file("examples/test_6502.o")
         .unwrap();
-    let disassembly = disassemble(&cpu.memory, start_addr, start_addr + size as u16, &opcodes);
+    let disassembly = disassemble(&cpu.memory, start_addr, start_addr + size.end, &opcodes);
     println!("---------------------------");
     println!("Main programm.");
     println!("---------------------------");
@@ -35,11 +35,11 @@ fn main() {
     println!("Registers");
     print!("{}", cpu.print_registers());
     println!("Test zero page");
-    cpu.memory.hex_dump(0x55, 0x55 + 31);
+    cpu.memory.print_hex_dump(0x55, 0x55 + 31);
     println!("Test area");
-    cpu.memory.hex_dump(0x04D0, 0x04D0 + 31);
+    cpu.memory.print_hex_dump(0x04D0, 0x04D0 + 31);
     println!("Upper stack:");
-    cpu.memory.hex_dump(0x018f - 0x5f, 0x018f);
+    cpu.memory.print_hex_dump(0x018f - 0x5f, 0x018f);
     //    log::set_max_level(log::LevelFilter::Debug);
     log::info!("Hahaha {:02X}", 0x34);
     log::debug!("I am here!");

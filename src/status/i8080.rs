@@ -5,7 +5,7 @@ pub const AUX_CARRY: u8 = 0b0001_0000;
 pub const PARITY: u8 = 0b0000_0100;
 pub const CARRY: u8 = 0b0000_0001;
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct Status {
     pub value: u8,
 }
