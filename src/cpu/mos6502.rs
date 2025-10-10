@@ -94,7 +94,7 @@ impl Cpu {
     ///
     /// It printes a content of registers in table form which can be useful for debugging
     ///
-    pub fn print_registers(&self) -> String {
+    pub fn get_registers(&self) -> String {
         format!(
 "-------------------------------------------------------------------------
 |  A  |  X  |  Y  |  SP   |  PC   |  P  | N | V | U | B | D | I | Z | C |
@@ -1600,5 +1600,8 @@ impl CpuUi for Cpu {
     }
     fn disasm(&mut self, start: u16, end: u16) -> Vec<String> {
         disassemble(&self.memory, start, end, &load_opcodes_table())
+    }
+    fn show_registers(&mut self) -> Vec<String> {
+        self.get_registers().lines().map(String::from).collect()
     }
 }

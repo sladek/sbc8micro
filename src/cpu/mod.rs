@@ -17,4 +17,5 @@ pub trait CpuUi {
     fn memory_dump(&mut self, start: u16, end: u16) -> Vec<String>;
     fn get_memory(&mut self) -> &mut Memory;
     fn disasm(&mut self, start: u16, end: u16) -> Vec<String>;
+    fn show_registers(&mut self) -> Vec<String>;
 }

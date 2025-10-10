@@ -24,9 +24,12 @@ use ratatui::{
     },
     prelude::CrosstermBackend,
 };
-use sbc8micro::{disassembler::mos6502_opcode, ui::app::{App, AppState}};
 use sbc8micro::disassembler::i8080_opcode;
 use sbc8micro::disassembler::opcode_viewer::OpcodeViewer;
+use sbc8micro::{
+    disassembler::mos6502_opcode,
+    ui::app::{App, AppState},
+};
 
 use color_eyre::eyre::Result;
 
@@ -39,7 +42,6 @@ fn main() -> Result<()> {
     let mut terminal = Terminal::new(backend)?;
     //    let terminal = ratatui::init();
 
-    
     let mut app = App::new();
     let mut state = AppState::Home;
     loop {
@@ -60,14 +62,11 @@ fn main() -> Result<()> {
                 let mut mos6502_viewer = OpcodeViewer::new(op6502_view);
                 state = mos6502_viewer.run(&mut terminal)?;
             }
-            _ => {
-                break
-            }
-        }       
+            _ => break,
+        }
     }
     disable_raw_mode()?;
     ratatui::restore();
     let _ = terminal.clear();
-    println!("Terminal size {:?}", terminal.size());
     Ok(())
 }

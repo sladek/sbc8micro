@@ -22,9 +22,26 @@ impl Help<HelpItem> {
     }
     /// Returns specific help item
     pub fn get_item(&self, name: &str) -> Option<HelpItem> {
-        self.help_items.clone().into_iter().find(|item| item.command == name)
+        self.help_items
+            .clone()
+            .into_iter()
+            .find(|item| Self::find_command(item.command.clone(), name))
     }
-}
+    /// Finds command
+    /// 
+    /// Finds command in "command" json member. command can contain multiple values like "help | ?" or "registers | regs"
+    /// and both are valid commands
+    fn find_command(commands: String, command: &str) -> bool {
+      let lines: Vec<&str> = commands.split('|').collect();
+      for line in lines {
+          if line.trim() == command {
+              return true
+          }
+      }
+      false
+    }
+
+  }
 
 pub static HELP: &str = r#"
 [
@@ -35,16 +52,10 @@ pub static HELP: &str = r#"
     "examples": "\\n    cd\\n    cd /\\n    cd \\\\n    cd /Program Files\\n    cd /home/user\\n Notes: Spaces ' ', like in \"Program Files\" are allowed in folder name.\\n        When no <directory> is provided it changes to home directory."
   },
   {
-    "command": "clear",
-    "description": "Clears the output area. The same as cls.",
-    "usage": "clear",
-    "examples": "\\n    clear"
-  },
-  {
-    "command": "cls",
-    "description": "Clears the output area. The same as clear.",
-    "usage": "cls",
-    "examples": "\\n    cls"
+    "command": "clear | cls",
+    "description": "Clears the output area.",
+    "usage": "clear or cls",
+    "examples": "\\n    clear\\n    cls"
   },
   {
     "command": "disasm",
@@ -59,16 +70,10 @@ pub static HELP: &str = r#"
     "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    dump\\n    dump 0xff\\n    dump 0 127\\n    dump 0h 0ffh\\n    dump $0 $ff\\n    dump 0x0 0xff\\n Note: When <start address> and <end address> are defined they are stored internally and next usage of dump command without address range will use these value.\\n       When only \"dump <start address>\" is defined then end address is calculated as <start + dump_range> where dump_range is by default 128 and can be changed by \"set dump_range <value>\" command."
   },
   {
-    "command": "help",
-    "description": "Shows a help for specific command. The same as ?.",
-    "usage": "help <item>",
-    "examples": "help set"
-  },
-  {
-    "command": "?",
-    "description": "Shows a help for specific command. The same as help.",
-    "usage": "? <item>",
-    "examples": "? set"
+    "command": "help | ?",
+    "description": "Shows a help for specific command",
+    "usage": "help <item> or ? <item>",
+    "examples": "\\n    help set\\n    ? set"
   },
   {
     "command": "load",
@@ -101,10 +106,17 @@ pub static HELP: &str = r#"
     "examples": "\\n    pwd"
   },
   {
+    "command": "registers | regs",
+    "description": "Shows the content of registers of currently set CPU.",
+    "usage": "registers or regs",
+    "examples": "\\n    registers\\n    regs"
+  },
+
+  {
     "command": "set",
     "description": "Sets application's parameters like cpu, range ...",
     "usage": "set <parameter> [<parameter>, ...]",
-    "examples": "\\n    set cpu 8080\\n    set cpu i8080\\n    set cpu 6502\\n    set cpu mos6502\\n    set dump_range 64\\n    set disasm_range 64\\n Note: dump_range is a number of bytes displayed by dump command.\\n Note: disasm_range is a number of bytes displayed by disasm command."
+    "examples": "\\n    set cpu 8080\\n    set cpu i8080\\n    set cpu 6502\\n    set cpu mos6502\\n    set disasm_range 64\\n    set dump_range 64\\n    set command_history_size 200\\n    set output_history_size 2000\\n Note: dump_range is a number of bytes displayed by dump command.\\n Note: disasm_range is a number of bytes displayed by disasm command.\\n Note: output_history_size is a number of lines from Output window kept in history buffer.\\n Note: command_history_size is a number of lines from Command window kept in history buffer."
   }
 ]
 "#;

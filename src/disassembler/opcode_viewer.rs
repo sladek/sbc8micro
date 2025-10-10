@@ -110,48 +110,47 @@ impl<'a, T> OpcodeViewer<'a, T> {
             Some(i) => {
                 if i >= self.view().opcodes().len() - 1 {
                     self.view().opcodes().len() - 1
-                }
-                else {
+                } else {
                     i
                 }
-            },
-            None => 0
+            }
+            None => 0,
         };
-//        self.table_state.select(Some(i));
         self.scroll_state = self.scroll_state.position(i);
         self.set_page(i);
     }
 
     fn previous_page(&mut self) {
         self.table_state.scroll_up_by(self.opcodes_page_size);
+/*
         let i = match self.table_state.selected() {
             Some(i) => i,
-            None => 0
+            None => 0,
         };
+ */
+        let i = self.table_state.selected().unwrap_or_default();
         self.scroll_state = self.scroll_state.position(i);
         self.set_page(i);
-
     }
-    /// Calculate in which page the selected row is positioned and set 
+    /// Calculate in which page the selected row is positioned and set
     /// initial index of the opcodes table for displaying in opcodes section
     fn set_page(&mut self, selected: usize) {
         let page_size = self.opcodes_page_size;
-        let page_offset = (selected/page_size as usize) * page_size as usize;
+        let page_offset = (selected / page_size as usize) * page_size as usize;
         self.table_state.select(Some(page_offset));
         let offset = self.table_state.offset_mut();
         *offset = page_offset;
     }
     /// Sets selected row in opcodes table based on mnemonic starting witch character 'ch'
     fn set_index_by_char(&mut self, ch: char) {
-        match self.view().find_index_by_char(ch) {
-            Some(index) => {
-                self.set_page(index);
-                // Set page sets "selected" to the beginning of pagw
-                // so let's reselect the required row
-                self.table_state.select(Some(index));
-            }
-            None => {}
-        }
+        if let Some(index) = self.view().find_index_by_char(ch) {
+             self.set_page(index);
+             // Set page sets "selected" to the beginning of pagw
+             // so let's reselect the required row
+             self.table_state.select(Some(index));
+         }
+
+
     }
     /// Runs opcode viewer
     ///
@@ -188,7 +187,7 @@ impl<'a, T> OpcodeViewer<'a, T> {
                 KeyCode::PageUp => self.previous_page(),
                 KeyCode::Char(ch) => {
                     let ch = ch.to_ascii_uppercase();
-                    if ch >= 'A' && ch <= 'Z' {
+                    if ch.is_ascii_uppercase() {
                         self.set_index_by_char(ch)
                     }
                 }

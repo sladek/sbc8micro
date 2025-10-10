@@ -25,12 +25,23 @@ impl Parameter {
         }
         match command[1] {
             "cpu" => Self::set_cpu(app, command),
-            "dump_range" => Self::set_range(app, command),
             "disasm_range" => Self::set_disasm_range(app, command),
+            "dump_range" => Self::set_range(app, command),
+            "command_history_size" => Self::set_command_history_size(app, command),
+            "output_history_size" => Self::set_output_history_size(app, command),
             _ => {
-                app.messages.push(format!("Error: Unknown parameter {}", command[1]));
                 app.messages
-                    .push(format!("  Available parameters are: cpu <{CPU_LIST}>"));
+                    .push(format!("Error: Unknown parameter {}", command[1]));
+                app.messages
+                    .push("- Available parameters are:".to_string());
+                app.messages
+                    .push(format!("    cpu <{CPU_LIST}>"));
+                app.messages
+                    .push("    dump_range <range>".to_string());
+                app.messages
+                    .push("    disasm_range <range>".to_string());
+                app.messages
+                    .push("    output_history_size <size>".to_string());
                 Ok(AppState::Home)
             }
         }
@@ -100,7 +111,7 @@ impl Parameter {
         if command.len() != 3 {
             app.messages
                 .push("Error: Wrong number of parameters.".to_string());
-            app.messages.push("  Usage: set range <size>.".to_string());
+            app.messages.push("  Usage: set dsasm_range <size>.".to_string());
             return Ok(AppState::Home);
         }
         let range = Memory::from_hex_string(command[2].to_string())?;
@@ -110,6 +121,42 @@ impl Parameter {
             app.disasm.set_end_address(0xffu16);
         }
         app.disasm.set_end_address(start_address + range);
+        Ok(AppState::Home)
+    }
+    /// Set size of history of Output window
+    ///
+    /// Usage:
+    ///   set output_history_size 255
+    ///   set output_history_size 0ffh
+    ///   set output_history_size $ff
+    ///   aet output_history_size 0xff
+    fn set_output_history_size(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
+        if command.len() != 3 {
+            app.messages
+                .push("Error: Wrong number of parameters.".to_string());
+            app.messages.push("  Usage: set output_history_size <size>.".to_string());
+            return Ok(AppState::Home);
+        }
+        let range = Memory::from_hex_string(command[2].to_string())?;
+        app.get_output_view_status().set_output_history_size(range as usize);
+        Ok(AppState::Home)
+    }
+    /// Set size of history of command window
+    ///
+    /// Usage:
+    ///   set command_history_size 255
+    ///   set command_history_size 0ffh
+    ///   set command_history_size $ff
+    ///   aet command_history_size 0xff
+    fn set_command_history_size(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
+        if command.len() != 3 {
+            app.messages
+                .push("Error: Wrong number of parameters.".to_string());
+            app.messages.push("  Usage: set command_history_size <size>.".to_string());
+            return Ok(AppState::Home);
+        }
+        let size = Memory::from_hex_string(command[2].to_string())?;
+        app.set_command_history_size(size as usize);
         Ok(AppState::Home)
     }
 

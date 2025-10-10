@@ -1,20 +1,23 @@
-use crate::ui::app::{AppState, App};
-use crate::commands::memory::Memory;
 use crate::commands::CPU_LIST;
+use crate::commands::memory::Memory;
+use crate::ui::app::{App, AppState};
 
 pub struct Disasm;
 
 impl Disasm {
     pub fn disasm(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
         if command.len() > 3 {
-            app.messages.push("Invalid number of parameters. Usage: disasm <start address> <end_address>".to_string());
+            app.messages.push(
+                "Invalid number of parameters. Usage: disasm <start address> <end_address>"
+                    .to_string(),
+            );
         }
         let cpu = &mut app.cpu_ui;
         let start_address: u16;
         let mut end_address: u16;
         match cpu {
             Some(cpu) => {
-               if command.len() == 1 {
+                if command.len() == 1 {
                     start_address = app.disasm.start;
                     end_address = app.disasm.end + 1;
                 } else if command.len() == 2 {
@@ -26,8 +29,9 @@ impl Disasm {
                     end_address += 1;
                 }
                 if start_address > end_address {
-                    app.messages.push("End address must be bigger than start address.".to_string());
-                    return  Ok(AppState::Home);
+                    app.messages
+                        .push("End address must be bigger than start address.".to_string());
+                    return Ok(AppState::Home);
                 }
                 if command.len() == 3 {
                     // Save values from command line so they can be used later
@@ -39,7 +43,7 @@ impl Disasm {
             }
             None => {
                 app.messages.push(format!("Error: Cpu is not defined. Use set cpu <{CPU_LIST}> to set default cpu first or use opcodes <{CPU_LIST}>"));
-            }           
+            }
         }
         Ok(AppState::Home)
     }

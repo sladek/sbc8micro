@@ -100,10 +100,9 @@ impl Cpu {
     ///
     /// Prints content of registers and flags
     ///
-    pub fn print_registers(&self) -> String {
+    pub fn get_registers(&self) -> String {
         format!(
-"Registers
----------------------------------------------------------------------------------------------------------
+"---------------------------------------------------------------------------------------------------------
 |  A  |  B  |  C  |  D  |  E  |  H  |  L  |  SP   |  PC   | INTE | PSW | S | Z | 0 | AC | 0 | P | 1 | C |
 |-----|-----|-----|-----|-----|-----|-----|-------|-------|------|-----|---|---|---|----|---|---|---|---|
 | {:02X}H | {:02X}H | {:02X}H | {:02X}H | {:02X}H | {:02X}H | {:02X}H | {:04X}H | {:04X}H |  {}   | {:02X}H | {} | {} | 0 | {}  | 0 | {} | 1 | {} |
@@ -1770,5 +1769,8 @@ impl CpuUi for Cpu {
     }
     fn disasm(&mut self, start: u16, end: u16) -> Vec<String> {
         disassemble(&self.memory, start, end, &load_opcodes_table())
+    }
+    fn show_registers(&mut self) -> Vec<String> {
+        self.get_registers().lines().map(String::from).collect()
     }
 }

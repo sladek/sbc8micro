@@ -2,12 +2,13 @@
 //! Processing a command from command line
 
 use crate::commands::directory::Directory;
+use crate::commands::disasm::Disasm;
 use crate::commands::help::Help;
 use crate::commands::load::Load;
 use crate::commands::memory::Memory;
 use crate::commands::opcodes::Opcodes;
+use crate::commands::registers::Registers;
 use crate::commands::set::Parameter;
-use crate::commands::disasm::Disasm;
 use crate::help;
 use crate::ui::app::{App, AppState};
 use regex::Regex;
@@ -24,46 +25,23 @@ impl Command {
         let params = re.replace_all(&input.to_owned(), " ").to_string();
         let command: Vec<&str> = params.trim().split(" ").collect();
         match command[0] {
-            "cd" => {
-                Directory::cd(app, command)
-            }
+            "cd" => Directory::cd(app, command),
             "cls" | "clear" => {
                 app.messages.clear();
                 Ok(AppState::Home)
             }
-            "disasm" => {
-                Disasm::disasm(app, command)
-            }
-            "dump" => {
-                Memory::dump(app, command)
-            }
-            "help" | "?" => {
-                Help::help(app, command)
-            }
-            "load" => {
-                Load::load_file(app, command)
-            }
-            "loada" => {
-                Load::load_acme_file(app, command)
-            }
-            "ls" | "dir" => {
-                Directory::ls(app, command)
-            }
-            "opcodes" => {
-                Opcodes::list_opcodes(app, command)
-            }
-            "pwd" => {
-                Directory::pwd(app, command)
-            }
-            "set" => {
-                Parameter::set(app, command)
-            }
-            "" => {
-                Ok(AppState::Home)
-            }
-            _ => {
-                Self::get_usage(app)
-            }
+            "disasm" => Disasm::disasm(app, command),
+            "dump" => Memory::dump(app, command),
+            "help" | "?" => Help::help(app, command),
+            "load" => Load::load_file(app, command),
+            "loada" => Load::load_acme_file(app, command),
+            "ls" | "dir" => Directory::ls(app, command),
+            "opcodes" => Opcodes::list_opcodes(app, command),
+            "pwd" => Directory::pwd(app, command),
+            "registers" | "regs" => Registers::get_registers(app, command),
+            "set" => Parameter::set(app, command),
+            "" => Ok(AppState::Home),
+            _ => Self::get_usage(app),
         }
     }
     /// Shows usage

@@ -33,7 +33,7 @@ fn main() {
     }
     println!("---------------------------");
     println!("Registers");
-    print!("{}", cpu.print_registers());
+    print!("{}", cpu.get_registers());
     println!("Test zero page");
     cpu.memory.print_hex_dump(0x55, 0x55 + 31);
     println!("Test area");

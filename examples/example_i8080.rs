@@ -49,7 +49,7 @@ fn main() {
             break;
         }
     }
-    print!("{}", cpu.print_registers());
+    print!("{}", cpu.get_registers());
     println!("Test area");
     cpu.memory.print_hex_dump(0x0200, 0x0200 + 31);
     println!("Upper stack:");

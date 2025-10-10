@@ -74,8 +74,7 @@ impl Memory {
         // regex for normal number
         let regex_number = Regex::new(r"[\d]+$").unwrap();
         if regex_intel_hex.is_match(&value) {
-            let num: &str =
-            if value.starts_with('0') {
+            let num: &str = if value.starts_with('0') {
                 &value[1..value.len() - 1]
             } else {
                 &value[..value.len() - 1]
@@ -175,7 +174,10 @@ mod tests {
     fn from_hex_str_number_3() {
         let result = Memory::from_hex_str_number("55aabb");
         // string too long
-        assert_eq!(result.err(), Some("Hexadecimal number is too long".to_string()));
+        assert_eq!(
+            result.err(),
+            Some("Hexadecimal number is too long".to_string())
+        );
     }
     #[test]
     fn from_hex_string_1() {

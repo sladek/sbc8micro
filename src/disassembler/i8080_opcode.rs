@@ -30,7 +30,7 @@ pub struct Opcode {
 pub struct OpcodeView<Opcode> {
     /// List of opcode informations
     opcodes: Vec<Opcode>,
-    /// Height of table of opcodes. 
+    /// Height of table of opcodes.
     /// It is used for page up/down movement
     height: u16,
 }
@@ -45,11 +45,11 @@ impl OpcodeView<Opcode> {
     }
 
     pub fn set_height(&mut self, height: u16) {
-      self.height = height;
+        self.height = height;
     }
 
     pub fn get_height(&self) -> u16 {
-      self.height
+        self.height
     }
 }
 
@@ -60,7 +60,9 @@ impl DrawOpcode<Opcode> for OpcodeView<Opcode> {
     }
     /// Find index of the opcode where mnemonic starts with character ch.
     fn find_index_by_char(&self, ch: char) -> Option<usize> {
-      self.opcodes.iter().position(|opcode| opcode.mnemonic.starts_with(ch))
+        self.opcodes
+            .iter()
+            .position(|opcode| opcode.mnemonic.starts_with(ch))
     }
     /// Shows opcode description in a frame
     fn draw(&self, viewer: &OpcodeViewer<Opcode>, frame: &mut Frame) {

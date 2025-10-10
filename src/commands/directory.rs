@@ -96,8 +96,7 @@ impl Directory {
             }
             return Ok(AppState::Home);
         }
-        let paths: io::Result<ReadDir> = 
-        if command.len() == 1 {
+        let paths: io::Result<ReadDir> = if command.len() == 1 {
             fs::read_dir(".")
         } else {
             fs::read_dir(&filename)
