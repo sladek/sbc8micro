@@ -64,7 +64,7 @@ impl CommandHistory {
     }
     /// Returns next line from command history
     fn command_history_up(&mut self) -> Option<String> {
-        if self.command_history.len() == 0 {
+        if self.command_history.is_empty() {
             return None
         }
         if self.command_history_position < self.command_history.len() as i16 - 1 {
@@ -287,7 +287,7 @@ impl App {
     /// or set by the command "set command_history_size".
     fn history_push_command(&mut self, comm: String) {
         let history = &mut self.command_history.command_history;
-        if comm.len() != 0 {
+        if !comm.is_empty() {
             history.insert(0,comm);
         }
         self.command_history.command_history_position = COMMAND_HISTORY_SIZE_INIT_INDEX;

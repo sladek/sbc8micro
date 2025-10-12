@@ -5,3 +5,4 @@ pub mod help;
 pub mod memory;
 pub mod status;
 pub mod ui;
+pub mod debugger;

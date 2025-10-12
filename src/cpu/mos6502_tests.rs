@@ -1269,7 +1269,7 @@ fn cld() {
 fn cli() {
     let mut cpu = mos6502::Cpu::new();
     cpu.p.set_interrupt_disable(true);
-    cpu.sp = 0xff;
+    cpu.s = 0xff;
     let program = vec![
         0x58, // CLI
         0x08, // PHP; push status to stack as break will set it to 1
@@ -2605,7 +2605,7 @@ fn jmp_indirect_30ff() {
 ///
 fn jsr() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.sp = 0xff;
+    cpu.s = 0xff;
     // load from 0x0600
     let program = vec![
         0xA9, 0x55, // LDA #$55
@@ -2628,10 +2628,10 @@ fn jsr() {
     }
     let addr_instack = cpu
         .memory
-        .read_word((cpu.sp as u16).wrapping_add(0x100u16).wrapping_add(1));
+        .read_word((cpu.s as u16).wrapping_add(0x100u16).wrapping_add(1));
     assert_eq!(cpu.a, 0xAAu8);
     assert_eq!(cpu.pc, 0x1236);
-    assert_eq!(cpu.sp, 0xfd);
+    assert_eq!(cpu.s, 0xfd);
     assert_eq!(addr_instack, 0x0604);
 }
 #[test]
@@ -3643,7 +3643,7 @@ fn ora_indirect_y() {
 ///
 fn pha() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.sp = 0xFFu8;
+    cpu.s = 0xFFu8;
     let program = vec![
         0xA9, 0xAAu8, // LDA #$AA
         0x48,   // PHA
@@ -3659,7 +3659,7 @@ fn pha() {
     }
     assert_eq!(cpu.a, 0xAAu8);
     assert_eq!(cpu.memory.read_byte(0x01ff), 0xAAu8);
-    assert_eq!(cpu.sp, 0xFE);
+    assert_eq!(cpu.s, 0xFE);
 }
 #[test]
 ///////////////////////////////////////////////
@@ -3667,7 +3667,7 @@ fn pha() {
 ///
 fn php() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.sp = 0xFFu8;
+    cpu.s = 0xFFu8;
     cpu.p.set_carry(true);
     cpu.p.set_negative(true);
     let program = vec![
@@ -3683,7 +3683,7 @@ fn php() {
         cpu.step();
     }
     assert_eq!(cpu.memory.read_byte(0x01ff), 0xB1u8);
-    assert_eq!(cpu.sp, 0xFE);
+    assert_eq!(cpu.s, 0xFE);
     assert_eq!(cpu.p.value, 0x81);
 }
 #[test]
@@ -3692,7 +3692,7 @@ fn php() {
 ///
 fn pla() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.sp = 0xFFu8;
+    cpu.s = 0xFFu8;
     let program = vec![
         0xA9, 0xAAu8, // LDA #$AA
         0x48,   // PHA
@@ -3710,7 +3710,7 @@ fn pla() {
     }
     assert_eq!(cpu.a, 0xAAu8);
     assert_eq!(cpu.memory.read_byte(0x01ff), 0xAAu8);
-    assert_eq!(cpu.sp, 0xFF);
+    assert_eq!(cpu.s, 0xFF);
 }
 #[test]
 ///////////////////////////////////////////////
@@ -3718,7 +3718,7 @@ fn pla() {
 ///
 fn plp() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.sp = 0xFFu8;
+    cpu.s = 0xFFu8;
     cpu.p.set_carry(true);
     cpu.p.set_negative(true);
     let program = vec![
@@ -3736,7 +3736,7 @@ fn plp() {
         cpu.step();
     }
     assert_eq!(cpu.memory.read_byte(0x01ff), 0xB1u8);
-    assert_eq!(cpu.sp, 0xFF);
+    assert_eq!(cpu.s, 0xFF);
     assert_eq!(cpu.p.value, 0x81);
 }
 #[test]
@@ -4079,7 +4079,7 @@ fn ror_absolute_x() {
 ///
 fn rti() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.sp = 0xff;
+    cpu.s = 0xff;
     let program = vec![
         0xA9, 0x12u8, // LDA #$12
         0x48,   // PHA ;push $12 to stack
@@ -4112,7 +4112,7 @@ fn rti() {
 ///
 fn rts() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.sp = 0xff;
+    cpu.s = 0xff;
     let program = vec![
         0xA9, 0x12u8, // LDA #$12
         0x48,   // PHA ;push $12 to stack
@@ -4981,7 +4981,7 @@ fn tay_n() {
 /// Tests TSX
 fn tsx() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.sp = 0x55u8;
+    cpu.s = 0x55u8;
     cpu.x = 0xaau8;
     let program = vec![
         0xBA, // TSX
@@ -4995,7 +4995,7 @@ fn tsx() {
         }
         cpu.step();
     }
-    assert_eq!(cpu.sp, 0x55);
+    assert_eq!(cpu.s, 0x55);
     assert_eq!(cpu.p.is_negative(), false);
     assert_eq!(cpu.p.is_zero(), false);
 }
@@ -5004,7 +5004,7 @@ fn tsx() {
 /// Tests TSX with zero flag
 fn tsx_z() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.sp = 0x00u8;
+    cpu.s = 0x00u8;
     cpu.x = 0xaau8;
     let program = vec![
         0xBA, // TSX
@@ -5018,7 +5018,7 @@ fn tsx_z() {
         }
         cpu.step();
     }
-    assert_eq!(cpu.sp, 0x00);
+    assert_eq!(cpu.s, 0x00);
     assert_eq!(cpu.p.is_negative(), false);
     assert_eq!(cpu.p.is_zero(), true);
 }
@@ -5027,7 +5027,7 @@ fn tsx_z() {
 /// Tests TSX with negative flag
 fn tsx_n() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.sp = 0x80u8;
+    cpu.s = 0x80u8;
     cpu.x = 0xaau8;
     let program = vec![
         0xBA, // TSX
@@ -5041,7 +5041,7 @@ fn tsx_n() {
         }
         cpu.step();
     }
-    assert_eq!(cpu.sp, 0x80);
+    assert_eq!(cpu.s, 0x80);
     assert_eq!(cpu.p.is_negative(), true);
     assert_eq!(cpu.p.is_zero(), false);
 }
@@ -5099,7 +5099,7 @@ fn txa_z() {
 ///
 fn txs() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.sp = 0x55u8;
+    cpu.s = 0x55u8;
     cpu.x = 0xAAu8;
     let program = vec![
         0x9A, // TXS
@@ -5113,7 +5113,7 @@ fn txs() {
         }
         cpu.step();
     }
-    assert_eq!(cpu.sp, 0xAAu8);
+    assert_eq!(cpu.s, 0xAAu8);
 }
 #[test]
 ///////////////////////////////////////////////

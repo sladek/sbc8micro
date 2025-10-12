@@ -106,12 +106,17 @@ pub static HELP: &str = r#"
     "examples": "\\n    pwd"
   },
   {
+    "command": "reg | r",
+    "description": "Shows or sets the content of the register of the currently set CPU.",
+    "usage": "r <reg> [value] or reg <reg> [value]",
+    "examples": "\\n    reg a\\n    reg a 0ffh\\n    r x\\n    r x $ff\\n    reg sp 0fffh\\n    r pc $ffff\\n Note: If value is defined, it is set, or only the content of the register is displayed."
+  },
+  {
     "command": "registers | regs",
     "description": "Shows the content of registers of currently set CPU.",
     "usage": "registers or regs",
     "examples": "\\n    registers\\n    regs"
   },
-
   {
     "command": "set",
     "description": "Sets application's parameters like cpu, range ...",

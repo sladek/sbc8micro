@@ -1,3 +1,4 @@
+use crate::commands::push_cpu_not_set;
 use crate::commands::CPU_LIST;
 use crate::cpu::Cpu;
 use crate::ui::app::App;
@@ -22,7 +23,7 @@ impl Opcodes {
         if command.len() < 2 {
             match app.cpu {
                 Cpu::None => {
-                    app.messages.push(format!("Error: Cpu is not defined. Use set cpu <{CPU_LIST}> to set default cpu first or use opcodes <{CPU_LIST}>"));
+                    push_cpu_not_set(app);
                     return Ok(AppState::Home);
                 }
                 Cpu::I8080 => {

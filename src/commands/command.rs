@@ -9,6 +9,7 @@ use crate::commands::memory::Memory;
 use crate::commands::opcodes::Opcodes;
 use crate::commands::registers::Registers;
 use crate::commands::set::Parameter;
+use crate::commands::breakpoints::Breakpoint;
 use crate::help;
 use crate::ui::app::{App, AppState};
 use regex::Regex;
@@ -25,6 +26,7 @@ impl Command {
         let params = re.replace_all(&input.to_owned(), " ").to_string();
         let command: Vec<&str> = params.trim().split(" ").collect();
         match command[0] {
+            "b" => Breakpoint::breakpoint(app, command),
             "cd" => Directory::cd(app, command),
             "cls" | "clear" => {
                 app.messages.clear();
@@ -38,7 +40,8 @@ impl Command {
             "ls" | "dir" => Directory::ls(app, command),
             "opcodes" => Opcodes::list_opcodes(app, command),
             "pwd" => Directory::pwd(app, command),
-            "registers" | "regs" => Registers::get_registers(app, command),
+            "r" | "reg" => Registers::set_get_reg(app, command),
+            "registers" | "regs" => Registers::show_registers(app, command),
             "set" => Parameter::set(app, command),
             "" => Ok(AppState::Home),
             _ => Self::get_usage(app),

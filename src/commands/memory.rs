@@ -1,8 +1,8 @@
 use regex::Regex;
 
-use crate::commands::CPU_LIST;
 use crate::ui::app::App;
 use crate::ui::app::AppState;
+use crate::commands::push_cpu_not_set;
 
 pub struct Memory {}
 
@@ -52,7 +52,7 @@ impl Memory {
                 return Ok(AppState::Home);
             }
             None => {
-                app.messages.push(format!("Error: Cpu is not defined. Use set cpu <{CPU_LIST}> to set default cpu first or use opcodes <{CPU_LIST}>"));
+                push_cpu_not_set(app);
             }
         }
         Ok(AppState::Home)
@@ -111,7 +111,7 @@ impl Memory {
     fn from_hex_str_number(num: &str) -> Result<u16, String> {
         let input = num.to_uppercase();
         if input.len() > 4 {
-            return Err("Hexadecimal number is too long".to_string());
+            return Err(format!("Hexadecimal number 0x{num} is too long").to_string());
         }
         let mut result: u16 = 0;
         for c in input.as_bytes() {
@@ -176,7 +176,7 @@ mod tests {
         // string too long
         assert_eq!(
             result.err(),
-            Some("Hexadecimal number is too long".to_string())
+            Some("Hexadecimal number 0x55aabb is too long".to_string())
         );
     }
     #[test]

@@ -1,5 +1,5 @@
 use crate::commands::directory::Directory;
-use crate::commands::{self, CPU_LIST};
+use crate::commands::{self, push_cpu_not_set};
 use crate::memory::Memory;
 use crate::ui::app::{App, AppState};
 use std::fs;
@@ -8,6 +8,10 @@ pub struct Load;
 
 impl Load {
     pub fn load_file(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
+        if app.cpu_ui.is_none(){
+            push_cpu_not_set(app);
+            return Ok(AppState::Home);
+        }
         if command.len() < 3 {
             app.messages.push(
                 "Invalid number of parameters. Usage: load <start address> <file name>".to_string(),
@@ -51,7 +55,7 @@ impl Load {
                         };
                     }
                     None => {
-                        app.messages.push(format!("Error: Cpu is not defined. Use set cpu <{CPU_LIST}> to set default cpu first or use opcodes <{CPU_LIST}>"));
+                        push_cpu_not_set(app);
                         return Ok(AppState::Home);
                     }
                 }
@@ -64,6 +68,10 @@ impl Load {
     }
 
     pub fn load_acme_file(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
+        if app.cpu_ui.is_none(){
+            push_cpu_not_set(app);
+            return Ok(AppState::Home);
+        }
         if command.len() < 2 {
             app.messages
                 .push("Invalid number of parameters. Usage: loada <file name>".to_string());
@@ -101,8 +109,7 @@ impl Load {
                 }
             }
             None => {
-                app.messages.push(format!("Error: Cpu is not defined. Use set cpu <{CPU_LIST}> to set default cpu first or use opcodes <{CPU_LIST}>"));
-                //                return Ok(AppState::Home);
+                push_cpu_not_set(app);
             }
         }
         Ok(AppState::Home)

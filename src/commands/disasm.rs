@@ -1,4 +1,4 @@
-use crate::commands::CPU_LIST;
+use crate::commands::push_cpu_not_set;
 use crate::commands::memory::Memory;
 use crate::ui::app::{App, AppState};
 
@@ -42,7 +42,7 @@ impl Disasm {
                 app.messages.append(&mut disasm);
             }
             None => {
-                app.messages.push(format!("Error: Cpu is not defined. Use set cpu <{CPU_LIST}> to set default cpu first or use opcodes <{CPU_LIST}>"));
+                push_cpu_not_set(app);
             }
         }
         Ok(AppState::Home)

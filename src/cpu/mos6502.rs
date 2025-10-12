@@ -37,7 +37,9 @@
 //! A = 00, X = FF<br/>
 //! Flags: Z=false, N=true
 //!
-use crate::cpu::CpuUi;
+use crate::commands::breakpoints::Breakpoint;
+use crate::cpu::{CpuUi, Reg};
+use crate::debugger::Breakpoints;
 use crate::disassembler::mos6502_opcode_consts::*;
 use crate::memory::Memory;
 use crate::status::mos6502;
@@ -52,13 +54,15 @@ pub struct Cpu {
     /// Y - Index register
     pub y: u8,
     /// Stack pointer
-    pub sp: u8,
+    pub s: u8,
     /// Program counter
     pub pc: u16,
     /// Status register
     pub p: mos6502::Status,
     /// Memory assigned to CPU
     pub memory: Memory,
+    /// Breakpoints
+    pub breakpoints: Breakpoints,
     /// Debug flag
     ///
     /// If frue opcode is also outputed when the programm is executed.
@@ -74,16 +78,62 @@ impl Cpu {
             a: 0,
             x: 0,
             y: 0,
-            sp: 0xFF,
+            s: 0xFF,
             pc: 0,
             p: mos6502::Status::default(),
             memory: Memory::new(),
+            breakpoints: Breakpoints::new(),
             debug: true,
         }
     }
     pub fn get_cpu_ui() -> Option<Box<dyn CpuUi>> {
         Some(Box::new(Self::new()))
     }
+    fn set_8_bit_value(value: u16) -> Result<u8, String> {
+        if value > 0xff { Err(format!("Value {:04X}H [{value}] is too big for 8 bit register.", value).to_string()) }
+        else  {Ok(value as u8) }
+    }
+    /// Sets 8 bit register value by register name
+    /// Sets 8 bit register value by register name
+    pub fn set_register_by_name(&mut self, reg: &str, value: u16) -> Result<(), String> {
+        match reg.to_uppercase().as_str() {
+            "A" => self.a = Self::set_8_bit_value(value)?,
+            "X" => self.x = Self::set_8_bit_value(value)?,
+            "Y" => self.y = Self::set_8_bit_value(value)?,
+            "S" => self.s = Self::set_8_bit_value(value)?,
+            "P" => self.p.value = Self::set_8_bit_value(value)?,
+            "PC" => self.pc = value,
+            _ => {
+                return Err(format!("Unknown register {reg}"));
+            }
+        }
+        Ok(())
+    }
+    /// Sets 8 bit register value by register name
+    pub fn set_register16_by_name(&mut self, reg: &str, value: u16) -> Result<(), String> {
+        match reg.to_uppercase().as_str() {
+            "PC" => self.pc = value,
+            _ => {
+                return Err(format!("Unknown register {reg}"));
+            }
+        }
+        Ok(())
+    }
+    /// Get register value by register name
+    fn get_register(&self, reg: &str) -> Result<Reg, String> {
+        match reg.to_uppercase().as_str() {
+            "A" => Ok(Reg::R8(self.a)),
+            "X" => Ok(Reg::R8(self.x)),
+            "Y" => Ok(Reg::R8(self.y)),
+            "S" => Ok(Reg::R8(self.s)),
+            "PC" => Ok(Reg::R16(self.pc)),
+            "P" => Ok(Reg::R8(self.p.value)),
+            _ => {
+                Err(format!("Unknown register {reg}"))
+            }
+        }
+    }
+    
     /// Loads program to the memory and set PC to start address of the programm
     pub fn load_program(&mut self, program: &[u8], start_addr: u16) {
         let _ = self.memory.load_program(program, start_addr);
@@ -99,12 +149,12 @@ impl Cpu {
 "-------------------------------------------------------------------------
 |  A  |  X  |  Y  |  SP   |  PC   |  P  | N | V | U | B | D | I | Z | C |
 |-----|-----|-----|-------|-------|-----|---|---|---|---|---|---|---|---|
-| {:02X}H | {:02X}H | {:02X}H | {:04X}H | {:04X}H | {:02X}H | {} | {} | {} | {} | {} | {} | {} | {} |
+| ${:02X} | ${:02X} | ${:02X} |  ${:02X}  | ${:04X} | ${:02X} | {} | {} | {} | {} | {} | {} | {} | {} |
 -------------------------------------------------------------------------\n",
             self.a,
             self.x,
             self.y,
-            self.sp,
+            self.s,
             self.pc,
             self.p.value,
             self.p.is_negative() as u8,
@@ -144,14 +194,14 @@ impl Cpu {
     }
     /// Pushes a byte to stack
     fn push(&mut self, value: u8) {
-        let addr = 0x0100u16 + self.sp as u16;
+        let addr = 0x0100u16 + self.s as u16;
         self.memory.write_byte(addr, value);
-        self.sp = self.sp.wrapping_sub(1);
+        self.s = self.s.wrapping_sub(1);
     }
     /// Pops a byte from stack
     fn pop(&mut self) -> u8 {
-        self.sp = self.sp.wrapping_add(1);
-        let addr = 0x0100u16 + self.sp as u16;
+        self.s = self.s.wrapping_add(1);
+        let addr = 0x0100u16 + self.s as u16;
         self.memory.read_byte(addr)
     }
     /// Pushes a word into stack
@@ -1560,7 +1610,7 @@ impl Cpu {
             }
             // TSX
             TSX => {
-                self.x = self.sp;
+                self.x = self.s;
                 self.set_n_z(self.x);
                 dbg!("{}TSX", self.code_to_str(1));
             }
@@ -1572,7 +1622,7 @@ impl Cpu {
             }
             // TXS
             TXS => {
-                self.sp = self.x;
+                self.s = self.x;
                 dbg!("{}TXS", self.code_to_str(1));
             }
             // TYA
@@ -1604,4 +1654,33 @@ impl CpuUi for Cpu {
     fn show_registers(&mut self) -> Vec<String> {
         self.get_registers().lines().map(String::from).collect()
     }
+
+    fn set_register_by_name(&mut self, reg: &str, value: u16) -> Result<(), String> {
+        self.set_register_by_name(reg, value)
+    }
+    fn get_register_by_name(&mut self,reg: &str) -> Result<String, String> {
+        match self.get_register(reg){
+            Ok(Reg::R8(val)) => {
+                Ok(format!("{reg}: ${:02X} [{val}]", val))
+            }
+            Ok(Reg::R16(val)) => {
+                Ok(format!("{reg}: ${:04X} [{val}]", val))
+            }
+            Err(err) => {
+                Err(err)
+            }             
+        }
+    }
+    fn get_breakpoints(&self) -> Result<Vec<u16>, String> {
+        Ok(self.breakpoints.get_breakpoints())
+    }
+    fn set_breakpoints(&mut self, address: u16) -> Result<(), String> {
+        let breakpoints = &mut self.breakpoints;
+        breakpoints.set_breakpoint(address)
+    }
+    fn clear_breakpoints(&mut self) -> Result<(), String> {
+        self.breakpoints.clear_breakpoints()?;
+        Ok(())
+    }
+
 }
