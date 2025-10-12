@@ -37,7 +37,6 @@
 //! A = 00, X = FF<br/>
 //! Flags: Z=false, N=true
 //!
-use crate::commands::breakpoints::Breakpoint;
 use crate::cpu::{CpuUi, Reg};
 use crate::debugger::Breakpoints;
 use crate::disassembler::mos6502_opcode_consts::*;

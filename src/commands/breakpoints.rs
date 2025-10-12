@@ -25,7 +25,7 @@ impl Breakpoint {
             }
             2 => {
                 if command[1].eq_ignore_ascii_case("x") {
-                    cpu.clear_breakpoints();
+                    let _ = cpu.clear_breakpoints();
                     app.messages.push("All breakpoint has been deleted.".to_string());
                     return Ok(AppState::Home);
                 } 

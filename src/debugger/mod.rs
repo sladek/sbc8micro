@@ -32,7 +32,7 @@ impl Breakpoints {
         }
         match self.breakpoints.iter().find(|&addr| *addr == address) {
             Some(address) => {
-                let addr = address.clone();
+                let addr = *address;
                 self.remove_breakpoint(addr)?;
                 return Err(format!("Breakpoint: 0x{:04X} [{}] has been removed.", &addr, &addr));
             }
