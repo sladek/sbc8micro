@@ -1,48 +1,80 @@
-use crate::commands::push_cpu_not_set;
-use crate::commands::memory::Memory;
+use crate::commands::{memory::Memory, MIN_DISASM_RANGE};
 use crate::ui::app::{App, AppState};
 
 pub struct Disasm;
 
 impl Disasm {
     pub fn disasm(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
-        if command.len() > 3 {
-            app.messages.push(
-                "Invalid number of parameters. Usage: disasm <start address> <end_address>"
-                    .to_string(),
-            );
-        }
-        let cpu = &mut app.cpu_ui;
+        app.check_cpu()?; // Check if cpu is defined
         let start_address: u16;
         let mut end_address: u16;
-        match cpu {
-            Some(cpu) => {
-                if command.len() == 1 {
-                    start_address = app.disasm.start;
-                    end_address = app.disasm.end + 1;
-                } else if command.len() == 2 {
-                    start_address = Memory::from_hex_string(command[1].to_string())?;
-                    end_address = start_address + app.disasm.range;
-                } else {
-                    start_address = Memory::from_hex_string(command[1].to_string())?;
-                    end_address = Memory::from_hex_string(command[2].to_string())?;
-                    end_address += 1;
-                }
+        match command.len() {
+            1 => {
+                start_address = app.disasm.start;
+                end_address = app.disasm.end + 1;
+            }
+            2 => {
+                start_address = Memory::from_hex_string(command[1].to_string())?;
+                end_address = start_address + app.disasm.range;
+            }
+            3 => {
+                // Save values from command line so they can be used later
+                start_address = Memory::from_hex_string(command[1].to_string())?;
+                end_address = Memory::from_hex_string(command[2].to_string())?;
+                end_address += 1;
                 if start_address > end_address {
                     app.messages
                         .push("End address must be bigger than start address.".to_string());
                     return Ok(AppState::Home);
                 }
-                if command.len() == 3 {
-                    // Save values from command line so they can be used later
-                    app.disasm.set_start_address(start_address);
-                    app.disasm.set_end_address(end_address);
-                }
-                let mut disasm = cpu.disasm(start_address, end_address);
-                app.messages.append(&mut disasm);
+                app.disasm.set_start_address(start_address);
+                app.disasm.set_end_address(end_address);
             }
-            None => {
-                push_cpu_not_set(app);
+            _ => {
+                return Err(
+                    "Invalid number of parameters. Usage: disasm <start address> <end_address>"
+                        .to_string(),
+                );
+            }
+        }
+        if let Some(cpu) = &mut app.cpu_ui {
+            let mut disasm = cpu.disasm(start_address, end_address);
+            app.messages.append(&mut disasm);
+        }
+
+        Ok(AppState::Home)
+    }
+    /// Set memory range for dissasembler
+    ///
+    /// Usage:
+    ///   disasm_range 127
+    ///   disasm_range 0ffh
+    ///   dr $ff
+    ///   dr 0xff
+    pub fn disasm_range(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
+        match command.len() {
+            1 => {
+                let range = app.disasm.range;
+                app.messages.push(format!(" Disasembler range: {:04x} [{range}]", range));
+            }
+            2 => {
+                let range = Memory::from_hex_string(command[1].to_string())?;
+                if range < MIN_DISASM_RANGE {
+                    return Err(format!("Error: Minimum allowed disassembler range is {MIN_DISASM_RANGE}"))
+                }
+                app.disasm.set_range(range);
+                let start_address = app.disasm.start;
+                if (start_address as u32 + range as u32) > 0xff {
+                    app.disasm.set_end_address(0xffu16);
+                }
+                app.disasm.set_end_address(start_address + range);
+            }
+            _ => {
+                app.messages
+                    .push("Error: Wrong number of parameters.".to_string());
+                app.messages
+                    .push("  Usage: set dsasm_range <size>.".to_string());
+                return Ok(AppState::Home);
             }
         }
         Ok(AppState::Home)

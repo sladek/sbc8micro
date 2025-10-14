@@ -23,9 +23,11 @@ pub trait CpuUi {
     fn get_breakpoints(&self) -> Result<Vec<u16>, String>;
     fn set_breakpoints(&mut self, address: u16) -> Result<(), String>;
     fn clear_breakpoints(&mut self) -> Result<(), String>;
+    fn get_cpu_name(&self) -> Option<&str>;
+    fn one_step(&mut self) -> Option<String>;
 }
 
 pub enum Reg {
     R8(u8),
-    R16(u16)
+    R16(u16),
 }

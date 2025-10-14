@@ -25,8 +25,8 @@
 //!         break;
 //!     }
 //! }
-//! dbg!("A = {:02X}, X = {:02X}", cpu.a, cpu.x);
-//! dbg!("Flags: Z={}, N={}", cpu.p.is_zero(), cpu.p.is_negative());
+//! disasm = dbg!("A = {:02X}, X = {:02X}", cpu.a, cpu.x);
+//! disasm = dbg!("Flags: Z={}, N={}", cpu.p.is_zero(), cpu.p.is_negative());
 //! ```
 //!
 //! Result should be:<br/>
@@ -89,8 +89,15 @@ impl Cpu {
         Some(Box::new(Self::new()))
     }
     fn set_8_bit_value(value: u16) -> Result<u8, String> {
-        if value > 0xff { Err(format!("Value {:04X}H [{value}] is too big for 8 bit register.", value).to_string()) }
-        else  {Ok(value as u8) }
+        if value > 0xff {
+            Err(format!(
+                "Value {:04X}H [{value}] is too big for 8 bit register.",
+                value
+            )
+            .to_string())
+        } else {
+            Ok(value as u8)
+        }
     }
     /// Sets 8 bit register value by register name
     /// Sets 8 bit register value by register name
@@ -127,12 +134,10 @@ impl Cpu {
             "S" => Ok(Reg::R8(self.s)),
             "PC" => Ok(Reg::R16(self.pc)),
             "P" => Ok(Reg::R8(self.p.value)),
-            _ => {
-                Err(format!("Unknown register {reg}"))
-            }
+            _ => Err(format!("Unknown register {reg}")),
         }
     }
-    
+
     /// Loads program to the memory and set PC to start address of the programm
     pub fn load_program(&mut self, program: &[u8], start_addr: u16) {
         let _ = self.memory.load_program(program, start_addr);
@@ -520,24 +525,25 @@ impl Cpu {
     ///
     /// Read instriction from memory, executes it and set PC to point to next instruction in memory.
     /// If debug flag is set to true it will also print mnemonic code of the instruction that is executed.
-    pub fn step(&mut self) {
-        macro_rules! dbg { ($($x:tt)*) => { if self.debug { println!($($x)*); } } }
-
+    pub fn step(&mut self) -> Option<String>{
+//        macro_rules! dbg { ($($x:tt)*) => { if self.debug { println!($($x)*); } } }
+        macro_rules! dbg { ($($x:tt)*) => { if self.debug { format!($($x)*)} else { "".to_string() }}}
+        
         let opcode = self.memory.read_byte(self.pc);
         self.pc += 1;
-
+        let disasm: String;
         match opcode {
             // ADC #imm
             ADC_IMM => {
                 let value = self.read_immediate_byte();
                 self.adc(value);
-                dbg!("{}ADC #${:02X}", self.code_to_str(2), value);
+                disasm = dbg!("{}ADC #${:02X}", self.code_to_str(2), value);
             }
             // ADC zp
             ADC_ZP => {
                 let value = self.read_zero_page();
                 self.adc(value);
-                dbg!(
+                disasm = dbg!(
                     "{}ADC ${:02X}",
                     self.code_to_str(2),
                     self.memory.read_byte(self.pc.wrapping_sub(1))
@@ -547,7 +553,7 @@ impl Cpu {
             ADC_ZP_X => {
                 let value = self.read_zero_page_x();
                 self.adc(value);
-                dbg!(
+                disasm = dbg!(
                     "{}ADC ${:02X},X",
                     self.code_to_str(2),
                     self.memory.read_byte(self.pc.wrapping_sub(1))
@@ -558,95 +564,95 @@ impl Cpu {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 self.adc(value);
-                dbg!("{}ADC ${:04X}", self.code_to_str(3), addr);
+                disasm = dbg!("{}ADC ${:04X}", self.code_to_str(3), addr);
             }
             // ADC oper ;absolute,X
             ADC_ABS_X => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_x();
                 self.adc(value);
-                dbg!("{}ADC ${:04X},X", self.code_to_str(3), addr);
+                disasm = dbg!("{}ADC ${:04X},X", self.code_to_str(3), addr);
             }
             // ADC abs,Y ;absolute,Y
             ADC_ABS_Y => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_y();
                 self.adc(value);
-                dbg!("{}ADC ${:02X},Y", self.code_to_str(3), addr);
+                disasm = dbg!("{}ADC ${:02X},Y", self.code_to_str(3), addr);
             }
             // ADC (oper,X) ;(indexed indirect)
             ADC_IND_X => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_indexed_indirect();
                 self.adc(value);
-                dbg!("{}ADC (${:02X},X)", self.code_to_str(2), addr);
+                disasm = dbg!("{}ADC (${:02X},X)", self.code_to_str(2), addr);
             }
             // ADC (oper),Y ;(indexed indirect),Y
             ADC_IND_Y => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_indirect_indexed();
                 self.adc(value);
-                dbg!("{}ADC (${:02X}),Y", self.code_to_str(2), addr);
+                disasm = dbg!("{}ADC (${:02X}),Y", self.code_to_str(2), addr);
             }
             // AND #imm
             AND_IMM => {
                 let value = self.read_immediate_byte();
                 self.and(value);
-                dbg!("{}AND #${:02X}", self.code_to_str(2), value);
+                disasm = dbg!("{}AND #${:02X}", self.code_to_str(2), value);
             }
             // AND zp
             AND_ZP => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 self.and(value);
-                dbg!("{}AND ${:02X}", self.code_to_str(2), addr);
+                disasm = dbg!("{}AND ${:02X}", self.code_to_str(2), addr);
             }
             // AND zp,X
             AND_ZP_X => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page_x();
                 self.and(value);
-                dbg!("{}AND ${:02X},X", self.code_to_str(2), addr);
+                disasm = dbg!("{}AND ${:02X},X", self.code_to_str(2), addr);
             }
             // AND abs
             AND_ABS => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 self.and(value);
-                dbg!("{}AND ${:04X}", self.code_to_str(3), addr);
+                disasm = dbg!("{}AND ${:04X}", self.code_to_str(3), addr);
             }
             // AND abs,X
             AND_ABS_X => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_x();
                 self.and(value);
-                dbg!("{}AND ${:04X},X", self.code_to_str(3), addr);
+                disasm = dbg!("{}AND ${:04X},X", self.code_to_str(3), addr);
             }
             // AND abs,Y
             AND_ABS_Y => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_y();
                 self.and(value);
-                dbg!("{}AND ${:04X},Y", self.code_to_str(3), addr);
+                disasm = dbg!("{}AND ${:04X},Y", self.code_to_str(3), addr);
             }
             // AND (indirect,X)
             AND_IND_X => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_indexed_indirect();
                 self.and(value);
-                dbg!("{}AND (${:02X},X)", self.code_to_str(2), addr);
+                disasm = dbg!("{}AND (${:02X},X)", self.code_to_str(2), addr);
             }
             // AND (indirect),Y
             AND_IND_Y => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_indirect_indexed();
                 self.and(value);
-                dbg!("{}AND (${:02X}),Y", self.code_to_str(2), addr);
+                disasm = dbg!("{}AND (${:02X}),Y", self.code_to_str(2), addr);
             }
             // ASL A
             ASL_A => {
                 self.a = self.asl(self.a);
-                dbg!("{}ASL A", self.code_to_str(1));
+                disasm = dbg!("{}ASL A", self.code_to_str(1));
             }
             // ASL Zero Page
             ASL_ZP => {
@@ -654,7 +660,7 @@ impl Cpu {
                 let value = self.read_zero_page();
                 let result = self.asl(value);
                 self.memory.write_byte_zero_page(addr, result);
-                dbg!("{}ASL ${:02X}", self.code_to_str(2), addr);
+                disasm = dbg!("{}ASL ${:02X}", self.code_to_str(2), addr);
             }
             // ASL Zero Page,X
             ASL_ZP_X => {
@@ -663,7 +669,7 @@ impl Cpu {
                 let value = self.read_zero_page_x();
                 let result = self.asl(value);
                 self.memory.write_byte(addr as u16, result);
-                dbg!("{}ASL ${:02X},X", self.code_to_str(2), addr_zp);
+                disasm = dbg!("{}ASL ${:02X},X", self.code_to_str(2), addr_zp);
             }
             // ASL Absolute
             ASL_ABS => {
@@ -671,7 +677,7 @@ impl Cpu {
                 let value = self.read_absolute();
                 let result = self.asl(value);
                 self.memory.write_byte(addr, result);
-                dbg!("{}ASL ${:04X}", self.code_to_str(3), addr);
+                disasm = dbg!("{}ASL ${:04X}", self.code_to_str(3), addr);
             }
             // ASL Absolute,X
             ASL_ABS_X => {
@@ -681,16 +687,16 @@ impl Cpu {
                 let value = self.read_absolute_x();
                 let result = self.asl(value);
                 self.memory.write_byte(addr, result);
-                dbg!("{}ASL ${:04X},X", self.code_to_str(3), addr_zp);
+                disasm = dbg!("{}ASL ${:04X},X", self.code_to_str(3), addr_zp);
             }
             // BCC
             BCC => {
                 let offset = self.read_immediate_byte() as i8;
                 let addr = self.pc.wrapping_add(offset as u16);
-                dbg!("{}BCC ${:04X}", self.code_to_str(2), addr);
+                disasm = dbg!("{}BCC ${:04X}", self.code_to_str(2), addr);
                 if !self.p.is_carry() {
                     self.pc = addr;
-                    dbg!("----");
+                    // disasm = dbg!("----");
                 }
             }
             // Start of BCS
@@ -698,20 +704,20 @@ impl Cpu {
                 // BCS
                 let offset = self.read_immediate_byte() as i8;
                 let addr = self.pc.wrapping_add(offset as u16);
-                dbg!("{}BCS ${:04X}", self.code_to_str(2), addr);
+                disasm = dbg!("{}BCS ${:04X}", self.code_to_str(2), addr);
                 if self.p.is_carry() {
                     self.pc = addr;
-                    dbg!("----");
+                    // disasm = dbg!("----");
                 }
             }
             // BEQ (Branch if Equal / Zero flag set)
             BEQ => {
                 let offset = self.read_immediate_byte() as i8;
                 let addr = self.pc.wrapping_add(offset as u16);
-                dbg!("{}BEQ ${:04X}", self.code_to_str(2), addr);
+                disasm = dbg!("{}BEQ ${:04X}", self.code_to_str(2), addr);
                 if self.p.is_zero() {
                     self.pc = addr;
-                    dbg!("----");
+                    // disasm = dbg!("----");
                 }
             }
             // BIT Zero Page
@@ -719,59 +725,59 @@ impl Cpu {
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 self.bit(value);
-                dbg!("{}BIT ${:02X}", self.code_to_str(2), addr);
+                disasm = dbg!("{}BIT ${:02X}", self.code_to_str(2), addr);
             }
             // BIT Absolute
             BIT_ABS => {
                 let addr = self.read_immediate_word();
                 let value = self.memory.read_byte(addr);
                 self.bit(value);
-                dbg!("{}BIT ${:04X}", self.code_to_str(3), addr);
+                disasm = dbg!("{}BIT ${:04X}", self.code_to_str(3), addr);
             }
             // BMI
             BMI => {
                 let offset = self.read_immediate_byte() as i8;
                 let addr = self.pc.wrapping_add(offset as u16);
-                dbg!("{}BMI ${:04X}", self.code_to_str(2), addr);
+                disasm = dbg!("{}BMI ${:04X}", self.code_to_str(2), addr);
                 if self.p.is_negative() {
                     self.pc = addr;
-                    dbg!("----");
+                    // disasm = dbg!("----");
                 }
             }
             // BNE (Branch if Not Equal / Zero flag clear)
             BNE => {
                 let offset = self.read_immediate_byte() as i8;
                 let addr = self.pc.wrapping_add(offset as u16);
-                dbg!("{}BNE ${:04X}", self.code_to_str(3), addr);
+                disasm = dbg!("{}BNE ${:04X}", self.code_to_str(3), addr);
                 if !self.p.is_zero() {
                     self.pc = addr;
-                    dbg!("----");
+                    // disasm = dbg!("----");
                 }
             }
             // BPL
             BPL => {
                 let offset = self.read_immediate_byte() as i8;
                 let addr = self.pc.wrapping_add(offset as u16);
-                dbg!("{}BPL ${:04X}", self.code_to_str(3), addr);
+                disasm = dbg!("{}BPL ${:04X}", self.code_to_str(3), addr);
                 if !self.p.is_negative() {
                     self.pc = addr;
-                    dbg!("----");
+                    // disasm = dbg!("----");
                 }
             }
             // BRK
             BRK => {
-                dbg!("{}BRK", self.code_to_str(1));
-                dbg!("----");
+                disasm = dbg!("{}BRK", self.code_to_str(1));
+                // disasm = dbg!("----");
                 self.brk();
             }
             // BVC
             BVC => {
                 let offset = self.read_immediate_byte() as i8;
                 let addr = self.pc.wrapping_add(offset as u16);
-                dbg!("{}BVC ${:04X}", self.code_to_str(3), addr);
+                disasm = dbg!("{}BVC ${:04X}", self.code_to_str(3), addr);
                 if self.p.value & 0x40 == 0 {
                     self.pc = addr;
-                    dbg!("----");
+                    // disasm = dbg!("----");
                 }
             }
             // BVS
@@ -779,126 +785,126 @@ impl Cpu {
                 // BVS
                 let offset = self.read_immediate_byte() as i8;
                 let addr = self.pc.wrapping_add(offset as u16);
-                dbg!("{}BVS ${:04X}", self.code_to_str(3), addr);
+                disasm = dbg!("{}BVS ${:04X}", self.code_to_str(3), addr);
                 if self.p.value & 0x40 != 0 {
                     self.pc = addr;
-                    dbg!("----");
+                    // disasm = dbg!("----");
                 }
             }
             // CLC
             CLC => {
                 self.p.set_carry(false);
-                dbg!("{}CLC", self.code_to_str(1));
+                disasm = dbg!("{}CLC", self.code_to_str(1));
             }
             // CLD
             CLD => {
                 self.p.set_decimal_mode(false);
-                dbg!("{}CLD", self.code_to_str(1));
+                disasm = dbg!("{}CLD", self.code_to_str(1));
             }
             // CLI
             CLI => {
                 self.p.set_interrupt_disable(false);
-                dbg!("{}CLI", self.code_to_str(1));
+                disasm = dbg!("{}CLI", self.code_to_str(1));
             }
             // CLV
             CLV => {
                 self.p.set_overflow(false);
-                dbg!("{}CLV", self.code_to_str(1));
+                disasm = dbg!("{}CLV", self.code_to_str(1));
             }
             // CMP #imm
             CMP_IMM => {
                 let value = self.read_immediate_byte();
                 self.cmp(value);
-                dbg!("{}CMP #${:02X}", self.code_to_str(2), value);
+                disasm = dbg!("{}CMP #${:02X}", self.code_to_str(2), value);
             }
             // CMP zp
             CMP_ZP => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 self.cmp(value);
-                dbg!("{}CMP ${:02X}", self.code_to_str(2), addr);
+                disasm = dbg!("{}CMP ${:02X}", self.code_to_str(2), addr);
             }
             // CMP zp,X
             CMP_ZP_X => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page_x();
                 self.cmp(value);
-                dbg!("{}CMP ${:02X},X", self.code_to_str(2), addr);
+                disasm = dbg!("{}CMP ${:02X},X", self.code_to_str(2), addr);
             }
             // CMP abs
             CMP_ABS => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 self.cmp(value);
-                dbg!("{}CMP ${:04X}", self.code_to_str(3), addr);
+                disasm = dbg!("{}CMP ${:04X}", self.code_to_str(3), addr);
             }
             // CMP abs,X
             CMP_ABS_X => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_x();
                 self.cmp(value);
-                dbg!("{}CMP ${:04X},X", self.code_to_str(3), addr);
+                disasm = dbg!("{}CMP ${:04X},X", self.code_to_str(3), addr);
             }
             // CMP abs,Y
             CMP_ABS_Y => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_y();
                 self.cmp(value);
-                dbg!("{}CMP ${:04X},Y", self.code_to_str(3), addr);
+                disasm = dbg!("{}CMP ${:04X},Y", self.code_to_str(3), addr);
             }
             // CMP (zp,X)
             CMP_IND_X => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_indexed_indirect();
                 self.cmp(value);
-                dbg!("{}CMP (${:02X},X)", self.code_to_str(2), addr);
+                disasm = dbg!("{}CMP (${:02X},X)", self.code_to_str(2), addr);
             }
             // CMP (zp),Y
             CMP_IND_Y => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_indirect_indexed();
                 self.cmp(value);
-                dbg!("{}CMP (${:02X}),Y", self.code_to_str(2), addr);
+                disasm = dbg!("{}CMP (${:02X}),Y", self.code_to_str(2), addr);
             }
             // CPX #imm
             CPX_IMM => {
                 let value = self.read_immediate_byte();
                 self.cpx(value);
-                dbg!("{}CPX #${:02X}", self.code_to_str(2), value);
+                disasm = dbg!("{}CPX #${:02X}", self.code_to_str(2), value);
             }
             // CPX zp
             CPX_ZP => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 self.cpx(value);
-                dbg!("{}CPX ${:02X}", self.code_to_str(2), addr);
+                disasm = dbg!("{}CPX ${:02X}", self.code_to_str(2), addr);
             }
             // CPX abs
             CPX_ABS => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 self.cpx(value);
-                dbg!("{}CPX ${:04X}", self.code_to_str(3), addr);
+                disasm = dbg!("{}CPX ${:04X}", self.code_to_str(3), addr);
             }
             // CPY #imm
             CPY_IMM => {
                 let value = self.read_immediate_byte();
                 self.cpy(value);
-                dbg!("{}CPY #${:02X}", self.code_to_str(2), value);
+                disasm = dbg!("{}CPY #${:02X}", self.code_to_str(2), value);
             }
             // CPY zp
             CPY_ZP => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 self.cpy(value);
-                dbg!("{}CPY ${:02X}", self.code_to_str(2), addr);
+                disasm = dbg!("{}CPY ${:02X}", self.code_to_str(2), addr);
             }
             // CPY abs
             CPY_ABS => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 self.cpy(value);
-                dbg!("{}CPY ${:04X}", self.code_to_str(3), addr);
+                disasm = dbg!("{}CPY ${:04X}", self.code_to_str(3), addr);
             }
             // DEC Zero Page
             DEC_ZP => {
@@ -906,7 +912,7 @@ impl Cpu {
                 let val = self.read_zero_page();
                 let result = self.dec(val);
                 self.memory.write_byte(addr as u16, result);
-                dbg!("{}DEC ${:02X}", self.code_to_str(2), addr);
+                disasm = dbg!("{}DEC ${:02X}", self.code_to_str(2), addr);
             }
             // DEC Zero Page,X
             DEC_ZP_X => {
@@ -915,7 +921,7 @@ impl Cpu {
                 let val = self.read_zero_page_x();
                 let result = self.dec(val);
                 self.memory.write_byte(addr as u16, result);
-                dbg!("{}DEC ${:02X},X", self.code_to_str(2), addr_zp);
+                disasm = dbg!("{}DEC ${:02X},X", self.code_to_str(2), addr_zp);
             }
             // DEC Absolute
             DEC_ABS => {
@@ -923,7 +929,7 @@ impl Cpu {
                 let val = self.read_absolute();
                 let result = self.dec(val);
                 self.memory.write_byte(addr, result);
-                dbg!("{}DEC ${:04X}", self.code_to_str(3), addr);
+                disasm = dbg!("{}DEC ${:04X}", self.code_to_str(3), addr);
             }
             DEC_ABS_X => {
                 // DEC Absolute,X
@@ -932,72 +938,72 @@ impl Cpu {
                 let val = self.read_absolute_x();
                 let result = self.dec(val);
                 self.memory.write_byte(addr, result);
-                dbg!("{}DEC ${:04X},X", self.code_to_str(3), addr_abs);
+                disasm = dbg!("{}DEC ${:04X},X", self.code_to_str(3), addr_abs);
             }
             // DEX
             DEX => {
                 self.x = self.dec(self.x);
-                dbg!("{}DEX", self.code_to_str(1));
+                disasm = dbg!("{}DEX", self.code_to_str(1));
             }
             // DEY
             DEY => {
                 self.y = self.dec(self.y);
-                dbg!("{}DEY", self.code_to_str(1));
+                disasm = dbg!("{}DEY", self.code_to_str(1));
             }
             // EOR #imm
             EOR_IMM => {
                 let value = self.read_immediate_byte();
                 self.eor(value);
-                dbg!("{}EOR #${:02X}", self.code_to_str(2), value);
+                disasm = dbg!("{}EOR #${:02X}", self.code_to_str(2), value);
             }
             // EOR zp
             EOR_ZP => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 self.eor(value);
-                dbg!("{}EOR ${:02X}", self.code_to_str(2), addr);
+                disasm = dbg!("{}EOR ${:02X}", self.code_to_str(2), addr);
             }
             // EOR zp,X
             EOR_ZP_X => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page_x();
                 self.eor(value);
-                dbg!("{}EOR ${:02X},X", self.code_to_str(2), addr);
+                disasm = dbg!("{}EOR ${:02X},X", self.code_to_str(2), addr);
             }
             // EOR abs
             EOR_ABS => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 self.eor(value);
-                dbg!("{}EOR ${:04X}", self.code_to_str(3), addr);
+                disasm = dbg!("{}EOR ${:04X}", self.code_to_str(3), addr);
             }
             // EOR abs,X
             EOR_ABS_X => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_x();
                 self.eor(value);
-                dbg!("{}EOR ${:04X},X", self.code_to_str(3), addr);
+                disasm = dbg!("{}EOR ${:04X},X", self.code_to_str(3), addr);
             }
             // EOR abs,Y
             EOR_ABS_Y => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_y();
                 self.eor(value);
-                dbg!("{}EOR ${:04X},Y", self.code_to_str(3), addr);
+                disasm = dbg!("{}EOR ${:04X},Y", self.code_to_str(3), addr);
             }
             // EOR indirect,X
             EOR_IND_X => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_indexed_indirect();
                 self.eor(value);
-                dbg!("{}EOR (${:02X},X)", self.code_to_str(2), addr);
+                disasm = dbg!("{}EOR (${:02X},X)", self.code_to_str(2), addr);
             }
             EOR_IND_Y => {
                 // EOR indirect,Y
                 let addr = self.get_zero_page_address();
                 let value = self.read_indirect_indexed();
                 self.eor(value);
-                dbg!("{}EOR (${:02X}),Y", self.code_to_str(2), addr);
+                disasm = dbg!("{}EOR (${:02X}),Y", self.code_to_str(2), addr);
             }
             // INC Zero Page
             INC_ZP => {
@@ -1005,7 +1011,7 @@ impl Cpu {
                 let value = self.read_zero_page();
                 let result = self.inc(value);
                 self.memory.write_byte_zero_page(addr, result);
-                dbg!("{}INC ${:02X}", self.code_to_str(2), addr);
+                disasm = dbg!("{}INC ${:02X}", self.code_to_str(2), addr);
             }
             // INC Zero Page,X
             INC_ZP_X => {
@@ -1013,7 +1019,7 @@ impl Cpu {
                 let value = self.read_zero_page_x();
                 let result = self.inc(value);
                 self.memory.write_byte_zero_page(addr, result);
-                dbg!(
+                disasm = dbg!(
                     "{}INC ${:02X},X",
                     self.code_to_str(2),
                     addr.wrapping_sub(self.x)
@@ -1025,7 +1031,7 @@ impl Cpu {
                 let value = self.read_absolute();
                 let result = self.inc(value);
                 self.memory.write_byte(addr, result);
-                dbg!("{}INC ${:04X}", self.code_to_str(3), addr);
+                disasm = dbg!("{}INC ${:04X}", self.code_to_str(3), addr);
             }
             // INC Absolute,X
             INC_ABS_X => {
@@ -1033,7 +1039,7 @@ impl Cpu {
                 let value = self.read_absolute_x();
                 let result = self.inc(value);
                 self.memory.write_byte(addr, result);
-                dbg!(
+                disasm = dbg!(
                     "{}INC ${:04X},X",
                     self.code_to_str(3),
                     addr.wrapping_sub(self.x as u16)
@@ -1043,19 +1049,19 @@ impl Cpu {
             INX => {
                 // INX
                 self.x = self.inc(self.x);
-                dbg!("{}INX", self.code_to_str(1));
+                disasm = dbg!("{}INX", self.code_to_str(1));
             }
             // INY
             INY => {
                 // INY
                 self.y = self.inc(self.y);
-                dbg!("{}INY", self.code_to_str(1));
+                disasm = dbg!("{}INY", self.code_to_str(1));
             }
             // JMP absolute
             JMP => {
                 let addr = self.memory.read_word(self.pc);
                 self.pc += 2;
-                dbg!("{}JMP ${:04X}\n----", self.code_to_str(3), addr);
+                disasm = dbg!("{}JMP ${:04X}\n----", self.code_to_str(3), addr);
                 self.pc = addr;
             }
             // JMP indirect
@@ -1070,7 +1076,7 @@ impl Cpu {
                     .memory
                     .read_byte((addr_hi as u16) << 0x8 | addr_lo.wrapping_add(1) as u16);
                 self.pc += 2;
-                dbg!("{}JMP (${:04X})\n----", self.code_to_str(3), addr);
+                disasm = dbg!("{}JMP (${:04X})\n----", self.code_to_str(3), addr);
                 self.pc = (jmp_addr_hi as u16) << 8 | jmp_addr_lo as u16;
             }
             // JSR
@@ -1078,136 +1084,136 @@ impl Cpu {
                 let addr = self.read_immediate_word();
                 //                self.pc += 2;
                 self.push_word(self.pc.wrapping_sub(1)); // push return address - 1
-                dbg!("{}JSR ${:04X}\n----", self.code_to_str(3), addr);
+                disasm = dbg!("{}JSR ${:04X}\n----", self.code_to_str(3), addr);
                 self.pc = addr;
             }
             // LDA Immediate
             LDA_IMM => {
                 let value = self.read_immediate_byte();
                 self.lda(value);
-                dbg!("{}LDA #${:02X}", self.code_to_str(2), value);
+                disasm = dbg!("{}LDA #${:02X}", self.code_to_str(2), value);
             }
             // LDA Zero Page
             LDA_ZP => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 self.lda(value);
-                dbg!("{}LDA ${:02X}", self.code_to_str(2), addr);
+                disasm = dbg!("{}LDA ${:02X}", self.code_to_str(2), addr);
             }
             // LDA Zero Page,X
             LDA_ZP_X => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page_x();
                 self.lda(value);
-                dbg!("{}LDA ${:02X},X", self.code_to_str(2), addr);
+                disasm = dbg!("{}LDA ${:02X},X", self.code_to_str(2), addr);
             }
             // LDA Absolute
             LDA_ABS => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 self.lda(value);
-                dbg!("{}LDA ${:04X}", self.code_to_str(3), addr);
+                disasm = dbg!("{}LDA ${:04X}", self.code_to_str(3), addr);
             }
             // LDA Absolute,X
             LDA_ABS_X => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_x();
                 self.lda(value);
-                dbg!("{}LDA ${:04X},X", self.code_to_str(3), addr);
+                disasm = dbg!("{}LDA ${:04X},X", self.code_to_str(3), addr);
             }
             // LDA Absolute,Y
             LDA_ABS_Y => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_y();
                 self.lda(value);
-                dbg!("{}LDA ${:02X},Y", self.code_to_str(2), addr);
+                disasm = dbg!("{}LDA ${:02X},Y", self.code_to_str(2), addr);
             }
             // LDA (zp,X)
             LDA_IND_X => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_indexed_indirect();
                 self.lda(value);
-                dbg!("{}LDA (${:02X},X)", self.code_to_str(2), addr);
+                disasm = dbg!("{}LDA (${:02X},X)", self.code_to_str(2), addr);
             }
             // LDA (zp),Y
             LDA_IND_Y => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_indirect_indexed();
                 self.lda(value);
-                dbg!("{}LDA (${:02X}),Y", self.code_to_str(2), addr);
+                disasm = dbg!("{}LDA (${:02X}),Y", self.code_to_str(2), addr);
             }
             // LDX Immediate
             LDX_IMM => {
                 let value = self.read_immediate_byte();
                 self.ldx(value);
-                dbg!("{}LDX #${:02X}", self.code_to_str(2), value);
+                disasm = dbg!("{}LDX #${:02X}", self.code_to_str(2), value);
             }
             // LDX zp
             LDX_ZP => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 self.ldx(value);
-                dbg!("{}LDX ${:02X}", self.code_to_str(2), addr);
+                disasm = dbg!("{}LDX ${:02X}", self.code_to_str(2), addr);
             }
             // LDX zp,Y
             LDX_ZP_Y => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page_y();
                 self.ldx(value);
-                dbg!("{}LDX ${:02X},Y", self.code_to_str(2), addr);
+                disasm = dbg!("{}LDX ${:02X},Y", self.code_to_str(2), addr);
             }
             // LDX abs
             LDX_ABS => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 self.ldx(value);
-                dbg!("{}LDX ${:04X}", self.code_to_str(3), addr);
+                disasm = dbg!("{}LDX ${:04X}", self.code_to_str(3), addr);
             }
             // LDX abs,Y
             LDX_ABS_Y => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_y();
                 self.ldx(value);
-                dbg!("{}LDX ${:04X},Y", self.code_to_str(3), addr);
+                disasm = dbg!("{}LDX ${:04X},Y", self.code_to_str(3), addr);
             }
             // LDY Immediate
             LDY_IMM => {
                 let value = self.read_immediate_byte();
                 self.ldy(value);
-                dbg!("{}LDY #${:02X}", self.code_to_str(2), value);
+                disasm = dbg!("{}LDY #${:02X}", self.code_to_str(2), value);
             }
             // LDY Zero Page
             LDY_ZP => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 self.ldy(value);
-                dbg!("{}LDY ${:02X}", self.code_to_str(2), addr);
+                disasm = dbg!("{}LDY ${:02X}", self.code_to_str(2), addr);
             }
             // LDY zp,X
             LDY_ZP_X => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page_x();
                 self.ldy(value);
-                dbg!("{}LDY ${:02X},X", self.code_to_str(2), addr);
+                disasm = dbg!("{}LDY ${:02X},X", self.code_to_str(2), addr);
             }
             // LDY abs
             LDY_ABS => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 self.ldy(value);
-                dbg!("{}LDY ${:04X}", self.code_to_str(3), addr);
+                disasm = dbg!("{}LDY ${:04X}", self.code_to_str(3), addr);
             }
             // LDY abs,X
             LDY_ABS_X => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_x();
                 self.ldy(value);
-                dbg!("{}LDY ${:02X},X", self.code_to_str(3), addr);
+                disasm = dbg!("{}LDY ${:02X},X", self.code_to_str(3), addr);
             }
             // LSR A
             LSR_A => {
                 self.a = self.lsr(self.a);
-                dbg!("{}LSR A", self.code_to_str(1));
+                disasm = dbg!("{}LSR A", self.code_to_str(1));
             }
             // LSR zp
             LSR_ZP => {
@@ -1215,7 +1221,7 @@ impl Cpu {
                 let value = self.read_zero_page();
                 let result = self.lsr(value);
                 self.memory.write_byte(addr as u16, result);
-                dbg!("{}LSR ${:02X}", self.code_to_str(2), addr);
+                disasm = dbg!("{}LSR ${:02X}", self.code_to_str(2), addr);
             }
             // LSR zp,X
             LSR_ZP_X => {
@@ -1223,7 +1229,7 @@ impl Cpu {
                 let value = self.read_zero_page_x();
                 let result = self.lsr(value);
                 self.memory.write_byte(addr as u16, result);
-                dbg!(
+                disasm = dbg!(
                     "{}LSR ${:02X},X",
                     self.code_to_str(2),
                     addr.wrapping_sub(self.x)
@@ -1235,7 +1241,7 @@ impl Cpu {
                 let value = self.read_absolute();
                 let result = self.lsr(value);
                 self.memory.write_byte(addr, result);
-                dbg!("{}LSR ${:04X}", self.code_to_str(3), addr);
+                disasm = dbg!("{}LSR ${:04X}", self.code_to_str(3), addr);
             }
             // LSR abs,X
             LSR_ABS_X => {
@@ -1243,7 +1249,7 @@ impl Cpu {
                 let value = self.read_absolute_x();
                 let result = self.lsr(value);
                 self.memory.write_byte(addr, result);
-                dbg!(
+                disasm = dbg!(
                     "{}LSR ${:04X},X",
                     self.code_to_str(3),
                     addr.wrapping_sub(self.x as u16)
@@ -1251,89 +1257,89 @@ impl Cpu {
             }
             // NOP
             NOP => {
-                dbg!("{}NOP", self.code_to_str(1))
+                disasm = dbg!("{}NOP", self.code_to_str(1))
             }
             // ORA #imm
             ORA_IMM => {
                 let value = self.read_immediate_byte();
                 self.ora(value);
-                dbg!("{}ORA #${:02X}", self.code_to_str(2), value);
+                disasm = dbg!("{}ORA #${:02X}", self.code_to_str(2), value);
             }
             // ORA zp
             ORA_ZP => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 self.ora(value);
-                dbg!("{}ORA ${:02X}", self.code_to_str(2), addr);
+                disasm = dbg!("{}ORA ${:02X}", self.code_to_str(2), addr);
             }
             // ORA zp,X
             ORA_ZP_X => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page_x();
                 self.ora(value);
-                dbg!("{}ORA ${:02X},X", self.code_to_str(2), addr);
+                disasm = dbg!("{}ORA ${:02X},X", self.code_to_str(2), addr);
             }
             // ORA abs
             ORA_ABS => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 self.ora(value);
-                dbg!("{}ORA ${:04X}", self.code_to_str(3), addr);
+                disasm = dbg!("{}ORA ${:04X}", self.code_to_str(3), addr);
             }
             // ORA abs,X
             ORA_ABS_X => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_x();
                 self.ora(value);
-                dbg!("{}ORA ${:04X},X", self.code_to_str(3), addr);
+                disasm = dbg!("{}ORA ${:04X},X", self.code_to_str(3), addr);
             }
             // ORA abs,Y
             ORA_ABS_Y => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_y();
                 self.ora(value);
-                dbg!("{}ORA ${:04X},Y", self.code_to_str(3), addr);
+                disasm = dbg!("{}ORA ${:04X},Y", self.code_to_str(3), addr);
             }
             // ORA (zp,X)
             ORA_IND_X => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_indexed_indirect();
                 self.ora(value);
-                dbg!("{}ORA (${:02X},X)", self.code_to_str(2), addr);
+                disasm = dbg!("{}ORA (${:02X},X)", self.code_to_str(2), addr);
             }
             // ORA (zp),Y
             ORA_IND_Y => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_indirect_indexed();
                 self.ora(value);
-                dbg!("{}ORA (${:02X}),Y", self.code_to_str(2), addr);
+                disasm = dbg!("{}ORA (${:02X}),Y", self.code_to_str(2), addr);
             }
             // PHA
             PHA => {
                 self.push(self.a);
-                dbg!("{}PHA", self.code_to_str(1));
+                disasm = dbg!("{}PHA", self.code_to_str(1));
             }
             // PHP
             PHP => {
                 self.push(self.p.value | mos6502::BREAK | mos6502::UNUSED); // emulate B and Unused flag set when pushed
-                dbg!("{}PHP", self.code_to_str(1));
+                disasm = dbg!("{}PHP", self.code_to_str(1));
             }
             // PLA
             PLA => {
                 self.a = self.pop();
                 self.p.set_zero(self.a == 0);
                 self.p.set_negative(self.a & 0x80 != 0);
-                dbg!("{}PLA", self.code_to_str(1));
+                disasm = dbg!("{}PLA", self.code_to_str(1));
             }
             // PLP
             PLP => {
                 self.p.value = self.pop() & 0b1100_1111; // B and unused bits masked off
-                dbg!("{}PLP (pull P)", self.code_to_str(1));
+                disasm = dbg!("{}PLP (pull P)", self.code_to_str(1));
             }
             // ROL A
             ROL_A => {
                 self.a = self.rol(self.a);
-                dbg!("{}ROL A", self.code_to_str(1));
+                disasm = dbg!("{}ROL A", self.code_to_str(1));
             }
             // ROL zp
             ROL_ZP => {
@@ -1341,7 +1347,7 @@ impl Cpu {
                 let value = self.read_zero_page();
                 let result = self.rol(value);
                 self.memory.write_byte(addr as u16, result);
-                dbg!("{}ROL ${:02X}", self.code_to_str(2), addr);
+                disasm = dbg!("{}ROL ${:02X}", self.code_to_str(2), addr);
             }
             // ROL zp,X
             ROL_ZP_X => {
@@ -1349,7 +1355,7 @@ impl Cpu {
                 let value = self.read_zero_page_x();
                 let result = self.rol(value);
                 self.memory.write_byte(addr as u16, result);
-                dbg!(
+                disasm = dbg!(
                     "{}ROL ${:02X},X",
                     self.code_to_str(2),
                     addr.wrapping_sub(self.x)
@@ -1361,7 +1367,7 @@ impl Cpu {
                 let value = self.read_absolute();
                 let result = self.rol(value);
                 self.memory.write_byte(addr, result);
-                dbg!("{}ROL ${:04X}", self.code_to_str(3), addr);
+                disasm = dbg!("{}ROL ${:04X}", self.code_to_str(3), addr);
             }
             // ROL abs,X
             ROL_ABS_X => {
@@ -1369,7 +1375,7 @@ impl Cpu {
                 let value = self.read_absolute_x();
                 let result = self.rol(value);
                 self.memory.write_byte(addr, result);
-                dbg!(
+                disasm = dbg!(
                     "{}ROL ${:04X},X",
                     self.code_to_str(3),
                     addr.wrapping_sub(self.x as u16)
@@ -1378,7 +1384,7 @@ impl Cpu {
             // ROR A
             ROR_A => {
                 self.a = self.ror(self.a);
-                dbg!("{}ROR A", self.code_to_str(1));
+                disasm = dbg!("{}ROR A", self.code_to_str(1));
             }
             // ROR zp
             ROR_ZP => {
@@ -1386,7 +1392,7 @@ impl Cpu {
                 let value = self.read_zero_page();
                 let result = self.ror(value);
                 self.memory.write_byte(addr as u16, result);
-                dbg!("{}ROR ${:02X}", self.code_to_str(2), addr);
+                disasm = dbg!("{}ROR ${:02X}", self.code_to_str(2), addr);
             }
             // ROR zp,X
             ROR_ZP_X => {
@@ -1394,7 +1400,7 @@ impl Cpu {
                 let value = self.read_zero_page_x();
                 let result = self.ror(value);
                 self.memory.write_byte(addr as u16, result);
-                dbg!(
+                disasm = dbg!(
                     "{}ROR ${:02X},X",
                     self.code_to_str(2),
                     addr.wrapping_sub(self.x)
@@ -1406,7 +1412,7 @@ impl Cpu {
                 let value = self.read_absolute();
                 let result = self.ror(value);
                 self.memory.write_byte(addr, result);
-                dbg!("{}ROR ${:04X}", self.code_to_str(3), addr);
+                disasm = dbg!("{}ROR ${:04X}", self.code_to_str(3), addr);
             }
             // ROR abs,X
             ROR_ABS_X => {
@@ -1414,7 +1420,7 @@ impl Cpu {
                 let value = self.read_absolute_x();
                 let result = self.ror(value);
                 self.memory.write_byte(addr, result);
-                dbg!(
+                disasm = dbg!(
                     "{}ROR ${:04X},X",
                     self.code_to_str(3),
                     addr.wrapping_sub(self.x as u16)
@@ -1422,99 +1428,99 @@ impl Cpu {
             }
             // RTI
             RTI => {
-                dbg!("{}RTI", self.code_to_str(1));
-                dbg!("----");
+                disasm = dbg!("{}RTI", self.code_to_str(1));
+                // disasm = dbg!("----");
                 self.p.value = self.pop() & !mos6502::BREAK & !mos6502::UNUSED; // B and unused bits masked off
                 self.pc = self.pop_word();
             }
             // RTS
             RTS => {
                 self.pc = self.pop_word().wrapping_add(1);
-                dbg!("{}RTS\n----", self.code_to_str(1));
+                disasm = dbg!("{}RTS\n----", self.code_to_str(1));
             }
             // SBC #imm
             SBC_IMM => {
                 let value = self.read_immediate_byte();
                 self.sbc(value);
-                dbg!("{}SBC #${:02X}", self.code_to_str(2), value);
+                disasm = dbg!("{}SBC #${:02X}", self.code_to_str(2), value);
             }
             // SBC zp
             SBC_ZP => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 self.sbc(value);
-                dbg!("{}SBC ${:02x}", self.code_to_str(2), addr)
+                disasm = dbg!("{}SBC ${:02x}", self.code_to_str(2), addr)
             }
             // SBC zp,X
             SBC_ZP_X => {
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page_x();
                 self.sbc(value);
-                dbg!("{}SBC ${:02x},X", self.code_to_str(2), addr);
+                disasm = dbg!("{}SBC ${:02x},X", self.code_to_str(2), addr);
             }
             // SBC absolute
             SBC_ABS => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 self.sbc(value);
-                dbg!("{}SBC ${:04x}", self.code_to_str(3), addr);
+                disasm = dbg!("{}SBC ${:04x}", self.code_to_str(3), addr);
             }
             // SBC absolute,X
             SBC_ABS_X => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_x();
                 self.sbc(value);
-                dbg!("{}SBC ${:04x},X", self.code_to_str(3), addr);
+                disasm = dbg!("{}SBC ${:04x},X", self.code_to_str(3), addr);
             }
             // SBC absolute,Y
             SBC_ABS_Y => {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute_y();
                 self.sbc(value);
-                dbg!("{}SBC ${:04x},Y", self.code_to_str(3), addr);
+                disasm = dbg!("{}SBC ${:04x},Y", self.code_to_str(3), addr);
             }
             // SBC (indirect,X)
             SBC_IND_X => {
                 let addr = self.get_absolute_address();
                 let value = self.read_indexed_indirect();
                 self.sbc(value);
-                dbg!("{}SBC $({:02x},X)", self.code_to_str(2), addr);
+                disasm = dbg!("{}SBC $({:02x},X)", self.code_to_str(2), addr);
             }
             // SBC(indirect),Y
             SBC_IND_Y => {
                 let addr = self.get_absolute_address();
                 let value = self.read_indirect_indexed();
                 self.sbc(value);
-                dbg!("{}SBC $({:02x}),Y", self.code_to_str(2), addr);
+                disasm = dbg!("{}SBC $({:02x}),Y", self.code_to_str(2), addr);
             }
             // SEC
             SEC => {
                 self.p.set_carry(true);
-                dbg!("{}SEC", self.code_to_str(1));
+                disasm = dbg!("{}SEC", self.code_to_str(1));
             }
             // SED
             SED => {
                 self.p.set_decimal_mode(true);
-                dbg!("{}SED", self.code_to_str(1));
+                disasm = dbg!("{}SED", self.code_to_str(1));
             }
             // SEI
             SEI => {
                 self.p.set_interrupt_disable(true);
-                dbg!("{}SEI", self.code_to_str(1));
+                disasm = dbg!("{}SEI", self.code_to_str(1));
             }
             // STA zp
             STA_ZP => {
                 let addr = self.get_zero_page_address();
                 self.pc += 1;
                 self.memory.write_byte_zero_page(addr, self.a);
-                dbg!("{}STA ${:02X}", self.code_to_str(2), addr);
+                disasm = dbg!("{}STA ${:02X}", self.code_to_str(2), addr);
             }
             // STA zp,X
             STA_ZP_X => {
                 let addr = self.get_zero_page_address_x();
                 self.pc += 1;
                 self.memory.write_byte_zero_page(addr, self.a);
-                dbg!(
+                disasm = dbg!(
                     "{}STA ${:02X},X",
                     self.code_to_str(2),
                     addr.wrapping_sub(self.x)
@@ -1525,21 +1531,21 @@ impl Cpu {
                 let addr = self.get_absolute_address();
                 self.pc += 2;
                 self.memory.write_byte(addr, self.a);
-                dbg!("{}STA ${:04X}", self.code_to_str(3), addr);
+                disasm = dbg!("{}STA ${:04X}", self.code_to_str(3), addr);
             }
             // STA $nnnn,X
             STA_ABS_X => {
                 let addr = self.get_absolute_address_x();
                 self.pc += 2;
                 self.memory.write_byte(addr, self.a);
-                dbg!("{}STA ${:04X},X", self.code_to_str(3), addr);
+                disasm = dbg!("{}STA ${:04X},X", self.code_to_str(3), addr);
             }
             // STA $nnnn,Y
             STA_ABS_Y => {
                 let addr = self.get_absolute_address_y();
                 self.pc += 2;
                 self.memory.write_byte(addr, self.a);
-                dbg!("{}STA ${:04X},Y", self.code_to_str(3), addr);
+                disasm = dbg!("{}STA ${:04X},Y", self.code_to_str(3), addr);
             }
             // STA (indirect,X)
             STA_IND_X => {
@@ -1547,7 +1553,7 @@ impl Cpu {
                 let addr = self.get_indirect_address_x();
                 self.pc += 1;
                 self.memory.write_byte(addr, self.a);
-                dbg!("{}STA (${:02X},X)", self.code_to_str(2), addr_zp);
+                disasm = dbg!("{}STA (${:02X},X)", self.code_to_str(2), addr_zp);
             }
             // STA (indirect),Y
             STA_IND_Y => {
@@ -1555,86 +1561,87 @@ impl Cpu {
                 let addr = self.get_indirect_address_y();
                 self.pc += 1;
                 self.memory.write_byte(addr, self.a);
-                dbg!("{}STA (${:02X}),Y", self.code_to_str(2), addr_zp);
+                disasm = dbg!("{}STA (${:02X}),Y", self.code_to_str(2), addr_zp);
             }
             // STX zp
             STX_ZP => {
                 let addr = self.read_immediate_byte();
                 self.memory.write_byte_zero_page(addr, self.x);
-                dbg!("{}STX ${:02X}", self.code_to_str(2), addr);
+                disasm = dbg!("{}STX ${:02X}", self.code_to_str(2), addr);
             }
             // STX zp,Y
             STX_ZP_Y => {
                 let addr = self.read_immediate_byte();
                 self.memory
                     .write_byte_zero_page(addr.wrapping_add(self.y), self.x);
-                dbg!("{}STX ${:02X},Y", self.code_to_str(2), addr);
+                disasm = dbg!("{}STX ${:02X},Y", self.code_to_str(2), addr);
             }
             // STX abs
             STX_ABS => {
                 let addr = self.read_immediate_word();
                 self.memory.write_byte(addr, self.x);
-                dbg!("{}STX ${:02X}", self.code_to_str(2), addr);
+                disasm = dbg!("{}STX ${:02X}", self.code_to_str(2), addr);
             }
             // STY zp
             STY_ZP => {
                 let addr = self.read_immediate_byte();
                 self.memory.write_byte_zero_page(addr, self.y);
-                dbg!("{}STY ${:02X}", self.code_to_str(2), addr);
+                disasm = dbg!("{}STY ${:02X}", self.code_to_str(2), addr);
             }
             // STY zp,X
             STY_ZP_X => {
                 let addr = self.read_immediate_byte();
                 self.memory
                     .write_byte_zero_page(addr.wrapping_add(self.x), self.y);
-                dbg!("{}STY ${:02X},X", self.code_to_str(2), addr);
+                disasm = dbg!("{}STY ${:02X},X", self.code_to_str(2), addr);
             }
             // STY abs
             STY_ABS => {
                 let addr = self.read_immediate_word();
                 self.memory.write_byte(addr, self.y);
-                dbg!("{}STY ${:04X}", self.code_to_str(3), addr);
+                disasm = dbg!("{}STY ${:04X}", self.code_to_str(3), addr);
             }
             // TAX
             TAX => {
                 self.x = self.a;
                 self.set_n_z(self.x);
-                dbg!("{}TAX", self.code_to_str(1));
+                disasm = dbg!("{}TAX", self.code_to_str(1));
             }
             // TAY
             TAY => {
                 self.y = self.a;
                 self.set_n_z(self.y);
-                dbg!("{}TAY", self.code_to_str(1));
+                disasm = dbg!("{}TAY", self.code_to_str(1));
             }
             // TSX
             TSX => {
                 self.x = self.s;
                 self.set_n_z(self.x);
-                dbg!("{}TSX", self.code_to_str(1));
+                disasm = dbg!("{}TSX", self.code_to_str(1));
             }
             // TXA
             TXA => {
                 self.a = self.x;
                 self.set_n_z(self.a);
-                dbg!("{}TXA", self.code_to_str(1));
+                disasm = dbg!("{}TXA", self.code_to_str(1));
             }
             // TXS
             TXS => {
                 self.s = self.x;
-                dbg!("{}TXS", self.code_to_str(1));
+                disasm = dbg!("{}TXS", self.code_to_str(1));
             }
             // TYA
             TYA => {
                 self.a = self.y;
                 self.set_n_z(self.a);
-                dbg!("{}TYA", self.code_to_str(1));
+                disasm = dbg!("{}TYA", self.code_to_str(1));
             }
             // End of TYA
             _ => {
-                dbg!("{}!byte ${:02X}", self.code_to_str(1), opcode);
+                disasm = dbg!("{}!byte ${:02X}", self.code_to_str(1), opcode);
             }
         }
+        Some(disasm)
     }
 }
 
@@ -1657,17 +1664,11 @@ impl CpuUi for Cpu {
     fn set_register_by_name(&mut self, reg: &str, value: u16) -> Result<(), String> {
         self.set_register_by_name(reg, value)
     }
-    fn get_register_by_name(&mut self,reg: &str) -> Result<String, String> {
-        match self.get_register(reg){
-            Ok(Reg::R8(val)) => {
-                Ok(format!("{reg}: ${:02X} [{val}]", val))
-            }
-            Ok(Reg::R16(val)) => {
-                Ok(format!("{reg}: ${:04X} [{val}]", val))
-            }
-            Err(err) => {
-                Err(err)
-            }             
+    fn get_register_by_name(&mut self, reg: &str) -> Result<String, String> {
+        match self.get_register(reg) {
+            Ok(Reg::R8(val)) => Ok(format!("{reg}: ${:02X} [{val}]", val)),
+            Ok(Reg::R16(val)) => Ok(format!("{reg}: ${:04X} [{val}]", val)),
+            Err(err) => Err(err),
         }
     }
     fn get_breakpoints(&self) -> Result<Vec<u16>, String> {
@@ -1681,5 +1682,10 @@ impl CpuUi for Cpu {
         self.breakpoints.clear_breakpoints()?;
         Ok(())
     }
-
+    fn get_cpu_name(&self) -> Option<&str> {
+        Some("MOS6502")
+    }
+    fn one_step(&mut self) -> Option<String> {
+        self.step()
+    }
 }

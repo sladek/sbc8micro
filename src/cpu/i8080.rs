@@ -26,11 +26,11 @@
 //!```
 
 use crate::cpu::{CpuUi, Reg};
+use crate::debugger::Breakpoints;
 use crate::disassembler::i8080::disassemble;
 use crate::disassembler::i8080_opcode_consts::*;
 use crate::memory::Memory;
 use crate::status::i8080::*;
-use crate::debugger::Breakpoints;
 
 /// CPU registers, flags, counters and memory
 #[derive(Default, Clone)]
@@ -96,8 +96,15 @@ impl Cpu {
         Some(Box::new(Self::new()))
     }
     fn set_8_bit_value(value: u16) -> Result<u8, String> {
-        if value > 0xff { Err(format!("Value {:04X}H [{value}] is too big for 8 bit register.", value).to_string()) }
-        else  {Ok(value as u8) }
+        if value > 0xff {
+            Err(format!(
+                "Value {:04X}H [{value}] is too big for 8 bit register.",
+                value
+            )
+            .to_string())
+        } else {
+            Ok(value as u8)
+        }
     }
     /// Sets 8 bit register value by register name
     pub fn set_register_by_name(&mut self, reg: &str, value: u16) -> Result<(), String> {
@@ -130,9 +137,7 @@ impl Cpu {
             "SP" => Ok(Reg::R16(self.sp)),
             "PC" => Ok(Reg::R16(self.pc)),
             "PSW" => Ok(Reg::R8(self.status.value)),
-            _ => {
-                Err(format!("Unknown register {reg}"))
-            }
+            _ => Err(format!("Unknown register {reg}")),
         }
     }
     ///
@@ -484,210 +489,211 @@ impl Cpu {
     /// Read instriction from memory, executes it and set PC to point to next instruction in memory.
     /// If debug flag is set to true it will also print mnemonic code of the instruction that is executed.
     ///
-    pub fn step(&mut self) {
-        macro_rules! dbg { ($($x:tt)*) => { if self.debug { println!($($x)*); } } }
+    pub fn step(&mut self) -> Option<String> {
+//        macro_rules! dbg { ($($x:tt)*) => { if self.debug { println!($($x)*); } } }
+        macro_rules! dbg { ($($x:tt)*) => { if self.debug { format!($($x)*)} else { "".to_string() }}}
 
         let opcode = self.memory.read_byte(self.pc);
         self.pc = self.pc.wrapping_add(1);
-
+        let mut disasm:String = String::from("");
         match opcode {
             ACI => {
                 let value = self.read_immediate_byte();
                 self.addc(value);
-                dbg!("{}ACI {:02X}H", self.code_to_str(2), value);
+                disasm = dbg!("{}ACI {:02X}H", self.code_to_str(2), value);
             }
             ADC_B => {
                 let value = self.b;
                 self.addc(value);
-                dbg!("{}ADC B", self.code_to_str(1));
+                disasm = dbg!("{}ADC B", self.code_to_str(1));
             }
             ADC_C => {
                 let value = self.c;
                 self.addc(value);
-                dbg!("{}ADC C", self.code_to_str(1));
+                disasm = dbg!("{}ADC C", self.code_to_str(1));
             }
             ADC_D => {
                 let value = self.d;
                 self.addc(value);
-                dbg!("{}ADC D", self.code_to_str(1));
+                disasm = dbg!("{}ADC D", self.code_to_str(1));
             }
             ADC_E => {
                 let value = self.e;
                 self.addc(value);
-                dbg!("{}ADC E", self.code_to_str(1));
+                disasm = dbg!("{}ADC E", self.code_to_str(1));
             }
             ADC_H => {
                 let value = self.h;
                 self.addc(value);
-                dbg!("{}ADC H", self.code_to_str(1));
+                disasm = dbg!("{}ADC H", self.code_to_str(1));
             }
             ADC_L => {
                 let value = self.l;
                 self.addc(value);
-                dbg!("{}ADC L", self.code_to_str(1));
+                disasm = dbg!("{}ADC L", self.code_to_str(1));
             }
             ADC_M => {
                 let value = self.read_m();
                 self.addc(value);
-                dbg!("{}ADC M", self.code_to_str(1));
+                disasm = dbg!("{}ADC M", self.code_to_str(1));
             }
             ADC_A => {
                 let value = self.a;
                 self.addc(value);
-                dbg!("{}ADC A", self.code_to_str(1));
+                disasm = dbg!("{}ADC A", self.code_to_str(1));
             }
             ADD_B => {
                 let value = self.b;
                 self.add(value, false);
-                dbg!("{}ADD B", self.code_to_str(1));
+                disasm = dbg!("{}ADD B", self.code_to_str(1));
             }
             ADD_C => {
                 let value = self.c;
                 self.add(value, false);
-                dbg!("{}ADD C", self.code_to_str(1));
+                disasm = dbg!("{}ADD C", self.code_to_str(1));
             }
             ADD_D => {
                 let value = self.d;
                 self.add(value, false);
-                dbg!("{}ADD D", self.code_to_str(1));
+                disasm = dbg!("{}ADD D", self.code_to_str(1));
             }
             ADD_E => {
                 let value = self.e;
                 self.add(value, false);
-                dbg!("{}ADD E", self.code_to_str(1));
+                disasm = dbg!("{}ADD E", self.code_to_str(1));
             }
             ADD_H => {
                 let value = self.h;
                 self.add(value, false);
-                dbg!("{}ADD H", self.code_to_str(1));
+                disasm = dbg!("{}ADD H", self.code_to_str(1));
             }
             ADD_L => {
                 let value = self.l;
                 self.add(value, false);
-                dbg!("{}ADD L", self.code_to_str(1));
+                disasm = dbg!("{}ADD L", self.code_to_str(1));
             }
             ADD_M => {
                 let value = self.read_m();
                 self.add(value, false);
-                dbg!("{}ADD M", self.code_to_str(1));
+                disasm = dbg!("{}ADD M", self.code_to_str(1));
             }
             ADD_A => {
                 let value = self.a;
                 self.add(value, false);
-                dbg!("{}ADD A", self.code_to_str(1));
+                disasm = dbg!("{}ADD A", self.code_to_str(1));
             }
             ADI => {
                 let value = self.read_immediate_byte();
                 self.add(value, false);
-                dbg!("{}ADI {:02X}H", self.code_to_str(2), value);
+                disasm = dbg!("{}ADI {:02X}H", self.code_to_str(2), value);
             }
             ANA_B => {
                 let value = self.b;
                 self.and(value);
-                dbg!("{}ANA B", self.code_to_str(1));
+                disasm = dbg!("{}ANA B", self.code_to_str(1));
             }
             ANA_C => {
                 let value = self.c;
                 self.and(value);
-                dbg!("{}ANA C", self.code_to_str(1));
+                disasm = dbg!("{}ANA C", self.code_to_str(1));
             }
             ANA_D => {
                 let value = self.d;
                 self.and(value);
-                dbg!("{}ANA D", self.code_to_str(1));
+                disasm = dbg!("{}ANA D", self.code_to_str(1));
             }
             ANA_E => {
                 let value = self.e;
                 self.and(value);
-                dbg!("{}ANA E", self.code_to_str(1));
+                disasm = dbg!("{}ANA E", self.code_to_str(1));
             }
             ANA_H => {
                 let value = self.h;
                 self.and(value);
-                dbg!("{}ANA H", self.code_to_str(1));
+                disasm = dbg!("{}ANA H", self.code_to_str(1));
             }
             ANA_L => {
                 let value = self.l;
                 self.and(value);
-                dbg!("{}ANA L", self.code_to_str(1));
+                disasm = dbg!("{}ANA L", self.code_to_str(1));
             }
             ANA_M => {
                 let value = self.read_immediate_byte();
                 self.and(value);
-                dbg!("{}ANA M", self.code_to_str(1));
+                disasm = dbg!("{}ANA M", self.code_to_str(1));
             }
             ANA_A => {
                 let value = self.a;
                 self.and(value);
-                dbg!("{}ANA A", self.code_to_str(1));
+                disasm = dbg!("{}ANA A", self.code_to_str(1));
             }
             ANI => {
                 let value = self.read_immediate_byte();
                 self.and(value);
-                dbg!("{}ANI {:02X}H", self.code_to_str(2), value);
+                disasm = dbg!("{}ANI {:02X}H", self.code_to_str(2), value);
             }
             CMA => {
                 self.a = !self.a;
-                dbg!("{}CMA", self.code_to_str(1));
+                disasm = dbg!("{}CMA", self.code_to_str(1));
             }
             CMC => {
                 self.status.set_carry(!self.status.is_carry());
-                dbg!("{}CMC", self.code_to_str(1));
+                disasm = dbg!("{}CMC", self.code_to_str(1));
             }
             CMP_B => {
                 let tmp = self.a;
                 self.sub(self.b, false);
                 self.a = tmp;
-                dbg!("{}CMP B", self.code_to_str(1));
+                disasm = dbg!("{}CMP B", self.code_to_str(1));
             }
             CMP_C => {
                 let tmp = self.a;
                 self.sub(self.c, false);
                 self.a = tmp;
-                dbg!("{}CMP C", self.code_to_str(1));
+                disasm = dbg!("{}CMP C", self.code_to_str(1));
             }
             CMP_D => {
                 let tmp = self.a;
                 self.sub(self.d, false);
                 self.a = tmp;
-                dbg!("{}CMP D", self.code_to_str(1));
+                disasm = dbg!("{}CMP D", self.code_to_str(1));
             }
             CMP_E => {
                 let tmp = self.a;
                 self.sub(self.e, false);
                 self.a = tmp;
-                dbg!("{}CMP E", self.code_to_str(1));
+                disasm = dbg!("{}CMP E", self.code_to_str(1));
             }
             CMP_H => {
                 let tmp = self.a;
                 self.sub(self.h, false);
                 self.a = tmp;
-                dbg!("{}CMP H", self.code_to_str(1));
+                disasm = dbg!("{}CMP H", self.code_to_str(1));
             }
             CMP_L => {
                 let tmp = self.a;
                 self.sub(self.l, false);
                 self.a = tmp;
-                dbg!("{}CMP L", self.code_to_str(1));
+                disasm = dbg!("{}CMP L", self.code_to_str(1));
             }
             CMP_M => {
                 let tmp = self.a;
                 self.sub(self.read_m(), false);
                 self.a = tmp;
-                dbg!("{}CMP M", self.code_to_str(1));
+                disasm = dbg!("{}CMP M", self.code_to_str(1));
             }
             CMP_A => {
                 let tmp = self.a;
                 self.sub(self.a, false);
                 self.a = tmp;
-                dbg!("{}CMP A", self.code_to_str(1));
+                disasm = dbg!("{}CMP A", self.code_to_str(1));
             }
             CPI => {
                 let tmp = self.a;
                 let data = self.read_immediate_byte();
                 self.sub(data, false);
                 self.a = tmp;
-                dbg!("{}CPI {:02X}", self.code_to_str(2), data);
+                disasm = dbg!("{}CPI {:02X}", self.code_to_str(2), data);
             }
             CALL => {
                 if self.debug {
@@ -695,7 +701,7 @@ impl Cpu {
                     self.pc = self.pc.wrapping_add(2);
                     let code = self.code_to_str(3);
                     self.pc = self.pc.wrapping_sub(2);
-                    dbg!("{}CALL {:04X}", code, addr);
+                    disasm = dbg!("{}CALL {:04X}", code, addr);
                 }
                 self.call();
             }
@@ -706,7 +712,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        dbg!("{}CNZ {:04X}", code, addr);
+                        disasm = dbg!("{}CNZ {:04X}", code, addr);
                     }
                     self.call();
                 } else {
@@ -720,7 +726,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        dbg!("{}CZ {:04X}", code, addr);
+                        disasm = dbg!("{}CZ {:04X}", code, addr);
                     }
                     self.call();
                 } else {
@@ -734,7 +740,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        dbg!("{}CNC {:04X}", code, addr);
+                        disasm = dbg!("{}CNC {:04X}", code, addr);
                     }
                     self.call();
                 } else {
@@ -748,7 +754,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        dbg!("{}CC {:04X}", code, addr);
+                        disasm = dbg!("{}CC {:04X}", code, addr);
                     }
                     self.call();
                 } else {
@@ -762,7 +768,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        dbg!("{}CPO {:04X}", code, addr);
+                        disasm = dbg!("{}CPO {:04X}", code, addr);
                     }
                     self.call();
                 } else {
@@ -776,7 +782,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        dbg!("{}CPE {:04X}", code, addr);
+                        disasm = dbg!("{}CPE {:04X}", code, addr);
                     }
                     self.call();
                 } else {
@@ -790,7 +796,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        dbg!("{}CP {:04X}", code, addr);
+                        disasm = dbg!("{}CP {:04X}", code, addr);
                     }
                     self.call();
                 } else {
@@ -804,7 +810,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        dbg!("{}CM {:04X}", code, addr);
+                        disasm = dbg!("{}CM {:04X}", code, addr);
                     }
                     self.call();
                 } else {
@@ -813,139 +819,139 @@ impl Cpu {
             }
             DAA => {
                 self.daa();
-                dbg!("{}DAA", self.code_to_str(1));
+                disasm = dbg!("{}DAA", self.code_to_str(1));
             }
             DAD_B => {
                 self.dad(self.get_bc());
-                dbg!("{}DAD B", self.code_to_str(1));
+                disasm = dbg!("{}DAD B", self.code_to_str(1));
             }
             DAD_D => {
                 self.dad(self.get_de());
-                dbg!("{}DAD D", self.code_to_str(1));
+                disasm = dbg!("{}DAD D", self.code_to_str(1));
             }
             DAD_H => {
                 self.dad(self.get_hl());
-                dbg!("{}DAD H", self.code_to_str(1));
+                disasm = dbg!("{}DAD H", self.code_to_str(1));
             }
             DAD_SP => {
                 self.dad(self.sp);
-                dbg!("{}DAD H", self.code_to_str(1));
+                disasm = dbg!("{}DAD H", self.code_to_str(1));
             }
             DCR_B => {
                 self.b = self.dcr(self.b);
-                dbg!("{}DCR B", self.code_to_str(1));
+                disasm = dbg!("{}DCR B", self.code_to_str(1));
             }
             DCR_C => {
                 self.c = self.dcr(self.c);
-                dbg!("{}DCR C", self.code_to_str(1));
+                disasm = dbg!("{}DCR C", self.code_to_str(1));
             }
             DCR_D => {
                 self.d = self.dcr(self.d);
-                dbg!("{}DCR D", self.code_to_str(1));
+                disasm = dbg!("{}DCR D", self.code_to_str(1));
             }
             DCR_E => {
                 self.e = self.dcr(self.e);
-                dbg!("{}DCR E", self.code_to_str(1));
+                disasm = dbg!("{}DCR E", self.code_to_str(1));
             }
             DCR_H => {
                 self.h = self.dcr(self.h);
-                dbg!("{}DCR H", self.code_to_str(1));
+                disasm = dbg!("{}DCR H", self.code_to_str(1));
             }
             DCR_L => {
                 self.l = self.dcr(self.l);
-                dbg!("{}DCR L", self.code_to_str(1));
+                disasm = dbg!("{}DCR L", self.code_to_str(1));
             }
             DCR_M => {
                 let mut value = self.read_m();
                 value = self.dcr(value);
                 self.store_m(value);
-                dbg!("{}DCR M", self.code_to_str(1));
+                disasm = dbg!("{}DCR M", self.code_to_str(1));
             }
             DCR_A => {
                 self.a = self.dcr(self.a);
-                dbg!("{}DCR A", self.code_to_str(1));
+                disasm = dbg!("{}DCR A", self.code_to_str(1));
             }
             DCX_B => {
                 self.set_bc(self.get_bc().wrapping_sub(1));
-                dbg!("{}DCX B", self.code_to_str(1));
+                disasm = dbg!("{}DCX B", self.code_to_str(1));
             }
             DCX_D => {
                 self.set_de(self.get_de().wrapping_sub(1));
-                dbg!("{}DCX D", self.code_to_str(1));
+                disasm = dbg!("{}DCX D", self.code_to_str(1));
             }
             DCX_H => {
                 self.set_hl(self.get_hl().wrapping_sub(1));
-                dbg!("{}DCX H", self.code_to_str(1));
+                disasm = dbg!("{}DCX H", self.code_to_str(1));
             }
             DCX_SP => {
                 self.sp = self.sp.wrapping_sub(1);
-                dbg!("{}DCX SP", self.code_to_str(1));
+                disasm = dbg!("{}DCX SP", self.code_to_str(1));
             }
             DI => {
                 self.inte = false;
-                dbg!("{}EI", self.code_to_str(1));
+                disasm = dbg!("{}EI", self.code_to_str(1));
             }
             EI => {
                 self.inte = true;
-                dbg!("{}EI", self.code_to_str(1));
+                disasm = dbg!("{}EI", self.code_to_str(1));
             }
             HLT => {
-                dbg!("{}HLT", self.code_to_str(1));
+                disasm = dbg!("{}HLT", self.code_to_str(1));
             }
             IN => {
                 let addr = self.read_immediate_byte();
                 self.a = self.inp(addr);
-                dbg!("{}IN {:02X}H", self.code_to_str(2), addr);
+                disasm = dbg!("{}IN {:02X}H", self.code_to_str(2), addr);
             }
             INR_B => {
                 self.b = self.inr(self.b);
-                dbg!("{}INR B", self.code_to_str(1));
+                disasm = dbg!("{}INR B", self.code_to_str(1));
             }
             INR_C => {
                 self.c = self.inr(self.c);
-                dbg!("{}INR C", self.code_to_str(1));
+                disasm = dbg!("{}INR C", self.code_to_str(1));
             }
             INR_D => {
                 self.d = self.inr(self.d);
-                dbg!("{}INR D", self.code_to_str(1));
+                disasm = dbg!("{}INR D", self.code_to_str(1));
             }
             INR_E => {
                 self.e = self.inr(self.e);
-                dbg!("{}INR D", self.code_to_str(1));
+                disasm = dbg!("{}INR D", self.code_to_str(1));
             }
             INR_H => {
                 self.h = self.inr(self.h);
-                dbg!("{}INR H", self.code_to_str(1));
+                disasm = dbg!("{}INR H", self.code_to_str(1));
             }
             INR_L => {
                 self.l = self.inr(self.l);
-                dbg!("{}INR L", self.code_to_str(1));
+                disasm = dbg!("{}INR L", self.code_to_str(1));
             }
             INR_M => {
                 let mut value = self.read_m();
                 value = self.inr(value);
                 self.store_m(value);
-                dbg!("{}INR M", self.code_to_str(1));
+                disasm = dbg!("{}INR M", self.code_to_str(1));
             }
             INR_A => {
                 self.a = self.inr(self.a);
-                dbg!("{}INR A", self.code_to_str(1));
+                disasm = dbg!("{}INR A", self.code_to_str(1));
             }
             INX_B => {
                 self.set_bc(self.get_bc().wrapping_add(1));
-                dbg!("{}INX B", self.code_to_str(1));
+                disasm = dbg!("{}INX B", self.code_to_str(1));
             }
             INX_D => {
                 self.set_de(self.get_de().wrapping_add(1));
-                dbg!("{}INX D", self.code_to_str(1));
+                disasm = dbg!("{}INX D", self.code_to_str(1));
             }
             INX_H => {
                 self.set_hl(self.get_hl().wrapping_add(1));
-                dbg!("{}INX H", self.code_to_str(1));
+                disasm = dbg!("{}INX H", self.code_to_str(1));
             }
             INX_SP => {
                 self.sp = self.sp.wrapping_add(1);
-                dbg!("{}INX SP", self.code_to_str(1));
+                disasm = dbg!("{}INX SP", self.code_to_str(1));
             }
             JNZ => {
                 if !self.status.is_zero() {
@@ -954,7 +960,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        dbg!("{}JNZ {:04X}", code, addr);
+                        disasm = dbg!("{}JNZ {:04X}", code, addr);
                     }
                     self.jmp();
                 } else {
@@ -968,7 +974,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        dbg!("{}JZ {:04X}", code, addr);
+                        disasm = dbg!("{}JZ {:04X}", code, addr);
                     }
                     self.jmp();
                 } else {
@@ -982,7 +988,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        dbg!("{}JNC {:04X}", code, addr);
+                        disasm = dbg!("{}JNC {:04X}", code, addr);
                     }
                     self.jmp();
                 } else {
@@ -996,7 +1002,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        dbg!("{}JC {:04X}", code, addr);
+                        disasm = dbg!("{}JC {:04X}", code, addr);
                     }
                     self.jmp();
                 } else {
@@ -1010,7 +1016,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        dbg!("{}JPO {:04X}", code, addr);
+                        disasm = dbg!("{}JPO {:04X}", code, addr);
                     }
                     self.jmp();
                 } else {
@@ -1024,7 +1030,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        dbg!("{}JPE {:04X}", code, addr);
+                        disasm = dbg!("{}JPE {:04X}", code, addr);
                     }
                     self.jmp();
                 } else {
@@ -1038,7 +1044,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        dbg!("{}JP {:04X}", code, addr);
+                        disasm = dbg!("{}JP {:04X}", code, addr);
                     }
                     self.jmp();
                 } else {
@@ -1052,7 +1058,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        dbg!("{}JM {:04X}", code, addr);
+                        disasm = dbg!("{}JM {:04X}", code, addr);
                     }
                     self.jmp();
                 } else {
@@ -1065,409 +1071,408 @@ impl Cpu {
                     self.pc = self.pc.wrapping_add(2);
                     let code = self.code_to_str(3);
                     self.pc = self.pc.wrapping_sub(2);
-                    dbg!("{}JMP {:04X}", code, addr);
+                    disasm = dbg!("{}JMP {:04X}", code, addr);
                 }
                 self.jmp();
             }
             LDA => {
                 let addr = self.read_immediate_word();
                 self.a = self.memory.read_byte(addr);
-                dbg!("{}LDA {:04X}H", self.code_to_str(3), addr);
+                disasm = dbg!("{}LDA {:04X}H", self.code_to_str(3), addr);
             }
             LDAX_B => {
                 let addr = self.get_bc();
                 self.a = self.memory.read_byte(addr);
-                dbg!("{}LDAX B", self.code_to_str(1));
+                disasm = dbg!("{}LDAX B", self.code_to_str(1));
             }
             LDAX_D => {
                 let addr = self.get_de();
                 self.a = self.memory.read_byte(addr);
-                dbg!("{}LDAX B", self.code_to_str(1));
+                disasm = dbg!("{}LDAX B", self.code_to_str(1));
             }
             LHLD => {
                 let addr = self.read_immediate_word();
                 self.l = self.memory.read_byte(addr);
                 self.h = self.memory.read_byte(addr + 1);
-                dbg!("{}LHLD {:04X}H", self.code_to_str(3), addr);
+                disasm = dbg!("{}LHLD {:04X}H", self.code_to_str(3), addr);
             }
             LXI_B => {
                 let word = self.read_immediate_word();
                 self.set_bc(word);
-                dbg!("{}LXI B {:04X}H", self.code_to_str(3), word);
+                disasm = dbg!("{}LXI B {:04X}H", self.code_to_str(3), word);
             }
             LXI_D => {
                 let word = self.read_immediate_word();
                 self.set_de(word);
-                dbg!("{}LXI D {:04X}H", self.code_to_str(3), word);
+                disasm = dbg!("{}LXI D {:04X}H", self.code_to_str(3), word);
             }
             LXI_H => {
                 let word = self.read_immediate_word();
                 self.set_hl(word);
-                dbg!("{}LXI H {:04X}H", self.code_to_str(3), word);
+                disasm = dbg!("{}LXI H {:04X}H", self.code_to_str(3), word);
             }
             LXI_SP => {
                 self.sp = self.read_immediate_word();
-                dbg!("{}LXI SP {:04X}H", self.code_to_str(3), self.sp);
+                disasm = dbg!("{}LXI SP {:04X}H", self.code_to_str(3), self.sp);
             }
             MVI_A => {
                 let value = self.read_immediate_byte();
                 self.a = value;
-                dbg!("{}MVI A,{:02X}H", self.code_to_str(2), value);
+                disasm = dbg!("{}MVI A,{:02X}H", self.code_to_str(2), value);
             }
             MVI_B => {
                 let value = self.read_immediate_byte();
                 self.b = value;
-                dbg!("{}MVI B,{:02X}H", self.code_to_str(2), value);
+                disasm = dbg!("{}MVI B,{:02X}H", self.code_to_str(2), value);
             }
             MVI_C => {
                 let value = self.read_immediate_byte();
                 self.c = value;
-                dbg!("{}MVI C,{:02X}H", self.code_to_str(2), value);
+                disasm = dbg!("{}MVI C,{:02X}H", self.code_to_str(2), value);
             }
             MVI_D => {
                 let value = self.read_immediate_byte();
                 self.d = value;
-                dbg!("{}MVI D,{:02X}H", self.code_to_str(2), value);
+                disasm = dbg!("{}MVI D,{:02X}H", self.code_to_str(2), value);
             }
             MVI_E => {
                 let value = self.read_immediate_byte();
                 self.e = value;
-                dbg!("{}MVI E,{:02X}H", self.code_to_str(2), value);
+                disasm = dbg!("{}MVI E,{:02X}H", self.code_to_str(2), value);
             }
             MVI_H => {
                 let value = self.read_immediate_byte();
                 self.h = value;
-                dbg!("{}MVI H,{:02X}H", self.code_to_str(2), value);
+                disasm = dbg!("{}MVI H,{:02X}H", self.code_to_str(2), value);
             }
             MVI_L => {
                 let value = self.read_immediate_byte();
                 self.l = value;
-                dbg!("{}MVI L,{:02X}H", self.code_to_str(2), value);
+                disasm = dbg!("{}MVI L,{:02X}H", self.code_to_str(2), value);
             }
             MVI_M => {
                 let addr = self.get_hl();
                 let value = self.read_immediate_byte();
                 self.memory.write_byte(addr, value);
-                dbg!("{}MVI M,{:02X}H", self.code_to_str(2), value);
+                disasm = dbg!("{}MVI M,{:02X}H", self.code_to_str(2), value);
             }
             MOV_A_B => {
                 self.a = self.b;
-                dbg!("{}MOV A,B", self.code_to_str(1));
+                disasm = dbg!("{}MOV A,B", self.code_to_str(1));
             }
             MOV_A_C => {
                 self.a = self.c;
-                dbg!("{}MOV A,C", self.code_to_str(1));
+                disasm = dbg!("{}MOV A,C", self.code_to_str(1));
             }
             MOV_A_D => {
                 self.a = self.d;
-                dbg!("{}MOV A,D", self.code_to_str(1));
+                disasm = dbg!("{}MOV A,D", self.code_to_str(1));
             }
             MOV_A_E => {
                 self.a = self.e;
-                dbg!("{}MOV A,E", self.code_to_str(1));
+                disasm = dbg!("{}MOV A,E", self.code_to_str(1));
             }
             MOV_A_H => {
                 self.a = self.h;
-                dbg!("{}MOV A,H", self.code_to_str(1));
+                disasm = dbg!("{}MOV A,H", self.code_to_str(1));
             }
             MOV_A_L => {
                 self.a = self.l;
-                dbg!("{}MOV A,L", self.code_to_str(1));
+                disasm = dbg!("{}MOV A,L", self.code_to_str(1));
             }
             MOV_A_M => {
                 self.a = self.memory.read_byte(self.get_hl());
-                dbg!("{}MOV A,M", self.code_to_str(1));
+                disasm = dbg!("{}MOV A,M", self.code_to_str(1));
             }
             MOV_A_A => {
-                dbg!("{}MOV A,A", self.code_to_str(1));
+                disasm = dbg!("{}MOV A,A", self.code_to_str(1));
             }
             MOV_B_B => {
-                dbg!("{}MOV B,B", self.code_to_str(1));
+                disasm = dbg!("{}MOV B,B", self.code_to_str(1));
             }
             MOV_B_C => {
                 self.b = self.c;
-                dbg!("{}MOV B,C", self.code_to_str(1));
+                disasm = dbg!("{}MOV B,C", self.code_to_str(1));
             }
             MOV_B_D => {
                 self.b = self.d;
-                dbg!("{}MOV B,D", self.code_to_str(1));
+                disasm = dbg!("{}MOV B,D", self.code_to_str(1));
             }
             MOV_B_E => {
                 self.b = self.e;
-                dbg!("{}MOV B,E", self.code_to_str(1));
+                disasm = dbg!("{}MOV B,E", self.code_to_str(1));
             }
             MOV_B_H => {
                 self.b = self.h;
-                dbg!("{}MOV B,H", self.code_to_str(1));
+                disasm = dbg!("{}MOV B,H", self.code_to_str(1));
             }
             MOV_B_L => {
                 self.b = self.l;
-                dbg!("{}MOV B,L", self.code_to_str(1));
+                disasm = dbg!("{}MOV B,L", self.code_to_str(1));
             }
             MOV_B_M => {
                 self.b = self.memory.read_byte(self.get_hl());
-                dbg!("{}MOV B,M", self.code_to_str(1));
+                disasm = dbg!("{}MOV B,M", self.code_to_str(1));
             }
             MOV_B_A => {
                 self.b = self.a;
-                dbg!("{}MOV B,A", self.code_to_str(1));
+                disasm = dbg!("{}MOV B,A", self.code_to_str(1));
             }
             MOV_C_B => {
                 self.c = self.b;
-                dbg!("{}MOV C,B", self.code_to_str(1));
+                disasm = dbg!("{}MOV C,B", self.code_to_str(1));
             }
             MOV_C_C => {
-                dbg!("{}MOV C,C", self.code_to_str(1));
+                disasm = dbg!("{}MOV C,C", self.code_to_str(1));
             }
             MOV_C_D => {
                 self.c = self.d;
-                dbg!("{}MOV C,D", self.code_to_str(1));
+                disasm = dbg!("{}MOV C,D", self.code_to_str(1));
             }
             MOV_C_E => {
                 self.c = self.e;
-                dbg!("{}MOV C,E", self.code_to_str(1));
+                disasm = dbg!("{}MOV C,E", self.code_to_str(1));
             }
             MOV_C_H => {
                 self.c = self.h;
-                dbg!("{}MOV C,H", self.code_to_str(1));
+                disasm = dbg!("{}MOV C,H", self.code_to_str(1));
             }
             MOV_C_L => {
                 self.c = self.l;
-                dbg!("{}MOV C,L", self.code_to_str(1));
+                disasm = dbg!("{}MOV C,L", self.code_to_str(1));
             }
             MOV_C_M => {
                 self.c = self.memory.read_byte(self.get_hl());
-                dbg!("{}MOV C,M", self.code_to_str(1));
+                disasm = dbg!("{}MOV C,M", self.code_to_str(1));
             }
             MOV_C_A => {
                 self.c = self.a;
-                dbg!("{}MOV C,A", self.code_to_str(1));
+                disasm = dbg!("{}MOV C,A", self.code_to_str(1));
             }
             MOV_D_B => {
                 self.d = self.b;
-                dbg!("{}MOV D,B", self.code_to_str(1));
+                disasm = dbg!("{}MOV D,B", self.code_to_str(1));
             }
             MOV_D_C => {
                 self.d = self.c;
-                dbg!("{}MOV D,C", self.code_to_str(1));
+                disasm = dbg!("{}MOV D,C", self.code_to_str(1));
             }
             MOV_D_D => {
-                dbg!("{}MOV D,D", self.code_to_str(1));
+                disasm = dbg!("{}MOV D,D", self.code_to_str(1));
             }
             MOV_D_E => {
                 self.d = self.e;
-                dbg!("{}MOV D,E", self.code_to_str(1));
+                disasm = dbg!("{}MOV D,E", self.code_to_str(1));
             }
             MOV_D_H => {
                 self.d = self.h;
-                dbg!("{}MOV D,H", self.code_to_str(1));
+                disasm = dbg!("{}MOV D,H", self.code_to_str(1));
             }
             MOV_D_L => {
                 self.d = self.l;
-                dbg!("{}MOV D,L", self.code_to_str(1));
+                disasm = dbg!("{}MOV D,L", self.code_to_str(1));
             }
             MOV_D_M => {
                 self.d = self.memory.read_byte(self.get_hl());
-                dbg!("{}MOV D,M", self.code_to_str(1));
+                disasm = dbg!("{}MOV D,M", self.code_to_str(1));
             }
             MOV_D_A => {
                 self.d = self.a;
-                dbg!("{}MOV D,A", self.code_to_str(1));
+                disasm = dbg!("{}MOV D,A", self.code_to_str(1));
             }
             MOV_E_B => {
                 self.e = self.b;
-                dbg!("{}MOV E,B", self.code_to_str(1));
+                disasm = dbg!("{}MOV E,B", self.code_to_str(1));
             }
             MOV_E_C => {
                 self.e = self.c;
-                dbg!("{}MOV E,C", self.code_to_str(1));
+                disasm = dbg!("{}MOV E,C", self.code_to_str(1));
             }
             MOV_E_D => {
                 self.e = self.d;
-                dbg!("{}MOV E,D", self.code_to_str(1));
+                disasm = dbg!("{}MOV E,D", self.code_to_str(1));
             }
             MOV_E_E => {
-                dbg!("{}MOV E,E", self.code_to_str(1));
+                disasm = dbg!("{}MOV E,E", self.code_to_str(1));
             }
             MOV_E_H => {
                 self.e = self.h;
-                dbg!("{}MOV E,H", self.code_to_str(1));
+                disasm = dbg!("{}MOV E,H", self.code_to_str(1));
             }
             MOV_E_L => {
                 self.e = self.l;
-                dbg!("{}MOV E,L", self.code_to_str(1));
+                disasm = dbg!("{}MOV E,L", self.code_to_str(1));
             }
             MOV_E_M => {
                 self.e = self.memory.read_byte(self.get_hl());
-                dbg!("{}MOV E,M", self.code_to_str(1));
+                disasm = dbg!("{}MOV E,M", self.code_to_str(1));
             }
             MOV_E_A => {
                 self.e = self.a;
-                dbg!("{}MOV E,A", self.code_to_str(1));
+                disasm = dbg!("{}MOV E,A", self.code_to_str(1));
             }
             MOV_H_B => {
                 self.h = self.b;
-                dbg!("{}MOV H,B", self.code_to_str(1));
+                disasm = dbg!("{}MOV H,B", self.code_to_str(1));
             }
             MOV_H_C => {
                 self.h = self.c;
-                dbg!("{}MOV H,C", self.code_to_str(1));
+                disasm = dbg!("{}MOV H,C", self.code_to_str(1));
             }
             MOV_H_D => {
                 self.h = self.d;
-                dbg!("{}MOV H,D", self.code_to_str(1));
+                disasm = dbg!("{}MOV H,D", self.code_to_str(1));
             }
             MOV_H_E => {
                 self.h = self.e;
-                dbg!("{}MOV H,E", self.code_to_str(1));
+                disasm = dbg!("{}MOV H,E", self.code_to_str(1));
             }
             MOV_H_H => {
-                dbg!("{}MOV H,H", self.code_to_str(1));
+                disasm = dbg!("{}MOV H,H", self.code_to_str(1));
             }
             MOV_H_L => {
                 self.h = self.l;
-                dbg!("{}MOV H,L", self.code_to_str(1));
+                disasm = dbg!("{}MOV H,L", self.code_to_str(1));
             }
             MOV_H_M => {
                 self.h = self.memory.read_byte(self.get_hl());
-                dbg!("{}MOV H,M", self.code_to_str(1));
+                disasm = dbg!("{}MOV H,M", self.code_to_str(1));
             }
             MOV_H_A => {
                 self.h = self.a;
-                dbg!("{}MOV H,A", self.code_to_str(1));
+                disasm = dbg!("{}MOV H,A", self.code_to_str(1));
             }
             MOV_L_B => {
                 self.l = self.b;
-                dbg!("{}MOV L,B", self.code_to_str(1));
+                disasm = dbg!("{}MOV L,B", self.code_to_str(1));
             }
             MOV_L_C => {
                 self.l = self.c;
-                dbg!("{}MOV L,C", self.code_to_str(1));
+                disasm = dbg!("{}MOV L,C", self.code_to_str(1));
             }
             MOV_L_D => {
                 self.l = self.d;
-                dbg!("{}MOV L,D", self.code_to_str(1));
+                disasm = dbg!("{}MOV L,D", self.code_to_str(1));
             }
             MOV_L_E => {
                 self.l = self.e;
-                dbg!("{}MOV L,E", self.code_to_str(1));
+                disasm = dbg!("{}MOV L,E", self.code_to_str(1));
             }
             MOV_L_H => {
                 self.l = self.h;
-                dbg!("{}MOV L,H", self.code_to_str(1));
+                disasm = dbg!("{}MOV L,H", self.code_to_str(1));
             }
             MOV_L_L => {
-                dbg!("{}MOV L,L", self.code_to_str(1));
+                disasm = dbg!("{}MOV L,L", self.code_to_str(1));
             }
             MOV_L_M => {
                 self.l = self.memory.read_byte(self.get_hl());
-                dbg!("{}MOV L,M", self.code_to_str(1));
+                disasm = dbg!("{}MOV L,M", self.code_to_str(1));
             }
             MOV_L_A => {
                 self.l = self.a;
-                dbg!("{}MOV L,A", self.code_to_str(1));
+                disasm = dbg!("{}MOV L,A", self.code_to_str(1));
             }
             MOV_M_B => {
                 let addr = self.get_hl();
                 self.memory.write_byte(addr, self.b);
-                dbg!("{}MOV M,B", self.code_to_str(1));
+                disasm = dbg!("{}MOV M,B", self.code_to_str(1));
             }
             MOV_M_C => {
                 let addr = self.get_hl();
                 self.memory.write_byte(addr, self.c);
-                dbg!("{}MOV M,C", self.code_to_str(1));
+                disasm = dbg!("{}MOV M,C", self.code_to_str(1));
             }
             MOV_M_D => {
                 let addr = self.get_hl();
                 self.memory.write_byte(addr, self.d);
-                dbg!("{}MOV M,D", self.code_to_str(1));
+                disasm = dbg!("{}MOV M,D", self.code_to_str(1));
             }
             MOV_M_E => {
                 let addr = self.get_hl();
                 self.memory.write_byte(addr, self.e);
-                dbg!("{}MOV M,E", self.code_to_str(1));
+                disasm = dbg!("{}MOV M,E", self.code_to_str(1));
             }
             MOV_M_H => {
                 let addr = self.get_hl();
                 self.memory.write_byte(addr, self.h);
-                dbg!("{}MOV M,H", self.code_to_str(1));
+                disasm = dbg!("{}MOV M,H", self.code_to_str(1));
             }
             MOV_M_L => {
                 let addr = self.get_hl();
                 self.memory.write_byte(addr, self.l);
-                dbg!("{}MOV M,L", self.code_to_str(1));
+                disasm = dbg!("{}MOV M,L", self.code_to_str(1));
             }
             MOV_M_A => {
                 let addr = self.get_hl();
                 self.memory.write_byte(addr, self.a);
-                dbg!("{}MOV M,A", self.code_to_str(1));
+                disasm = dbg!("{}MOV M,A", self.code_to_str(1));
             }
-
             NOP => {
-                dbg!("{}NOP", self.code_to_str(1));
+                disasm = dbg!("{}NOP", self.code_to_str(1));
             }
             ORA_B => {
                 let value = self.b;
                 self.or(value);
-                dbg!("{}ORA B", self.code_to_str(1));
+                disasm = dbg!("{}ORA B", self.code_to_str(1));
             }
             ORA_C => {
                 let value = self.c;
                 self.or(value);
-                dbg!("{}ORA C", self.code_to_str(1));
+                disasm = dbg!("{}ORA C", self.code_to_str(1));
             }
             ORA_D => {
                 let value = self.d;
                 self.or(value);
-                dbg!("{}ORA D", self.code_to_str(1));
+                disasm = dbg!("{}ORA D", self.code_to_str(1));
             }
             ORA_E => {
                 let value = self.e;
                 self.or(value);
-                dbg!("{}ORA E", self.code_to_str(1));
+                disasm = dbg!("{}ORA E", self.code_to_str(1));
             }
             ORA_H => {
                 let value = self.h;
                 self.or(value);
-                dbg!("{}ORA H", self.code_to_str(1));
+                disasm = dbg!("{}ORA H", self.code_to_str(1));
             }
             ORA_L => {
                 let value = self.l;
                 self.or(value);
-                dbg!("{}ORA L", self.code_to_str(1));
+                disasm = dbg!("{}ORA L", self.code_to_str(1));
             }
             ORA_M => {
                 let value = self.memory.read_byte(self.get_hl());
                 self.or(value);
-                dbg!("{}ORA M", self.code_to_str(1));
+                disasm = dbg!("{}ORA M", self.code_to_str(1));
             }
             ORA_A => {
                 let value = self.a;
                 self.or(value);
-                dbg!("{}ORA A", self.code_to_str(1));
+                disasm = dbg!("{}ORA A", self.code_to_str(1));
             }
             ORI => {
                 let value = self.read_immediate_byte();
                 self.or(value);
-                dbg!("{}ORI {:02X}H", self.code_to_str(2), value);
+                disasm = dbg!("{}ORI {:02X}H", self.code_to_str(2), value);
             }
             PCHL => {
                 let hl = self.get_hl();
                 self.set_hl(self.pc);
                 self.pc = hl;
-                dbg!("{}PCHL", self.code_to_str(1));
+                disasm = dbg!("{}PCHL", self.code_to_str(1));
             }
             POP_B => {
                 (self.b, self.c) = self.pop();
-                dbg!("{}POP B", self.code_to_str(1));
+                disasm = dbg!("{}POP B", self.code_to_str(1));
             }
             POP_D => {
                 (self.d, self.e) = self.pop();
-                dbg!("{}POP D", self.code_to_str(1));
+                disasm = dbg!("{}POP D", self.code_to_str(1));
             }
             POP_H => {
                 (self.h, self.l) = self.pop();
-                dbg!("{}POP H", self.code_to_str(1));
+                disasm = dbg!("{}POP H", self.code_to_str(1));
             }
             POP_PSW => {
                 let mut addr = self.sp;
@@ -1480,23 +1485,23 @@ impl Cpu {
                 addr = addr.wrapping_add(1);
                 self.a = self.memory.read_byte(addr);
                 self.sp = self.sp.wrapping_add(2);
-                dbg!("{}POP PSW", self.code_to_str(1));
+                disasm = dbg!("{}POP PSW", self.code_to_str(1));
             }
             PUSH_B => {
                 self.push(self.b, self.c);
-                dbg!("{}PUSH B", self.code_to_str(1));
+                disasm = dbg!("{}PUSH B", self.code_to_str(1));
             }
             PUSH_D => {
                 self.push(self.d, self.e);
-                dbg!("{}PUSH D", self.code_to_str(1));
+                disasm = dbg!("{}PUSH D", self.code_to_str(1));
             }
             PUSH_H => {
                 self.push(self.h, self.l);
-                dbg!("{}PUSH H", self.code_to_str(1));
+                disasm = dbg!("{}PUSH H", self.code_to_str(1));
             }
             PUSH_PSW => {
                 self.push(self.a, self.status.value);
-                dbg!("{}PUSH B", self.code_to_str(1));
+                disasm = dbg!("{}PUSH B", self.code_to_str(1));
             }
             RAL => {
                 let mut val = (self.a as u16) << 1;
@@ -1505,7 +1510,7 @@ impl Cpu {
                 }
                 self.status.set_carry((self.a & 0x80) != 0);
                 self.a = val as u8;
-                dbg!("{}RAL", self.code_to_str(1));
+                disasm = dbg!("{}RAL", self.code_to_str(1));
             }
             RAR => {
                 let mut val = (self.a as u16) >> 1;
@@ -1514,7 +1519,7 @@ impl Cpu {
                 }
                 self.status.set_carry((self.a & 0x01) != 0);
                 self.a = val as u8;
-                dbg!("{}RAR", self.code_to_str(1));
+                disasm = dbg!("{}RAR", self.code_to_str(1));
             }
             RLC => {
                 let mut val = (self.a as u16) << 1;
@@ -1523,7 +1528,7 @@ impl Cpu {
                 }
                 self.status.set_carry(self.a & 0x80 != 0);
                 self.a = val as u8;
-                dbg!("{}RLC", self.code_to_str(1));
+                disasm = dbg!("{}RLC", self.code_to_str(1));
             }
             RRC => {
                 let mut val = (self.a as u16) >> 1;
@@ -1532,261 +1537,261 @@ impl Cpu {
                 }
                 self.status.set_carry(self.a & 0x01 != 0);
                 self.a = val as u8;
-                dbg!("{}RRC", self.code_to_str(1));
+                disasm = dbg!("{}RRC", self.code_to_str(1));
             }
             RET => {
-                dbg!("{}RET", self.code_to_str(1));
+                disasm = dbg!("{}RET", self.code_to_str(1));
                 self.ret();
             }
             RNZ => {
                 if !self.status.is_zero() {
-                    dbg!("{}RNZ", self.code_to_str(1));
+                    disasm = dbg!("{}RNZ", self.code_to_str(1));
                     self.ret();
                 }
             }
             RZ => {
                 if self.status.is_zero() {
-                    dbg!("{}RZ", self.code_to_str(1));
+                    disasm = dbg!("{}RZ", self.code_to_str(1));
                     self.ret();
                 }
             }
             RNC => {
                 if !self.status.is_carry() {
-                    dbg!("{}RNC", self.code_to_str(1));
+                    disasm = dbg!("{}RNC", self.code_to_str(1));
                     self.ret();
                 }
             }
             RC => {
                 if self.status.is_carry() {
-                    dbg!("{}RC", self.code_to_str(1));
+                    disasm = dbg!("{}RC", self.code_to_str(1));
                     self.ret();
                 }
             }
             RPO => {
                 if !self.status.is_parity() {
-                    dbg!("{}RPO", self.code_to_str(1));
+                    disasm = dbg!("{}RPO", self.code_to_str(1));
                     self.ret();
                 }
             }
             RPE => {
                 if self.status.is_parity() {
-                    dbg!("{}RPE", self.code_to_str(1));
+                    disasm = dbg!("{}RPE", self.code_to_str(1));
                     self.ret();
                 }
             }
             RP => {
                 if !self.status.is_negative() {
-                    dbg!("{}RP", self.code_to_str(1));
+                    disasm = dbg!("{}RP", self.code_to_str(1));
                     self.ret();
                 }
             }
             RM => {
                 if self.status.is_negative() {
-                    dbg!("{}RM", self.code_to_str(1));
+                    disasm = dbg!("{}RM", self.code_to_str(1));
                     self.ret();
                 }
             }
             RST_0 => {
-                dbg!("{}RST 0", self.code_to_str(1));
+                disasm = dbg!("{}RST 0", self.code_to_str(1));
                 self.rst(0);
             }
             RST_1 => {
-                dbg!("{}RST 1", self.code_to_str(1));
+                disasm = dbg!("{}RST 1", self.code_to_str(1));
                 self.rst(1);
             }
             RST_2 => {
-                dbg!("{}RST 2", self.code_to_str(1));
+                disasm = dbg!("{}RST 2", self.code_to_str(1));
                 self.rst(2);
             }
             RST_3 => {
-                dbg!("{}RST 3", self.code_to_str(1));
+                disasm = dbg!("{}RST 3", self.code_to_str(1));
                 self.rst(3);
             }
             RST_4 => {
-                dbg!("{}RST 4", self.code_to_str(1));
+                disasm = dbg!("{}RST 4", self.code_to_str(1));
                 self.rst(4);
             }
             RST_5 => {
-                dbg!("{}RST 5", self.code_to_str(1));
+                disasm = dbg!("{}RST 5", self.code_to_str(1));
                 self.rst(5);
             }
             RST_6 => {
-                dbg!("{}RST 6", self.code_to_str(1));
+                disasm = dbg!("{}RST 6", self.code_to_str(1));
                 self.rst(6);
             }
             RST_7 => {
-                dbg!("{}RST 7", self.code_to_str(1));
+                disasm = dbg!("{}RST 7", self.code_to_str(1));
                 self.rst(7);
             }
             SBB_B => {
                 let value = self.b;
                 self.sub(value, true);
-                dbg!("{}SBB B", self.code_to_str(1));
+                disasm = dbg!("{}SBB B", self.code_to_str(1));
             }
             SBB_C => {
                 let value = self.c;
                 self.sub(value, true);
-                dbg!("{}SBB C", self.code_to_str(1));
+                disasm = dbg!("{}SBB C", self.code_to_str(1));
             }
             SBB_D => {
                 let value = self.d;
                 self.sub(value, true);
-                dbg!("{}SBB D", self.code_to_str(1));
+                disasm = dbg!("{}SBB D", self.code_to_str(1));
             }
             SBB_E => {
                 let value = self.e;
                 self.sub(value, true);
-                dbg!("{}SBB E", self.code_to_str(1));
+                disasm = dbg!("{}SBB E", self.code_to_str(1));
             }
             SBB_H => {
                 let value = self.h;
                 self.sub(value, true);
-                dbg!("{}SBB H", self.code_to_str(1));
+                disasm = dbg!("{}SBB H", self.code_to_str(1));
             }
             SBB_L => {
                 let value = self.l;
                 self.sub(value, true);
-                dbg!("{}SBB L", self.code_to_str(1));
+                disasm = dbg!("{}SBB L", self.code_to_str(1));
             }
             SBB_M => {
                 let value = self.get_m();
                 self.sub(value, true);
-                dbg!("{}SBB M", self.code_to_str(1));
+                disasm = dbg!("{}SBB M", self.code_to_str(1));
             }
             SBB_A => {
                 let value = self.a;
                 self.sub(value, true);
-                dbg!("{}SBB A", self.code_to_str(1));
+                disasm = dbg!("{}SBB A", self.code_to_str(1));
             }
             SBI => {
                 let value = self.read_immediate_byte();
                 self.sub(value, true);
-                dbg!("{}SBI {:02X}H", self.code_to_str(2), value);
+                disasm = dbg!("{}SBI {:02X}H", self.code_to_str(2), value);
             }
             SUB_B => {
                 let value = self.b;
                 self.sub(value, false);
-                dbg!("{}SUB B", self.code_to_str(1));
+                disasm = dbg!("{}SUB B", self.code_to_str(1));
             }
             SUB_C => {
                 let value = self.c;
                 self.sub(value, false);
-                dbg!("{}SUB C", self.code_to_str(1));
+                disasm = dbg!("{}SUB C", self.code_to_str(1));
             }
             SUB_D => {
                 let value = self.d;
                 self.sub(value, false);
-                dbg!("{}SUB D", self.code_to_str(1));
+                disasm = dbg!("{}SUB D", self.code_to_str(1));
             }
             SUB_E => {
                 let value = self.e;
                 self.sub(value, false);
-                dbg!("{}SUB E", self.code_to_str(1));
+                disasm = dbg!("{}SUB E", self.code_to_str(1));
             }
             SUB_H => {
                 let value = self.h;
                 self.sub(value, false);
-                dbg!("{}SUB H", self.code_to_str(1));
+                disasm = dbg!("{}SUB H", self.code_to_str(1));
             }
             SUB_L => {
                 let value = self.l;
                 self.sub(value, false);
-                dbg!("{}SUB L", self.code_to_str(1));
+                disasm = dbg!("{}SUB L", self.code_to_str(1));
             }
             SUB_M => {
                 let value = self.read_m();
                 self.sub(value, false);
-                dbg!("{}SUB M", self.code_to_str(1));
+                disasm = dbg!("{}SUB M", self.code_to_str(1));
             }
             SUB_A => {
                 let value = self.a;
                 self.sub(value, false);
-                dbg!("{}SUB A", self.code_to_str(1));
+                disasm = dbg!("{}SUB A", self.code_to_str(1));
             }
             SUI => {
                 let value = self.read_immediate_byte();
                 self.sub(value, false);
-                dbg!("{}SUI {:02X}H", self.code_to_str(2), value);
+                disasm = dbg!("{}SUI {:02X}H", self.code_to_str(2), value);
             }
             SHLD => {
                 let addr = self.read_immediate_word();
                 self.memory.write_byte(addr, self.l);
                 self.memory.write_byte(addr.wrapping_add(1), self.h);
-                dbg!("{}SHLD {:04X}H", self.code_to_str(3), addr);
+                disasm = dbg!("{}SHLD {:04X}H", self.code_to_str(3), addr);
             }
             STA => {
                 let addr = self.read_immediate_word();
                 self.memory.write_byte(addr, self.a);
-                dbg!("{}STA {:04X}H", self.code_to_str(3), addr);
+                disasm = dbg!("{}STA {:04X}H", self.code_to_str(3), addr);
             }
             STAX_B => {
                 let addr = self.get_bc();
                 self.memory.write_byte(addr, self.a);
-                dbg!("{}STAX B", self.code_to_str(1));
+                disasm = dbg!("{}STAX B", self.code_to_str(1));
             }
             STAX_D => {
                 let addr = self.get_de();
                 self.memory.write_byte(addr, self.a);
-                dbg!("{}STAX B", self.code_to_str(1));
+                disasm = dbg!("{}STAX B", self.code_to_str(1));
             }
             STC => {
                 self.status.set_carry(true);
-                dbg!("{}STC", self.code_to_str(1));
+                disasm = dbg!("{}STC", self.code_to_str(1));
             }
             SPHL => {
                 self.sp = self.get_hl();
-                dbg!("{}SPHL", self.code_to_str(1));
+                disasm = dbg!("{}SPHL", self.code_to_str(1));
             }
             XCHG => {
                 let temp = self.get_hl();
                 self.set_hl(self.get_de());
                 self.set_de(temp);
-                dbg!("{}XCHG", self.code_to_str(1));
+                disasm = dbg!("{}XCHG", self.code_to_str(1));
             }
             XRA_B => {
                 let value = self.b;
                 self.xra(value);
-                dbg!("{}XRA B", self.code_to_str(1));
+                disasm = dbg!("{}XRA B", self.code_to_str(1));
             }
             XRA_C => {
                 let value = self.c;
                 self.xra(value);
-                dbg!("{}XRA C", self.code_to_str(1));
+                disasm = dbg!("{}XRA C", self.code_to_str(1));
             }
             XRA_D => {
                 let value = self.d;
                 self.xra(value);
-                dbg!("{}XRA D", self.code_to_str(1));
+                disasm = dbg!("{}XRA D", self.code_to_str(1));
             }
             XRA_E => {
                 let value = self.e;
                 self.xra(value);
-                dbg!("{}XRA E", self.code_to_str(1));
+                disasm = dbg!("{}XRA E", self.code_to_str(1));
             }
             XRA_H => {
                 let value = self.h;
                 self.xra(value);
-                dbg!("{}XRA H", self.code_to_str(1));
+                disasm = dbg!("{}XRA H", self.code_to_str(1));
             }
             XRA_L => {
                 let value = self.l;
                 self.xra(value);
-                dbg!("{}XRA L", self.code_to_str(1));
+                disasm = dbg!("{}XRA L", self.code_to_str(1));
             }
             XRA_M => {
                 let value = self.get_m();
                 self.xra(value);
-                dbg!("{}XRA M", self.code_to_str(1));
+                disasm = dbg!("{}XRA M", self.code_to_str(1));
             }
             XRA_A => {
                 let value = self.a;
                 self.xra(value);
-                dbg!("{}XRA A", self.code_to_str(1));
+                disasm = dbg!("{}XRA A", self.code_to_str(1));
             }
             XRI => {
                 let value = self.read_immediate_byte();
                 self.xra(value);
-                dbg!("{}XRI {:02X}", self.code_to_str(2), value);
+                disasm = dbg!("{}XRI {:02X}", self.code_to_str(2), value);
             }
             XTHL => {
                 let addr = self.sp;
@@ -1794,13 +1799,14 @@ impl Cpu {
                 self.l = self.memory.read_byte(addr);
                 self.h = self.memory.read_byte(addr + 1);
                 self.memory.write_word(addr, hl);
-                dbg!("{}XTHL", self.code_to_str(1));
+                disasm = dbg!("{}XTHL", self.code_to_str(1));
             }
 
             _ => {
-                dbg!("{}!byte {:02X}H", self.code_to_str(1), opcode);
+                disasm = dbg!("{}DB {:02X}H", self.code_to_str(1), opcode);
             }
         }
+        Some(disasm)
     }
 }
 
@@ -1822,17 +1828,11 @@ impl CpuUi for Cpu {
     fn set_register_by_name(&mut self, reg: &str, value: u16) -> Result<(), String> {
         self.set_register_by_name(reg, value)
     }
-    fn get_register_by_name(&mut self,reg: &str) -> Result<String, String> {
-        match self.get_register(reg){
-            Ok(Reg::R8(val)) => {
-                Ok(format!("{reg}: {:02X}H [{val}]", val))
-            }
-            Ok(Reg::R16(val)) => {
-                Ok(format!("{reg}: {:04X}H [{val}]", val))
-            }
-            Err(err) => {
-                Err(err)
-            }             
+    fn get_register_by_name(&mut self, reg: &str) -> Result<String, String> {
+        match self.get_register(reg) {
+            Ok(Reg::R8(val)) => Ok(format!("{reg}: {:02X}H [{val}]", val)),
+            Ok(Reg::R16(val)) => Ok(format!("{reg}: {:04X}H [{val}]", val)),
+            Err(err) => Err(err),
         }
     }
     fn get_breakpoints(&self) -> Result<Vec<u16>, String> {
@@ -1845,5 +1845,11 @@ impl CpuUi for Cpu {
     fn clear_breakpoints(&mut self) -> Result<(), String> {
         self.breakpoints.clear_breakpoints()?;
         Ok(())
+    }
+    fn get_cpu_name(&self) -> Option<&str> {
+        Some("Intel 8080")
+    }
+    fn one_step(&mut self) -> Option<String> {
+        self.step()
     }
 }

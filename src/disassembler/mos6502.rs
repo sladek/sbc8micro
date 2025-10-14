@@ -36,7 +36,7 @@
 use serde::Deserialize;
 use std::collections::HashMap;
 
-use crate::disassembler::mos6502_opcode;
+use crate::disassembler::mos6502_opcodes::OPCODES;
 use crate::memory::Memory;
 
 #[derive(Debug, Deserialize)]
@@ -49,7 +49,7 @@ pub struct OpcodeDef {
 
 pub fn load_opcodes_table() -> HashMap<u8, OpcodeDef> {
     let defs: Vec<OpcodeDef> =
-        serde_json::from_str(mos6502_opcode::OPCODES).expect("Failed to parse JSON");
+        serde_json::from_str(OPCODES).expect("Failed to parse JSON");
     defs.into_iter()
         .map(|def| (u8::from_str_radix(&def.opcode, 16).unwrap(), def))
         .collect()

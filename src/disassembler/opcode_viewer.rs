@@ -122,12 +122,12 @@ impl<'a, T> OpcodeViewer<'a, T> {
 
     fn previous_page(&mut self) {
         self.table_state.scroll_up_by(self.opcodes_page_size);
-/*
-        let i = match self.table_state.selected() {
-            Some(i) => i,
-            None => 0,
-        };
- */
+        /*
+               let i = match self.table_state.selected() {
+                   Some(i) => i,
+                   None => 0,
+               };
+        */
         let i = self.table_state.selected().unwrap_or_default();
         self.scroll_state = self.scroll_state.position(i);
         self.set_page(i);
@@ -144,13 +144,11 @@ impl<'a, T> OpcodeViewer<'a, T> {
     /// Sets selected row in opcodes table based on mnemonic starting witch character 'ch'
     fn set_index_by_char(&mut self, ch: char) {
         if let Some(index) = self.view().find_index_by_char(ch) {
-             self.set_page(index);
-             // Set page sets "selected" to the beginning of pagw
-             // so let's reselect the required row
-             self.table_state.select(Some(index));
-         }
-
-
+            self.set_page(index);
+            // Set page sets "selected" to the beginning of pagw
+            // so let's reselect the required row
+            self.table_state.select(Some(index));
+        }
     }
     /// Runs opcode viewer
     ///

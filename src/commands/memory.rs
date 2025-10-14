@@ -1,8 +1,9 @@
 use regex::Regex;
 
+use crate::commands::cpu_not_set_error;
+use crate::commands::MIN_MEMORY_RANGE;
 use crate::ui::app::App;
 use crate::ui::app::AppState;
-use crate::commands::push_cpu_not_set;
 
 pub struct Memory {}
 
@@ -20,42 +21,45 @@ impl Memory {
                 let dump: Vec<String>;
                 let start_addr;
                 let end_addr;
-                if command.len() == 1 {
-                    dump = cpu.memory_dump(dump_range.start, dump_range.end);
-                } else if command.len() == 2 {
-                    let temp_range = app.dump.range - 1;
-                    start_addr = Self::from_hex_string(command[1].to_string())?;
-                    if (start_addr as u32 + temp_range as u32) > 0xffff {
-                        end_addr = 0xffffu16;
-                    } else {
-                        end_addr = start_addr + temp_range;
+                match command.len() {
+                    1 => {
+                        dump = cpu.memory_dump(dump_range.start, dump_range.end);
                     }
-                    dump = cpu.memory_dump(start_addr, end_addr);
-                } else if command.len() == 3 {
-                    start_addr = Self::from_hex_string(command[1].to_string())?;
-                    end_addr = Self::from_hex_string(command[2].to_string())?;
-                    if start_addr >= end_addr {
-                        return Err("Start address must be lower than end address.".to_string());
+                    2 => {
+                        let temp_range = app.dump.range - 1;
+                        start_addr = Self::from_hex_string(command[1].to_string())?;
+                        if (start_addr as u32 + temp_range as u32) > 0xffff {
+                            end_addr = 0xffffu16;
+                        } else {
+                            end_addr = start_addr + temp_range;
+                        }
+                        dump = cpu.memory_dump(start_addr, end_addr);                    
                     }
-                    app.dump.set_start_address(start_addr);
-                    app.dump.set_end_address(end_addr);
-                    dump = cpu.memory_dump(start_addr, end_addr);
-                } else {
-                    return Err(
-                        "Wrong number of parameters. Usage: dump or dump <start_addr> <end_addr>"
-                            .to_string(),
+                    3 => {
+                        start_addr = Self::from_hex_string(command[1].to_string())?;
+                        end_addr = Self::from_hex_string(command[2].to_string())?;
+                        if start_addr >= end_addr {
+                            return Err("Start address must be lower than end address.".to_string());
+                        }
+                        app.dump.set_start_address(start_addr);
+                        app.dump.set_end_address(end_addr);
+                        dump = cpu.memory_dump(start_addr, end_addr);
+                    }
+                    _ => {
+                        return Err(
+                            "Wrong number of parameters. Usage: dump or dump <start_addr> <end_addr>"
+                                .to_string(),
                     );
+
+                    }
                 }
                 for line in dump {
                     app.messages.push(line.to_string());
                 }
-                return Ok(AppState::Home);
+                Ok(AppState::Home)
             }
-            None => {
-                push_cpu_not_set(app);
-            }
+            None => cpu_not_set_error(),
         }
-        Ok(AppState::Home)
     }
     /// Translates decimal or hexadecimal numbers representation to u16
     ///
@@ -102,7 +106,6 @@ impl Memory {
                     return Err(value);
                 }
             }
-            //return "Number: True".to_string();
         }
         value.push_str(" - Invalid format of hexadecimal number.");
         Err(value)
@@ -133,6 +136,73 @@ impl Memory {
             return c - b'0';
         }
         0u8
+    }
+    /// Sets or displays memory range for dump command
+    ///
+    /// Usage:
+    ///   memory_range
+    ///   mr
+    ///   memory_range 127
+    ///   memory_range 0ffh
+    ///   mr $ff
+    ///   mr 0xff
+    pub fn memory_range(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
+        match command.len() {
+            1 => {
+                let range = app.dump.range + 1;
+                app.messages.push(format!("Memory range: 0x{:04x} [{range}]", range));
+            }
+            2 => {
+                let mut range = Memory::from_hex_string(command[1].to_string())?;
+                if range < MIN_MEMORY_RANGE {
+                    return Err(format!("Error: Minimum allowed memory range is {MIN_MEMORY_RANGE}"))
+                }
+                range -= 1;
+                app.dump.set_range(range);
+                let start_address = app.dump.start;
+                if (start_address as u32 + range as u32) > 0xff {
+                    app.dump.set_end_address(0xffu16);
+                }
+                app.dump.set_end_address(start_address + range);
+            }
+            _ => {
+                app.messages
+                    .push("Error: Wrong number of parameters.".to_string());
+                app.messages.push("  Usage: set range <size>.".to_string());
+            }
+        }
+        Ok(AppState::Home)
+    }
+    /// Sets  memory content
+    ///
+    /// Usage:
+    ///   m 0x1234 0xc3 0x34 0x12
+    pub fn set_memory(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
+        app.check_cpu()?; // Check if cpu is defined
+        if command.len() == 1 {
+            return Err("Error: Invalid number of parameters. Usage: m <address> <data> <data> <data> ... or mem <address> <data> <data> <data> ...".to_string())
+        }
+        let mut addr = Memory::from_hex_string(command[1].to_string())?;
+        let mut data: Vec<u8> = Vec::new();
+        for s_value in &command[2 ..] {
+            let value = Memory::from_hex_string(s_value.to_string())?;
+            if value > 0xff {
+                return Err(format!("Error: Value {s_value} [{value}] is bigger than 255. It must fit to 8 bit data."));
+            }
+            data.push(value as u8);
+        }
+        match &mut app.cpu_ui {
+            Some(cpu) => {
+                for value in data {
+                    cpu.get_memory().write_byte(addr, value);
+                    addr += 1;
+                }
+            }
+            None => {
+                return  cpu_not_set_error();
+            }
+        }
+        Ok(AppState::Home)
     }
 }
 

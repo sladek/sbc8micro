@@ -1,8 +1,11 @@
 use crate::commands::command::Command;
 use crate::cpu::{Cpu, CpuUi};
+//use color_eyre::eyre::Ok;
 use ratatui::crossterm::event::KeyModifiers;
 use ratatui::widgets::{Scrollbar, ScrollbarOrientation, ScrollbarState};
 
+use crate::commands::cpu_not_set_error;
+use crate::ui::{COMMAND_HISTORY_SIZE, COMMAND_HISTORY_SIZE_INIT_INDEX, OUTPUT_HISTORY_SIZE};
 use ratatui::{
     DefaultTerminal, Frame,
     crossterm::{
@@ -17,7 +20,6 @@ use ratatui::{
     widgets::{Block, List, ListItem, Paragraph},
 };
 use std::io::Result;
-use crate::ui::{COMMAND_HISTORY_SIZE, OUTPUT_HISTORY_SIZE, COMMAND_HISTORY_SIZE_INIT_INDEX};
 
 /// App holds the state of the application
 pub struct App {
@@ -47,7 +49,7 @@ impl Default for App {
         Self::new()
     }
 }
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct CommandHistory {
     /// Commands histrory
     command_history: Vec<String>,
@@ -65,7 +67,7 @@ impl CommandHistory {
     /// Returns next line from command history
     fn command_history_up(&mut self) -> Option<String> {
         if self.command_history.is_empty() {
-            return None
+            return None;
         }
         if self.command_history_position < self.command_history.len() as i16 - 1 {
             self.command_history_position += 1;
@@ -78,14 +80,14 @@ impl CommandHistory {
     /// Returns previous line from command history
     fn command_history_down(&mut self) -> Option<String> {
         if self.command_history_position == 0 {
-            return Some("".to_string())
+            return Some("".to_string());
         }
-//        let current_position = self.command_history_position;
+        //        let current_position = self.command_history_position;
         self.command_history_position -= 1;
         Some(self.command_history[self.command_history_position as usize].clone())
     }
 }
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct OutputViewStatus {
     // Moves output windows up and down based on offset
     // If +x moves up x lines, if -x moves down x lines
@@ -131,13 +133,13 @@ pub enum AppState {
     Opcodes6502,
     Quit,
 }
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Dump {
     pub start: u16,
     pub end: u16,
     pub range: u16,
 }
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Disasm {
     pub start: u16,
     pub end: u16,
@@ -166,6 +168,7 @@ impl Disasm {
     }
 }
 
+#[derive(Clone)]
 enum InputMode {
     Normal,
     Editing,
@@ -216,12 +219,19 @@ impl App {
     pub fn set_command_history_size(&mut self, size: usize) {
         self.command_history.command_history_size = size;
         if self.command_history.command_history.len() > size {
-            self.command_history.command_history = self.command_history.command_history[0..size].to_vec();
+            self.command_history.command_history =
+                self.command_history.command_history[0..size].to_vec();
             self.command_history.command_history_position = COMMAND_HISTORY_SIZE_INIT_INDEX;
         }
     }
     pub fn get_output_view_status(&mut self) -> &mut OutputViewStatus {
         &mut self.output_view_status
+    }
+    pub fn check_cpu(&mut self) -> std::result::Result<AppState, String> {
+        if self.cpu_ui.is_some() {
+            return Ok(AppState::Home);
+        }
+        cpu_not_set_error()
     }
     /// Moves cursor in input widget of command line Ui to the left
     fn move_cursor_left(&mut self) {
@@ -282,13 +292,13 @@ impl App {
         self.character_index = 0;
     }
     /// Pushes command to command buffer
-    /// 
+    ///
     /// It keeps maximum size of history either as default set by COMMAND_HISTORY_SIZE
     /// or set by the command "set command_history_size".
     fn history_push_command(&mut self, comm: String) {
         let history = &mut self.command_history.command_history;
         if !comm.is_empty() {
-            history.insert(0,comm);
+            history.insert(0, comm);
         }
         self.command_history.command_history_position = COMMAND_HISTORY_SIZE_INIT_INDEX;
         let size = self.command_history.command_history_size;
@@ -318,14 +328,14 @@ impl App {
         }
     }
     /// Moves history of commands up
-    fn move_command_history_up(&mut self){
+    fn move_command_history_up(&mut self) {
         if let Some(input) = self.command_history.command_history_up() {
             self.input = input;
             self.character_index = self.input.len();
         }
     }
     /// Moves history of commands up
-    fn move_command_history_down(&mut self){
+    fn move_command_history_down(&mut self) {
         if let Some(input) = self.command_history.command_history_down() {
             self.input = input;
             self.character_index = self.input.len();
@@ -402,19 +412,17 @@ impl App {
                     KeyCode::Up => {
                         if key.modifiers.contains(KeyModifiers::SHIFT) {
                             self.move_command_history_up()
-                        }
-                        else {
+                        } else {
                             self.move_output_up_line()
                         }
-                    },
+                    }
                     KeyCode::Down => {
                         if key.modifiers.contains(KeyModifiers::SHIFT) {
                             self.move_command_history_down()
-                        }
-                        else {
+                        } else {
                             self.move_output_down_line()
                         }
-                    },
+                    }
                     KeyCode::PageUp => self.move_output_up_page(),
                     KeyCode::PageDown => self.move_output_down_page(),
                     _ => {}

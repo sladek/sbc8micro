@@ -2,7 +2,8 @@
 use serde::Deserialize;
 use std::collections::HashMap;
 
-use crate::disassembler::i8080_opcode;
+use crate::disassembler::{i8080_opcodes::OPCODES};
+
 use crate::memory::Memory;
 
 #[derive(Debug, Deserialize)]
@@ -15,7 +16,7 @@ pub struct OpcodeDef {
 }
 pub fn load_opcodes_table() -> HashMap<u8, OpcodeDef> {
     let defs: Vec<OpcodeDef> =
-        serde_json::from_str(i8080_opcode::OPCODES).expect("Failed to parse JSON");
+        serde_json::from_str(OPCODES).expect("Failed to parse JSON");
     defs.into_iter()
         .map(|def| (u8::from_str_radix(&def.opcode, 16).unwrap(), def))
         .collect()
@@ -106,7 +107,7 @@ pub fn disassemble(
         } else {
             output.push(
                 format!(
-                    "{:04X}  {:02X}          !byte {:02X}",
+                    "{:04X}  {:02X}          DB {:02X}",
                     pc, opcode_byte, opcode_byte
                 )
                 .trim_end()

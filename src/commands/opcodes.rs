@@ -1,5 +1,5 @@
-use crate::commands::push_cpu_not_set;
 use crate::commands::CPU_LIST;
+use crate::commands::cpu_not_set_error;
 use crate::cpu::Cpu;
 use crate::ui::app::App;
 use crate::ui::app::AppState;
@@ -16,15 +16,14 @@ impl Opcodes {
     pub fn list_opcodes(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
         if command.len() > 2 {
             app.messages.push(format!(
-                "Error: more than 1 argument provided. Usage: opcodes or opcodes <{CPU_LIST}>"
+                "Error: more than 1 argument provided. Usage: \'opcodes\' or \'opcodes <{CPU_LIST}>\' or \'op\' or \'op <{CPU_LIST}>\'"
             ));
             return Ok(AppState::Home);
         }
         if command.len() < 2 {
             match app.cpu {
                 Cpu::None => {
-                    push_cpu_not_set(app);
-                    return Ok(AppState::Home);
+                    return  cpu_not_set_error();
                 }
                 Cpu::I8080 => {
                     return Ok(AppState::Opcodes8080);
@@ -43,7 +42,7 @@ impl Opcodes {
             }
             _ => {
                 app.messages
-                    .push(format!("Unknown cpu. Use opcodes or opcodes <{CPU_LIST}>"));
+                    .push(format!("Unknown cpu. Use \'opcodes\' or \'opcodes <{CPU_LIST}>\' or \'op\' or \'op <{CPU_LIST}>\'"));
             }
         }
         Ok(AppState::Home)

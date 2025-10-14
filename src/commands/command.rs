@@ -1,6 +1,8 @@
 //! Command processor
 //! Processing a command from command line
 
+use crate::commands::breakpoints::Breakpoint;
+use crate::commands::cpu::Cpu;
 use crate::commands::directory::Directory;
 use crate::commands::disasm::Disasm;
 use crate::commands::help::Help;
@@ -8,11 +10,11 @@ use crate::commands::load::Load;
 use crate::commands::memory::Memory;
 use crate::commands::opcodes::Opcodes;
 use crate::commands::registers::Registers;
-use crate::commands::set::Parameter;
-use crate::commands::breakpoints::Breakpoint;
+use crate::commands::{MIN_OUTPUT_HISTORY_LENGTH, MIN_COMMAND_HISTORY_LENGTH};
 use crate::help;
 use crate::ui::app::{App, AppState};
 use regex::Regex;
+
 
 #[derive(Default)]
 pub struct Command {}
@@ -28,21 +30,26 @@ impl Command {
         match command[0] {
             "b" => Breakpoint::breakpoint(app, command),
             "cd" => Directory::cd(app, command),
+            "ch" | "command_history_length" => Self::command_history(app, command),
             "cls" | "clear" => {
                 app.messages.clear();
                 Ok(AppState::Home)
             }
-            "disasm" => Disasm::disasm(app, command),
-            "dump" => Memory::dump(app, command),
-            "help" | "?" => Help::help(app, command),
-            "load" => Load::load_file(app, command),
-            "loada" => Load::load_acme_file(app, command),
+            "cpu" => Cpu::set_cpu(app, command),
+            "da" | "disasm" => Disasm::disasm(app, command),
+            "dr" | "disasm_range" => Disasm::disasm_range(app, command),
+            "d" | "dump" => Memory::dump(app, command),
+            "help" | "h" | "?" => Help::help(app, command),
+            "l" | "load" => Load::load_file(app, command),
+            "la" | "loada" => Load::load_acme_file(app, command),
             "ls" | "dir" => Directory::ls(app, command),
-            "opcodes" => Opcodes::list_opcodes(app, command),
+            "m" | "mem" => Memory::set_memory(app, command),
+            "mr" | "memory_range" => Memory::memory_range(app, command),
+            "oh" | "output_history_length" => Self::output_history(app, command),
+            "op" |"opcodes" => Opcodes::list_opcodes(app, command),
             "pwd" => Directory::pwd(app, command),
             "r" | "reg" => Registers::set_get_reg(app, command),
-            "registers" | "regs" => Registers::show_registers(app, command),
-            "set" => Parameter::set(app, command),
+            "s" | "step" => Cpu::step(app, command),
             "" => Ok(AppState::Home),
             _ => Self::get_usage(app),
         }
@@ -60,4 +67,70 @@ impl Command {
         }
         Ok(AppState::Home)
     }
+    /// Set or displays size of history of Output window
+    ///
+    /// Usage:
+    ///   output_history 255
+    ///   output_history 0ffh
+    ///   oh $ff
+    ///   oh 0xff
+    fn output_history(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
+        match command.len() {
+            1 => {
+                let length = app.get_output_view_status().get_output_history_size();
+                app.messages.push(format!("Output window history length: 0x{:04x} [{length}]", length));
+                return Ok(AppState::Home);
+            }
+            2 => {
+                let range = Memory::from_hex_string(command[1].to_string())?;
+                if range < MIN_OUTPUT_HISTORY_LENGTH {
+                    return Err(format!("Error: Minimal output history length is {MIN_OUTPUT_HISTORY_LENGTH}"));
+                }
+                app.get_output_view_status()
+                    .set_output_history_size(range as usize);               
+            }
+            _ => {
+                app.messages
+                    .push("Error: Wrong number of parameters.".to_string());
+                app.messages
+                    .push("  Usage: output_history [length] or oh [length]".to_string());
+                return Ok(AppState::Home);
+            }
+        }
+        Ok(AppState::Home)
+    }
+    /// Set or displays the length of history of command window
+    ///
+    /// Usage:
+    ///   ch
+    ///   ch 255
+    ///   ch 0ffh
+    ///   command_history
+    ///   command_history $ff
+    ///   command_history 0xff
+    fn command_history(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
+        match command.len() {
+            1 => {
+                let length = app.get_command_history_size();
+                app.messages.push(format!("Command history length: {length}"));
+                return Ok(AppState::Home)
+            }
+            2 => {
+                let size = Memory::from_hex_string(command[1].to_string())?;
+                if size < MIN_COMMAND_HISTORY_LENGTH {
+                    return Err(format!("Error: Minimal command history length is {MIN_COMMAND_HISTORY_LENGTH}"));
+                }
+                app.set_command_history_size(size as usize);
+            }
+            _ => {
+                app.messages
+                    .push("Error: Wrong number of parameters.".to_string());
+                app.messages
+                    .push("  Usage: set command_history_size <size>.".to_string());
+                return Ok(AppState::Home);
+            }
+        }
+        Ok(AppState::Home)
+    }
+
 }
