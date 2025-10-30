@@ -72,19 +72,25 @@ pub static HELP: &str = r#"
     "command": "da | disasm",
     "description": "Shows a disassembled code of a specific memory region.",
     "usage": "da or disasm or da <start address> or disasm <start address> or da <start address> <end address> or disasm <start address> <end address>",
-    "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    da\\n    disasm\\n    da 0ffh\\n    disasm $ff\\n    da 0 255\\n    disasm 0x0000 0x00ff\\n Note: When <start address> and <end address> are defined they are stored internally and next usage of disasm command without address range will use these value.\\n       When only \"disasm <start address>\" is defined then end address is calculated as <start + disasm_range> where dump_range is by default 64 and can be changed\\n       by disasm_range <value> command or dr <value>."
+    "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    da\\n    disasm\\n    da 0ffh\\n    disasm $ff\\n    da 0 255\\n    disasm 0x0000 0x00ff\\n Note: When <start address> and <end address> are defined they are stored internally and next usage of disasm command without address range will use these value.\\n       When only \"disasm <start address>\" is defined then <end address> is calculated as <start address> + <disasm_range> where disasm_range is by default 16 and can be changed\\n       by disasm_range <value> command or dr <value>."
   },
   {
     "command": "dr | disasm_range",
     "description": "Shows or sets range of default addresses for disasembler.",
     "usage": "dr [range] or disasm_range [range]",
-    "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    dr\\n    disasm_range\\n    dr 100\\n    dr 0ffh\\n    disasm_range 0x00ff\\n    disasm_range $00ff\\n Note: If only dr or disasm_range is used, then the disassembler range is displayed; otherwise, the range is set to the value provided as a parameter."
+    "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    dr\\n    disasm_range\\n    dr 100\\n    dr 0ffh\\n    disasm_range 0x00ff\\n    disasm_range $00ff\\n Note: If only dr or disasm_range is used, then the disassembler range is displayed; otherwise, the range is set to the value provided as a parameter.\\n       End address of disassembler is calculated as start adrress + range."
   },
   {
     "command": "dump",
     "description": "Displays an area of the RAM for a specific CPU.",
     "usage": "dump or dump <start address> or dump <start address> <end address>",
     "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    dump\\n    dump 0xff\\n    dump 0 127\\n    dump 0h 0ffh\\n    dump $0 $ff\\n    dump 0x0 0xff\\n Note: When <start address> and <end address> are defined they are stored internally and next usage of dump command without address range will use these value.\\n       When only \"dump <start address>\" is defined then end address is calculated as <start + dump_range> where dump_range is by default 128 and can be changed by \"set dump_range <value>\" command."
+  },
+  {
+    "command": "g | go",
+    "description": "Starts a programm from an address defined in PC register or as a parameter on command line.",
+    "usage": "g [address] or go [address]",
+    "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    g\\n    g 0x1000\\n    go\\n    go $1000"
   },
   {
     "command": "help | h | ?",
@@ -147,10 +153,10 @@ pub static HELP: &str = r#"
     "examples": "\\n    r\\n    reg\\n    reg a\\n    reg a 0ffh\\n    r x\\n    r x $ff\\n    reg sp 0fffh\\n    r pc $ffff\\n Note: If value is defined, it is set, otherwise only the content of the register is displayed. If no register is provided it will display all registers."
   },
   {
-    "command": "set",
-    "description": "Sets application's parameters like cpu, range ...",
-    "usage": "set <parameter> [<parameter>, ...]",
-    "examples": "\\n    set cpu 8080\\n    set cpu i8080\\n    set cpu 6502\\n    set cpu mos6502\\n    set disasm_range 64\\n    set dump_range 64\\n    set command_history_size 200\\n    set output_history_size 2000\\n Note: dump_range is a number of bytes displayed by dump command.\\n Note: disasm_range is a number of bytes displayed by disasm command.\\n Note: output_history_size is a number of lines from Output window kept in history buffer.\\n Note: command_history_size is a number of lines from Command window kept in history buffer."
+    "command": "ser | serial",
+    "description": "Sets serial port's address, name, clock frequency and default parameters.",
+    "usage": "ser <address> <port name> [clock] or serial <address> <port name> [clock]",
+    "examples": "\\n    ser 0x40 COM3\\n    serial 0x40 /dev/tty4 2048000\\n Note: Default clock frequency is 416400, baud rate factor is 64x and other parameters are 8 bit, 1 stop bit, no parity."
   }
 ]
 "#;

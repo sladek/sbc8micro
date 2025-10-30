@@ -1,0 +1,30 @@
+
+Assembly Listing                                                                                                 Page: 1
+------------------------------------------------------------------------------------------------------------------------
+
+                            1 | DATA    EQU 40H
+                            2 | CONTROL EQU 41H
+                            3 | 
+                            4 |         ORG     0100H
+0100: 3E 00                 5 |         MVI     A, 00H
+0102: D3 41                 6 |         OUT     CONTROL
+0104: D3 41                 7 |         OUT     CONTROL
+0106: D3 41                 8 |         OUT     CONTROL
+0108: 3E 40                 9 |         MVI     A, 40H
+010A: D3 41                10 |         OUT     CONTROL
+010C: 3E 4F                11 |         MVI     A, 01001111B ; 8,N, 1
+010E: D3 41                12 |         OUT     CONTROL
+0110: 3E 05                13 |         MVI     A, 00000101B ; RxE, TxEN
+0112: D3 41                14 |         OUT     CONTROL
+0114: DB 41                15 | LOOP:   IN      CONTROL
+0116: E6 02                16 |         ANI     00000010B ; Rxrdy
+0118: CA 14 01             17 |         JZ      LOOP
+011B: DB 40                18 |         IN      DATA
+011D: D3 40                19 |         OUT     DATA
+011F: 3E 0D                20 |         MVI     A, 0DH
+0121: D3 40                21 |         OUT     DATA
+0123: 3E 0A                22 |         MVI     A, 0AH
+0125: D3 40                23 |         OUT     DATA
+0127: C3 14 01             24 |         JMP LOOP
+                           25 | xa
+

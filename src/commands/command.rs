@@ -10,11 +10,11 @@ use crate::commands::load::Load;
 use crate::commands::memory::Memory;
 use crate::commands::opcodes::Opcodes;
 use crate::commands::registers::Registers;
-use crate::commands::{MIN_OUTPUT_HISTORY_LENGTH, MIN_COMMAND_HISTORY_LENGTH};
+use crate::commands::serial::Serial;
+use crate::commands::{MIN_COMMAND_HISTORY_LENGTH, MIN_OUTPUT_HISTORY_LENGTH};
 use crate::help;
 use crate::ui::app::{App, AppState};
 use regex::Regex;
-
 
 #[derive(Default)]
 pub struct Command {}
@@ -39,17 +39,19 @@ impl Command {
             "da" | "disasm" => Disasm::disasm(app, command),
             "dr" | "disasm_range" => Disasm::disasm_range(app, command),
             "d" | "dump" => Memory::dump(app, command),
-            "help" | "h" | "?" => Help::help(app, command),
+            "g" | "go" => Cpu::go(app, command),
+            "h" | "help" | "?" => Help::help(app, command),
             "l" | "load" => Load::load_file(app, command),
             "la" | "loada" => Load::load_acme_file(app, command),
             "ls" | "dir" => Directory::ls(app, command),
             "m" | "mem" => Memory::set_memory(app, command),
             "mr" | "memory_range" => Memory::memory_range(app, command),
             "oh" | "output_history_length" => Self::output_history(app, command),
-            "op" |"opcodes" => Opcodes::list_opcodes(app, command),
+            "op" | "opcodes" => Opcodes::list_opcodes(app, command),
             "pwd" => Directory::pwd(app, command),
             "r" | "reg" => Registers::set_get_reg(app, command),
             "s" | "step" => Cpu::step(app, command),
+            "ser" | "serial" => Serial::serial(app, command),
             "" => Ok(AppState::Home),
             _ => Self::get_usage(app),
         }
@@ -78,16 +80,21 @@ impl Command {
         match command.len() {
             1 => {
                 let length = app.get_output_view_status().get_output_history_size();
-                app.messages.push(format!("Output window history length: 0x{:04x} [{length}]", length));
+                app.messages.push(format!(
+                    "Output window history length: 0x{:04x} [{length}]",
+                    length
+                ));
                 return Ok(AppState::Home);
             }
             2 => {
                 let range = Memory::from_hex_string(command[1].to_string())?;
                 if range < MIN_OUTPUT_HISTORY_LENGTH {
-                    return Err(format!("Error: Minimal output history length is {MIN_OUTPUT_HISTORY_LENGTH}"));
+                    return Err(format!(
+                        "Error: Minimal output history length is {MIN_OUTPUT_HISTORY_LENGTH}"
+                    ));
                 }
                 app.get_output_view_status()
-                    .set_output_history_size(range as usize);               
+                    .set_output_history_size(range as usize);
             }
             _ => {
                 app.messages
@@ -112,13 +119,16 @@ impl Command {
         match command.len() {
             1 => {
                 let length = app.get_command_history_size();
-                app.messages.push(format!("Command history length: {length}"));
-                return Ok(AppState::Home)
+                app.messages
+                    .push(format!("Command history length: {length}"));
+                return Ok(AppState::Home);
             }
             2 => {
                 let size = Memory::from_hex_string(command[1].to_string())?;
                 if size < MIN_COMMAND_HISTORY_LENGTH {
-                    return Err(format!("Error: Minimal command history length is {MIN_COMMAND_HISTORY_LENGTH}"));
+                    return Err(format!(
+                        "Error: Minimal command history length is {MIN_COMMAND_HISTORY_LENGTH}"
+                    ));
                 }
                 app.set_command_history_size(size as usize);
             }
@@ -132,5 +142,4 @@ impl Command {
         }
         Ok(AppState::Home)
     }
-
 }

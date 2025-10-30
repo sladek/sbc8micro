@@ -1,7 +1,7 @@
 use regex::Regex;
 
-use crate::commands::cpu_not_set_error;
 use crate::commands::MIN_MEMORY_RANGE;
+use crate::commands::cpu_not_set_error;
 use crate::ui::app::App;
 use crate::ui::app::AppState;
 
@@ -33,7 +33,7 @@ impl Memory {
                         } else {
                             end_addr = start_addr + temp_range;
                         }
-                        dump = cpu.memory_dump(start_addr, end_addr);                    
+                        dump = cpu.memory_dump(start_addr, end_addr);
                     }
                     3 => {
                         start_addr = Self::from_hex_string(command[1].to_string())?;
@@ -50,7 +50,6 @@ impl Memory {
                             "Wrong number of parameters. Usage: dump or dump <start_addr> <end_addr>"
                                 .to_string(),
                     );
-
                     }
                 }
                 for line in dump {
@@ -150,12 +149,15 @@ impl Memory {
         match command.len() {
             1 => {
                 let range = app.dump.range + 1;
-                app.messages.push(format!("Memory range: 0x{:04x} [{range}]", range));
+                app.messages
+                    .push(format!("Memory range: 0x{:04x} [{range}]", range));
             }
             2 => {
                 let mut range = Memory::from_hex_string(command[1].to_string())?;
                 if range < MIN_MEMORY_RANGE {
-                    return Err(format!("Error: Minimum allowed memory range is {MIN_MEMORY_RANGE}"))
+                    return Err(format!(
+                        "Error: Minimum allowed memory range is {MIN_MEMORY_RANGE}"
+                    ));
                 }
                 range -= 1;
                 app.dump.set_range(range);
@@ -180,14 +182,16 @@ impl Memory {
     pub fn set_memory(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
         app.check_cpu()?; // Check if cpu is defined
         if command.len() == 1 {
-            return Err("Error: Invalid number of parameters. Usage: m <address> <data> <data> <data> ... or mem <address> <data> <data> <data> ...".to_string())
+            return Err("Error: Invalid number of parameters. Usage: m <address> <data> <data> <data> ... or mem <address> <data> <data> <data> ...".to_string());
         }
         let mut addr = Memory::from_hex_string(command[1].to_string())?;
         let mut data: Vec<u8> = Vec::new();
-        for s_value in &command[2 ..] {
+        for s_value in &command[2..] {
             let value = Memory::from_hex_string(s_value.to_string())?;
             if value > 0xff {
-                return Err(format!("Error: Value {s_value} [{value}] is bigger than 255. It must fit to 8 bit data."));
+                return Err(format!(
+                    "Error: Value {s_value} [{value}] is bigger than 255. It must fit to 8 bit data."
+                ));
             }
             data.push(value as u8);
         }
@@ -195,11 +199,11 @@ impl Memory {
             Some(cpu) => {
                 for value in data {
                     cpu.get_memory().write_byte(addr, value);
-                    addr += 1;
+                    addr = addr.wrapping_add(1);
                 }
             }
             None => {
-                return  cpu_not_set_error();
+                return cpu_not_set_error();
             }
         }
         Ok(AppState::Home)

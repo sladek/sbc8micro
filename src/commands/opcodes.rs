@@ -23,7 +23,7 @@ impl Opcodes {
         if command.len() < 2 {
             match app.cpu {
                 Cpu::None => {
-                    return  cpu_not_set_error();
+                    return cpu_not_set_error();
                 }
                 Cpu::I8080 => {
                     return Ok(AppState::Opcodes8080);

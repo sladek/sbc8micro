@@ -111,9 +111,7 @@ impl Load {
                     Err(err) => return Err(err.to_string()),
                 }
             }
-            None => {
-                return  cpu_not_set_error()
-            }
+            None => return cpu_not_set_error(),
         }
         Ok(AppState::Home)
     }

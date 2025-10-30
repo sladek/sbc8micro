@@ -29,11 +29,12 @@ use crate::cpu::{CpuUi, Reg};
 use crate::debugger::Breakpoints;
 use crate::disassembler::i8080::disassemble;
 use crate::disassembler::i8080_opcode_consts::*;
+use crate::io;
 use crate::memory::Memory;
 use crate::status::i8080::*;
 
 /// CPU registers, flags, counters and memory
-#[derive(Default, Clone)]
+#[derive(Default)]
 pub struct Cpu {
     /// Accumulater
     pub a: u8,
@@ -59,6 +60,8 @@ pub struct Cpu {
     pub inte: bool,
     /// Memory assigned to CPU
     pub memory: Memory,
+    /// Io memory
+    pub io_memory: io::memory::IoMemory,
     /// Breakpoints
     pub breakpoints: Breakpoints,
     /// Debug flag
@@ -87,6 +90,7 @@ impl Cpu {
             sp: 0,
             inte: false,
             memory: Memory::new(),
+            io_memory: io::memory::IoMemory::new(),
             breakpoints: Breakpoints::new(),
             debug: true,
         }
@@ -175,22 +179,16 @@ impl Cpu {
             self.status.is_carry() as u8
         )
     }
-    ///
-    /// Sets debug flag
-    ///
-    /// If debug flag is set to true, then when stepping through instructions
-    /// also mnemonic code of instruction is printed, which is very convenient
-    /// during debugging of the programm
-    ///
-    pub fn set_debug(&mut self, debug: bool) {
-        self.debug = debug;
-    }
     /// Read data from data bus
     ///
     /// This will be modified after all the instructions are implemented
     /// Data bus needs to be introduced here
-    fn inp(&mut self, _address: u8) -> u8 {
-        0xff
+    fn inp(&mut self, address: u8) -> u8 {
+        self.io_memory.read(address)
+    }
+    fn out(&mut self, address: u8) {
+        self.io_memory.write(address, self.a);
+
     }
     fn read_immediate_byte(&mut self) -> u8 {
         let value = self.memory.read_byte(self.pc);
@@ -490,12 +488,12 @@ impl Cpu {
     /// If debug flag is set to true it will also print mnemonic code of the instruction that is executed.
     ///
     pub fn step(&mut self) -> Option<String> {
-//        macro_rules! dbg { ($($x:tt)*) => { if self.debug { println!($($x)*); } } }
+        //        macro_rules! dbg { ($($x:tt)*) => { if self.debug { println!($($x)*); } } }
         macro_rules! dbg { ($($x:tt)*) => { if self.debug { format!($($x)*)} else { "".to_string() }}}
 
         let opcode = self.memory.read_byte(self.pc);
         self.pc = self.pc.wrapping_add(1);
-        let mut disasm:String = String::from("");
+        let mut disasm: String = String::from("");
         match opcode {
             ACI => {
                 let value = self.read_immediate_byte();
@@ -1456,6 +1454,11 @@ impl Cpu {
                 self.or(value);
                 disasm = dbg!("{}ORI {:02X}H", self.code_to_str(2), value);
             }
+            OUT => {
+                let addr = self.read_immediate_byte();
+                self.out(addr);
+                disasm = dbg!("{}OUT {:02X}H", self.code_to_str(2), addr);                
+            }
             PCHL => {
                 let hl = self.get_hl();
                 self.set_hl(self.pc);
@@ -1806,7 +1809,10 @@ impl Cpu {
                 disasm = dbg!("{}DB {:02X}H", self.code_to_str(1), opcode);
             }
         }
-        Some(disasm)
+        match disasm.as_str() {
+            "" => None,
+            _ => Some(disasm),
+        }
     }
 }
 
@@ -1818,6 +1824,9 @@ impl CpuUi for Cpu {
     }
     fn get_memory(&mut self) -> &mut Memory {
         &mut self.memory
+    }
+    fn get_io_memory(&mut self) -> &mut io::memory::IoMemory {
+        &mut self.io_memory
     }
     fn disasm(&mut self, start: u16, end: u16) -> Vec<String> {
         disassemble(&self.memory, start, end, &load_opcodes_table())
@@ -1851,5 +1860,17 @@ impl CpuUi for Cpu {
     }
     fn one_step(&mut self) -> Option<String> {
         self.step()
+    }
+    fn get_pc(&mut self) -> u16 {
+        self.pc
+    }
+    fn set_pc(&mut self, pc: u16) {
+        self.pc = pc;
+    }
+    fn get_debug_flag(&self) -> bool {
+        self.debug
+    }
+    fn set_debug_flag(&mut self, debug: bool) {
+        self.debug = debug;
     }
 }

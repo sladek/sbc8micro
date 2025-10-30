@@ -226,6 +226,8 @@ pub const ORA_M: u8 = 0xB6;
 pub const ORA_A: u8 = 0xB7;
 // ORI
 pub const ORI: u8 = 0xF6;
+// OUT
+pub const OUT: u8 = 0xD3;
 // PCHL
 pub const PCHL: u8 = 0xE9;
 // POP

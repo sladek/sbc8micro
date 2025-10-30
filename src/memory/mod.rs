@@ -15,6 +15,11 @@ impl Region {
         Self { start: 0, end: 0 }
     }
 }
+
+pub enum MemCell {
+    Memory(u8),
+    Io(u8),
+}
 #[derive(Clone)]
 /// Memory that can be assigned to specific CPU
 pub struct Memory {

@@ -27,7 +27,7 @@ impl Breakpoints {
         self.breakpoints.clone()
     }
     /// Sets or remove a breakpoint
-    /// 
+    ///
     /// If breakpoint is not set it is set otherwise it is removed.
     pub fn set_breakpoint(&mut self, address: u16) -> Result<(), String> {
         if self.breakpoints.len() == self.max_breakpoints {
@@ -67,5 +67,12 @@ impl Breakpoints {
             }
             None => Err(format!("Breakpoint: {address} not defined.")),
         }
+    }
+    /// Check if breakpoint was reached
+    pub fn is_breakpoint(&self, address: u16) -> bool {
+        if self.breakpoints.contains(&address) {
+            return true;
+        };
+        false
     }
 }

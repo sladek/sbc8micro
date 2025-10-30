@@ -1604,6 +1604,15 @@ pub static OPCODES: &str = r#"
     "description": "The content of the second byte of the instruction is inclusive-OR'd with the content of the accumulator. \nThe result is placed in the accumulator. The CY and AC flags are cleared. \n[(A) <- (A) OR (byte 2)]\n\nZ S P CY AC\nx x x 0  0"
   },
   {
+    "opcode": "D3",
+    "mnemonic": "OUT port",
+    "mode": "direct port",
+    "bytes": 2,
+    "cycles": "3",
+    "states": "10",
+    "description": "The content of register A is placed on the eight bit bi-directional data bus for transmission to the specified port.\n\nN Z S P CY AC\n- - - - -  -"
+  },
+  {
     "opcode": "E9",
     "mnemonic": "PCHL",
     "mode": "register",

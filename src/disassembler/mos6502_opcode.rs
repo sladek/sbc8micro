@@ -1,5 +1,5 @@
 //! Opcode for MOS Technology mos6502 CPU
-use crate::disassembler::{DrawOpcode, opcode_viewer::OpcodeViewer, mos6502_opcodes::OPCODES};
+use crate::disassembler::{DrawOpcode, mos6502_opcodes::OPCODES, opcode_viewer::OpcodeViewer};
 use ratatui::{
     Frame,
     layout::Layout,
@@ -117,4 +117,3 @@ impl DrawOpcode<Opcode> for OpcodeView<Opcode> {
         frame.render_widget(desc_block, chunks[1]);
     }
 }
-

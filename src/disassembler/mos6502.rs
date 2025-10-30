@@ -29,8 +29,8 @@
 //!
 //! The result should be:
 //! 0600  A9 01       LDA #$01
-//! 0602  8D 00       STA $0200
-//! 0605  E8 F0       INX
+//! 0602  8D 00 02    STA $0200
+//! 0605  E8          INX
 //! 0606  F0 FC       BEQ $0604
 //! 0608  00 00       BRK
 use serde::Deserialize;
@@ -48,8 +48,7 @@ pub struct OpcodeDef {
 }
 
 pub fn load_opcodes_table() -> HashMap<u8, OpcodeDef> {
-    let defs: Vec<OpcodeDef> =
-        serde_json::from_str(OPCODES).expect("Failed to parse JSON");
+    let defs: Vec<OpcodeDef> = serde_json::from_str(OPCODES).expect("Failed to parse JSON");
     defs.into_iter()
         .map(|def| (u8::from_str_radix(&def.opcode, 16).unwrap(), def))
         .collect()
@@ -64,11 +63,12 @@ pub fn disassemble(
     let mut output = Vec::new();
     let mut pc = start;
 
-    while pc < end {
+    while pc <= end && pc >= start {
+        //pc >= start means that pc wrapped over maximum address so we have to check also this possibility
         let memory_data = memory.get_data();
         let opcode_byte = memory_data[pc as usize];
         if let Some(def) = opcodes.get(&opcode_byte) {
-            let args = &memory_data[(pc + 1) as usize..];
+            let args = &memory_data[(pc.wrapping_add(1)) as usize..];
             let operand_str = match def.mode.as_str() {
                 "accumulator" => "A".to_string(),
                 "immediate" => format!("#${:02X}", args[0]),
@@ -108,13 +108,13 @@ pub fn disassemble(
                 &def.mnemonic[..3],
                 operand_str
             ));
-            pc += def.bytes as u16;
+            pc = pc.wrapping_add(def.bytes as u16);
         } else {
             output.push(format!(
                 "{:04X}  {:02X}          !byte {:02X}",
                 pc, opcode_byte, opcode_byte
             ));
-            pc += 1;
+            pc = pc.wrapping_add(1);
         }
     }
     output

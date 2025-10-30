@@ -1,9 +1,8 @@
-use crate::commands::command::Command;
+use crate::commands::{MIN_DISASM_RANGE, command::Command};
 use crate::cpu::{Cpu, CpuUi};
 //use color_eyre::eyre::Ok;
 use ratatui::crossterm::event::KeyModifiers;
 use ratatui::widgets::{Scrollbar, ScrollbarOrientation, ScrollbarState};
-
 use crate::commands::cpu_not_set_error;
 use crate::ui::{COMMAND_HISTORY_SIZE, COMMAND_HISTORY_SIZE_INIT_INDEX, OUTPUT_HISTORY_SIZE};
 use ratatui::{
@@ -142,7 +141,7 @@ pub struct Dump {
 #[derive(Default, Clone)]
 pub struct Disasm {
     pub start: u16,
-    pub end: u16,
+    //    pub end: u16,
     pub range: u16,
 }
 
@@ -150,8 +149,8 @@ impl Disasm {
     pub fn new() -> Self {
         Self {
             start: 0u16,
-            end: 63u16,
-            range: 64,
+            //            end: 63u16,
+            range: MIN_DISASM_RANGE,
         }
     }
     /// Set start address of the dump range
@@ -159,9 +158,9 @@ impl Disasm {
         self.start = start_addr;
     }
     /// Set end address of the dump range
-    pub fn set_end_address(&mut self, end_addr: u16) {
-        self.end = end_addr;
-    }
+    //    pub fn set_end_address(&mut self, end_addr: u16) {
+    //        self.end = end_addr;
+    //    }
     /// Set end address of the dump range
     pub fn set_range(&mut self, range: u16) {
         self.range = range;
@@ -392,7 +391,7 @@ impl App {
         if let Event::Key(key) = event {
             match self.input_mode {
                 InputMode::Normal if key.kind == KeyEventKind::Press => match key.code {
-                    KeyCode::Char('e') => {
+                    KeyCode::Char('c') => {
                         self.input_mode = InputMode::Editing;
                     }
                     KeyCode::Char('q') | KeyCode::Esc => {
@@ -448,8 +447,8 @@ impl App {
                     "Press ".into(),
                     "q".bold(),
                     " to exit, ".into(),
-                    "e".bold(),
-                    " to start editing.".bold(),
+                    "c".bold(),
+                    " to enter command mode.".bold(),
                 ],
                 Style::default().add_modifier(Modifier::RAPID_BLINK),
             ),
@@ -457,9 +456,9 @@ impl App {
                 vec![
                     "Press ".into(),
                     "Esc".bold(),
-                    " to stop editing, ".into(),
+                    " to leave command mode, ".into(),
                     "Enter".bold(),
-                    " to record the message".into(),
+                    " to confirm command.".into(),
                 ],
                 Style::default(),
             ),

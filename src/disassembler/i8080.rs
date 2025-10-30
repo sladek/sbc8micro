@@ -2,7 +2,7 @@
 use serde::Deserialize;
 use std::collections::HashMap;
 
-use crate::disassembler::{i8080_opcodes::OPCODES};
+use crate::disassembler::i8080_opcodes::OPCODES;
 
 use crate::memory::Memory;
 
@@ -15,8 +15,7 @@ pub struct OpcodeDef {
     //    cycles: String,
 }
 pub fn load_opcodes_table() -> HashMap<u8, OpcodeDef> {
-    let defs: Vec<OpcodeDef> =
-        serde_json::from_str(OPCODES).expect("Failed to parse JSON");
+    let defs: Vec<OpcodeDef> = serde_json::from_str(OPCODES).expect("Failed to parse JSON");
     defs.into_iter()
         .map(|def| (u8::from_str_radix(&def.opcode, 16).unwrap(), def))
         .collect()
@@ -31,12 +30,13 @@ pub fn disassemble(
     let mut output = Vec::new();
     let mut pc = start;
 
-    while pc < end {
+    while pc <= end && pc >= start {
+        //pc >= start means that pc wrapped over maximum address so we have to check also this possibility
         let memory_data = memory.get_data();
         let opcode_byte = memory_data[pc as usize];
         let mut mnemonic = "";
         if let Some(def) = opcodes.get(&opcode_byte) {
-            let args = &memory_data[(pc + 1) as usize..];
+            let args = &memory_data[(pc.wrapping_add(1)) as usize..];
             let operand_str = match def.mode.as_str() {
                 "immediate8" | "direct port" => {
                     mnemonic = &def.mnemonic;
@@ -103,7 +103,7 @@ pub fn disassemble(
                 .to_string()
                 .replace(", ", ","),
             );
-            pc += def.bytes as u16;
+            pc = pc.wrapping_add(def.bytes as u16);
         } else {
             output.push(
                 format!(
@@ -114,7 +114,7 @@ pub fn disassemble(
                 .to_string()
                 .replace(", ", ","),
             );
-            pc += 1;
+            pc = pc.wrapping_add(1);
         }
     }
     output

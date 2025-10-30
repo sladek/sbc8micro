@@ -1,4 +1,4 @@
-use crate::commands::{memory::Memory, MIN_DISASM_RANGE};
+use crate::commands::{MIN_DISASM_RANGE, memory::Memory};
 use crate::ui::app::{App, AppState};
 
 pub struct Disasm;
@@ -7,28 +7,36 @@ impl Disasm {
     pub fn disasm(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
         app.check_cpu()?; // Check if cpu is defined
         let start_address: u16;
-        let mut end_address: u16;
+        let end_address: u16;
         match command.len() {
             1 => {
                 start_address = app.disasm.start;
-                end_address = app.disasm.end + 1;
+                end_address =
+                    if start_address as usize + app.disasm.range as usize > u16::MAX as usize {
+                        u16::MAX
+                    } else {
+                        start_address + app.disasm.range
+                    };
             }
             2 => {
                 start_address = Memory::from_hex_string(command[1].to_string())?;
-                end_address = start_address + app.disasm.range;
+                end_address = if start_address as u32 + app.disasm.range as u32 > u16::MAX.into() {
+                    u16::MAX
+                } else {
+                    start_address + app.disasm.range
+                };
             }
             3 => {
                 // Save values from command line so they can be used later
                 start_address = Memory::from_hex_string(command[1].to_string())?;
                 end_address = Memory::from_hex_string(command[2].to_string())?;
-                end_address += 1;
                 if start_address > end_address {
                     app.messages
                         .push("End address must be bigger than start address.".to_string());
                     return Ok(AppState::Home);
                 }
                 app.disasm.set_start_address(start_address);
-                app.disasm.set_end_address(end_address);
+                app.disasm.set_range(end_address - start_address);
             }
             _ => {
                 return Err(
@@ -55,19 +63,18 @@ impl Disasm {
         match command.len() {
             1 => {
                 let range = app.disasm.range;
-                app.messages.push(format!(" Disasembler range: {:04x} [{range}]", range));
+                app.messages
+                    .push(format!(" Disasembler range: {:04x}H [{range}]", range));
             }
             2 => {
                 let range = Memory::from_hex_string(command[1].to_string())?;
                 if range < MIN_DISASM_RANGE {
-                    return Err(format!("Error: Minimum allowed disassembler range is {MIN_DISASM_RANGE}"))
+                    return Err(format!(
+                        "Error: Minimum allowed disassembler range is {MIN_DISASM_RANGE}"
+                    ));
                 }
+                //range cannot increase end address beyond max memory size
                 app.disasm.set_range(range);
-                let start_address = app.disasm.start;
-                if (start_address as u32 + range as u32) > 0xff {
-                    app.disasm.set_end_address(0xffu16);
-                }
-                app.disasm.set_end_address(start_address + range);
             }
             _ => {
                 app.messages

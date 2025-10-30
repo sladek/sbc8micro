@@ -1,5 +1,5 @@
 //! Opcode for INTEL i8080 CPU
-use crate::disassembler::{DrawOpcode, opcode_viewer::OpcodeViewer, i8080_opcodes::OPCODES};
+use crate::disassembler::{DrawOpcode, i8080_opcodes::OPCODES, opcode_viewer::OpcodeViewer};
 use ratatui::{
     Frame,
     layout::Layout,

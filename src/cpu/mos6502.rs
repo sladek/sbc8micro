@@ -25,8 +25,6 @@
 //!         break;
 //!     }
 //! }
-//! disasm = dbg!("A = {:02X}, X = {:02X}", cpu.a, cpu.x);
-//! disasm = dbg!("Flags: Z={}, N={}", cpu.p.is_zero(), cpu.p.is_negative());
 //! ```
 //!
 //! Result should be:<br/>
@@ -41,6 +39,7 @@ use crate::cpu::{CpuUi, Reg};
 use crate::debugger::Breakpoints;
 use crate::disassembler::mos6502_opcode_consts::*;
 use crate::memory::Memory;
+use crate::io::memory;
 use crate::status::mos6502;
 
 /// Internal registers and flags for MOS6502 CPU
@@ -60,6 +59,7 @@ pub struct Cpu {
     pub p: mos6502::Status,
     /// Memory assigned to CPU
     pub memory: Memory,
+    pub io_memory: memory::IoMemory,
     /// Breakpoints
     pub breakpoints: Breakpoints,
     /// Debug flag
@@ -81,6 +81,7 @@ impl Cpu {
             pc: 0,
             p: mos6502::Status::default(),
             memory: Memory::new(),
+            io_memory: memory::IoMemory::new(),
             breakpoints: Breakpoints::new(),
             debug: true,
         }
@@ -525,10 +526,10 @@ impl Cpu {
     ///
     /// Read instriction from memory, executes it and set PC to point to next instruction in memory.
     /// If debug flag is set to true it will also print mnemonic code of the instruction that is executed.
-    pub fn step(&mut self) -> Option<String>{
-//        macro_rules! dbg { ($($x:tt)*) => { if self.debug { println!($($x)*); } } }
+    pub fn step(&mut self) -> Option<String> {
+        //        macro_rules! dbg { ($($x:tt)*) => { if self.debug { println!($($x)*); } } }
         macro_rules! dbg { ($($x:tt)*) => { if self.debug { format!($($x)*)} else { "".to_string() }}}
-        
+
         let opcode = self.memory.read_byte(self.pc);
         self.pc += 1;
         let disasm: String;
@@ -1256,9 +1257,7 @@ impl Cpu {
                 );
             }
             // NOP
-            NOP => {
-                disasm = dbg!("{}NOP", self.code_to_str(1))
-            }
+            NOP => disasm = dbg!("{}NOP", self.code_to_str(1)),
             // ORA #imm
             ORA_IMM => {
                 let value = self.read_immediate_byte();
@@ -1641,7 +1640,10 @@ impl Cpu {
                 disasm = dbg!("{}!byte ${:02X}", self.code_to_str(1), opcode);
             }
         }
-        Some(disasm)
+        match disasm.as_str() {
+            "" => None,
+            _ => Some(disasm),
+        }
     }
 }
 
@@ -1653,6 +1655,9 @@ impl CpuUi for Cpu {
     }
     fn get_memory(&mut self) -> &mut Memory {
         &mut self.memory
+    }
+    fn get_io_memory(&mut self) -> &mut crate::io::memory::IoMemory {
+        &mut self.io_memory
     }
     fn disasm(&mut self, start: u16, end: u16) -> Vec<String> {
         disassemble(&self.memory, start, end, &load_opcodes_table())
@@ -1688,4 +1693,17 @@ impl CpuUi for Cpu {
     fn one_step(&mut self) -> Option<String> {
         self.step()
     }
+    fn get_pc(&mut self) -> u16 {
+        self.pc
+    }
+    fn set_pc(&mut self, pc: u16) {
+        self.pc = pc;
+    }
+    fn get_debug_flag(&self) -> bool {
+        self.debug
+    }
+    fn set_debug_flag(&mut self, debug: bool) {
+        self.debug = debug;
+    }
+
 }

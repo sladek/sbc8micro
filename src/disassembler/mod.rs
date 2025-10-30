@@ -1,12 +1,12 @@
 //! Disassembler for specific CPU
 pub mod i8080;
 pub mod i8080_opcode;
-pub mod i8080_opcodes;
 pub mod i8080_opcode_consts;
+pub mod i8080_opcodes;
 pub mod mos6502;
 pub mod mos6502_opcode;
-pub mod mos6502_opcodes;
 pub mod mos6502_opcode_consts;
+pub mod mos6502_opcodes;
 pub mod opcode_viewer;
 
 use opcode_viewer::OpcodeViewer;

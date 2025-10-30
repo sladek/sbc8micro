@@ -1,11 +1,11 @@
-use sbc8micro::cpu::i8080;
+use sbc8micro::cpu::{CpuUi, i8080};
 use sbc8micro::disassembler::i8080::{disassemble, load_opcodes_table};
 use sbc8micro::disassembler::i8080_opcode_consts::*;
 
 fn main() {
     let opcodes = load_opcodes_table();
     let mut cpu = i8080::Cpu::new();
-    cpu.set_debug(true);
+    cpu.set_debug_flag(true);
     cpu.a = 0xff;
     cpu.status.clear_flags();
     cpu.h = 0x02;
