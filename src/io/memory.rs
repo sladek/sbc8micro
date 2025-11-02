@@ -5,68 +5,21 @@
 //! instructions can be used to transfer data to/from io.
 //!
 //! ```
-//! use sbc8micro::io::memory::{DummyIo, Memory};
+//! use sbc8micro::io::memory::{DummyIo, IoMemory};
 //!
 //! let address = 0x40;
 //! let value = 0x55;
-//! let mut memory = Memory::new();
+//! let mut memory = IoMemory::new();
 //! memory.map_port(Box::new(DummyIo::new()));
 //! memory.write(address, value);
 //! let result = memory.read(address);
 //! assert_eq!(value, result)
 //! ```
-use std::{collections::HashMap};
-use crate::io::*;
-
-#[derive(Default)]
-pub struct Memory {
-    addresses: Vec<Box<dyn IoPort>>,
-}
-
-impl Memory {
-    pub fn new() -> Self {
-        Memory {
-            addresses: Vec::new(),
-        }
-    }
-    pub fn map_port(&mut self, port: Box<dyn IoPort>) {
-        self.addresses.push(port);
-    }
-    pub fn clear(&mut self) {
-        self.addresses.clear();
-    }
-    /// Reads data from io address.
-    ///
-    /// Reads data from io address and returns data as u8. If the port is not present on that address
-    /// it returns 0xff which simulates real behavior of reading from non existing periferals.
-    pub fn read(&mut self, address: u8) -> u8 {
-        let mut i = 0;
-        while i < self.addresses.len() {
-            let port = &mut self.addresses[i];
-            if let Some(data) = port.read_from_address(address) {
-                return data;
-            };
-            i += 1;
-        }
-        0xff
-    }
-    /// Writes data to specific io address
-    ///
-    /// Writes data to specific io address. As in real system, it doesn't indicate success or failure
-    /// and it is on the user to make sure that periferal exist on that address.
-    pub fn write(&mut self, address: u8, data: u8) {
-        let mut i = 0;
-        while i < self.addresses.len(){
-            let port = &mut self.addresses[i];
-            port.write_to_address(address, data);
-            i += 1;
-        }
-    }
-}
-
+use crate::{io::*, ui::app::AppState};
+use std::collections::HashMap;
 
 const MEMORY_SIZE: usize = 256;
-pub struct IoMemory{
+pub struct IoMemory {
     port_map: [Option<u8>; MEMORY_SIZE],
     ports: HashMap<u8, Box<dyn IoPort>>,
 }
@@ -87,10 +40,8 @@ impl IoMemory {
                 }
                 self.ports.insert(address, port);
                 Ok(())
-            },
-            None => {
-                Err("Base address is not defined".to_string())
             }
+            None => Err("Base address is not defined".to_string()),
         }
     }
     /// Reads data from io address.
@@ -99,16 +50,17 @@ impl IoMemory {
     /// it returns 0xff which simulates real behavior of reading from non existing periferals.
     pub fn read(&mut self, address: u8) -> u8 {
         if let Some(base_address) = self.port_map[address as usize]
-            && let Some(port) = self.ports.get_mut(&base_address) {
-                match port.read_from_address(address) {
-                    Some(data) => {
-                        return data;
-                    },
-                    None => {
-                        return 0xff;
-                    }
-                };
+            && let Some(port) = self.ports.get_mut(&base_address)
+        {
+            match port.read_from_address(address) {
+                Some(data) => {
+                    return data;
+                }
+                None => {
+                    return 0xff;
+                }
             };
+        };
         0xff
     }
     /// Writes data to specific io address
@@ -117,32 +69,46 @@ impl IoMemory {
     /// and it is on the user to make sure that periferal exist on that address.
     pub fn write(&mut self, address: u8, data: u8) {
         if let Some(base_address) = self.port_map[address as usize]
-            && let Some(port) = self.ports.get_mut(&base_address) {
-                port.write_to_address(address, data);
-            };
+            && let Some(port) = self.ports.get_mut(&base_address)
+        {
+            port.write_to_address(address, data);
+        };
     }
     /// Removes ports mapped to base address
-    pub fn remove(&mut self, base_address: u8) {
-        // Remove base addresses from port map
-        for i in 0 .. (self.port_map.len() - 1) { 
-             if let Some(address) = self.port_map[i] 
-                && address == base_address {
-                    self.port_map[i] = None;
+    pub fn remove(&mut self, base_address: u8) -> Result<AppState, String> {
+        match self.ports.get(&base_address) {
+            Some(port) => {
+                // Remove ports from memory
+                let offsets = port.get_ports_offset();
+                for offset in offsets {
+                    let address = base_address + offset;
+                    self.port_map[address as usize] = None;
+                }
+                // remove port from ports HashMap
+                self.ports.remove(&base_address);
             }
-           
+            None => {
+                return Err(format!("No device mapped to this address [{base_address}]"));
+            }
         }
-        // remove port from ports HashMap
-        self.ports.remove(&base_address);
-
+        Ok(AppState::Home)
     }
     /// Gets io port info
     pub fn get_io_ports_info(&self) -> Vec<String> {
         let ports = &self.ports;
         let mut info: Vec<String> = Vec::new();
-        for (k,v) in ports {
-            info.push(v.get_io_port_info());            
+        for v in ports.values() {
+            info.push(v.get_io_port_info());
         }
-        return info;
+        info
+    }
+    /// Gets port map
+    pub fn get_port_map(&self) -> &[Option<u8>] {
+        &self.port_map
+    }
+    /// Gets ports
+    pub fn get_ports(&mut self) -> &mut HashMap<u8, Box<dyn IoPort>> {
+        &mut self.ports
     }
 }
 impl Default for IoMemory {
@@ -154,17 +120,20 @@ impl Default for IoMemory {
 #[derive(Default)]
 pub struct DummyIo {
     base_address: u8,
+    memory_base_addres: u16,
     ports_offset: [u8; 2],
     data: u8,
-    control: u8
+    control: u8,
 }
 impl DummyIo {
     pub fn new() -> Self {
-        DummyIo { 
-            base_address: 0x40, 
+        DummyIo {
+            base_address: 0x40,
+            memory_base_addres: 0x1234,
             ports_offset: [0, 1],
-            data: 0, 
-            control: 0 }
+            data: 0,
+            control: 0,
+        }
     }
 }
 impl IoPort for DummyIo {
@@ -173,13 +142,40 @@ impl IoPort for DummyIo {
         let offset_control = self.ports_offset[1];
         if address == self.base_address + offset_data {
             let data = self.data;
-            println!("Read data from dummy io: address 0x{:02X}, data 0x{:02X}", address, data);
-            return Some(data)
+            println!(
+                "Read data from dummy io: address 0x{:02X}, data 0x{:02X}",
+                address, data
+            );
+            return Some(data);
         }
         if address == self.base_address + offset_control {
             let data = self.control;
-            println!("Read control from dummy io: address 0x{:02X}, data 0x{:02X}", address, data);
-            return Some(data)
+            println!(
+                "Read control from dummy io: address 0x{:02X}, data 0x{:02X}",
+                address, data
+            );
+            return Some(data);
+        }
+        None
+    }
+    fn read_from_mem_address(&mut self, address: u16) -> Option<u8> {
+        let offset_data = self.ports_offset[0];
+        let offset_control = self.ports_offset[1];
+        if address == self.memory_base_addres + offset_data as u16 {
+            let data = self.data;
+            println!(
+                "Read data from dummy io: address 0x{:02X}, data 0x{:02X}",
+                address, data
+            );
+            return Some(data);
+        }
+        if address == self.memory_base_addres + offset_control as u16 {
+            let data = self.control;
+            println!(
+                "Read control from dummy io: address 0x{:02X}, data 0x{:02X}",
+                address, data
+            );
+            return Some(data);
         }
         None
     }
@@ -188,18 +184,45 @@ impl IoPort for DummyIo {
         let offset_control = self.ports_offset[1];
         if address == self.base_address + offset_data {
             self.data = data;
-            println!("Written data (0x{:02X}) to dummy io address 0x{:2X}", data, address);
+            println!(
+                "Written data (0x{:02X}) to dummy io address 0x{:2X}",
+                data, address
+            );
         }
         if address == self.base_address + offset_control {
             self.control = data;
-            println!("Written control (0x{:04X}) to dummy io address 0x{:2X}", data, address);
+            println!(
+                "Written control (0x{:02X}) to dummy io address 0x{:2X}",
+                data, address
+            );
         }
     }
-    fn get_ports_offset (& self) -> &[u8] {
+    fn write_to_memory_address(&mut self, address: u16, data: u8) {
+        let offset_data = self.ports_offset[0];
+        let offset_control = self.ports_offset[1];
+        if address == self.memory_base_addres + offset_data as u16 {
+            self.data = data;
+            println!(
+                "Written data (0x{:04X}) to dummy io address 0x{:2X}",
+                data, address
+            );
+        }
+        if address == self.memory_base_addres + offset_control as u16 {
+            self.control = data;
+            println!(
+                "Written control (0x{:02X}) to dummy io address 0x{:2X}",
+                data, address
+            );
+        }
+    }
+    fn get_ports_offset(&self) -> &[u8] {
         &self.ports_offset
     }
-    fn get_base_address(& self) -> Option<u8> {
+    fn get_base_address(&self) -> Option<u8> {
         Some(self.base_address)
+    }
+    fn get_memory_base_address(&self) -> Option<u16> {
+        Some(self.memory_base_addres)
     }
     fn get_io_port_info(&self) -> String {
         "Dumy device".to_string()
@@ -256,5 +279,22 @@ mod tests {
         assert_eq!(data, result);
         result = memory.read(address_control);
         assert_eq!(control, result);
+    }
+    #[test]
+    fn test_io_map_remove() {
+        let base_address: u8 = 0x40;
+        let mut memory = IoMemory::new();
+        let _ = memory.map_port(Box::new(DummyIo::new())).unwrap();
+        let port = memory.ports.get(&base_address);
+        assert!(!port.is_none());
+        let offsets = port.unwrap().get_ports_offset();
+        let mem1 = base_address + offsets[0];
+        assert!(memory.port_map[mem1 as usize].is_some()); // Is data port mapped?
+        let mem2 = base_address + offsets[1];
+        assert!(memory.port_map[mem2 as usize].is_some()); // Is control port mapped?
+        let result = memory.remove(base_address);
+        assert!(memory.port_map[mem1 as usize].is_none()); // Is data port removed?
+        assert!(memory.port_map[mem2 as usize].is_none()); // Is control port removed?
+        assert!(result.is_ok());
     }
 }

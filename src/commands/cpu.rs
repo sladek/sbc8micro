@@ -17,7 +17,7 @@ impl Cpu {
     pub fn set_cpu(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
         match command.len() {
             1 => {
-                app.check_cpu()?;
+                app.is_cpu_set()?;
                 let cpu = app.cpu_ui.as_mut().unwrap();
                 let name = cpu.get_cpu_name().unwrap().to_string();
                 app.messages.push(name);
@@ -47,7 +47,7 @@ impl Cpu {
     ///
     /// Executes one step and if debug flag is set, it also displays opcode of executed instruction
     pub fn step(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
-        app.check_cpu()?; // Check if cpu is defined
+        app.is_cpu_set()?; // Check if cpu is defined
         if command.len() != 1 {
             return Err("Invalid number of parameters. Usage: s or step".to_string());
         }
@@ -67,7 +67,7 @@ impl Cpu {
     /// reaches breakpoint or CTRL-C is pressed. If no breakpoint is reached and pc reaches
     /// end of memory (0xffff) it rolles over to 0x0000 and continues execution.
     pub fn go(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
-        app.check_cpu()?; // Check if cpu is defined
+        app.is_cpu_set()?; // Check if cpu is defined
         match &mut app.cpu_ui {
             Some(cpu) => {
                 // Stores debug flag

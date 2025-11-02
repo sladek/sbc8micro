@@ -1,10 +1,10 @@
 use crate::commands::{MIN_DISASM_RANGE, command::Command};
 use crate::cpu::{Cpu, CpuUi};
 //use color_eyre::eyre::Ok;
-use ratatui::crossterm::event::KeyModifiers;
-use ratatui::widgets::{Scrollbar, ScrollbarOrientation, ScrollbarState};
 use crate::commands::cpu_not_set_error;
 use crate::ui::{COMMAND_HISTORY_SIZE, COMMAND_HISTORY_SIZE_INIT_INDEX, OUTPUT_HISTORY_SIZE};
+use ratatui::crossterm::event::KeyModifiers;
+use ratatui::widgets::{Scrollbar, ScrollbarOrientation, ScrollbarState};
 use ratatui::{
     DefaultTerminal, Frame,
     crossterm::{
@@ -226,7 +226,7 @@ impl App {
     pub fn get_output_view_status(&mut self) -> &mut OutputViewStatus {
         &mut self.output_view_status
     }
-    pub fn check_cpu(&mut self) -> std::result::Result<AppState, String> {
+    pub fn is_cpu_set(&mut self) -> std::result::Result<AppState, String> {
         if self.cpu_ui.is_some() {
             return Ok(AppState::Home);
         }

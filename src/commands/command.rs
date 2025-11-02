@@ -11,6 +11,7 @@ use crate::commands::memory::Memory;
 use crate::commands::opcodes::Opcodes;
 use crate::commands::registers::Registers;
 use crate::commands::serial::Serial;
+use crate::commands::dev::Dev;
 use crate::commands::{MIN_COMMAND_HISTORY_LENGTH, MIN_OUTPUT_HISTORY_LENGTH};
 use crate::help;
 use crate::ui::app::{App, AppState};
@@ -36,13 +37,15 @@ impl Command {
                 Ok(AppState::Home)
             }
             "cpu" => Cpu::set_cpu(app, command),
-            "da" | "disasm" => Disasm::disasm(app, command),
-            "dr" | "disasm_range" => Disasm::disasm_range(app, command),
             "d" | "dump" => Memory::dump(app, command),
+            "da" | "disasm" => Disasm::disasm(app, command),
+            "dev" => Dev::list_devices(app, command),
+            "dr" | "disasm_range" => Disasm::disasm_range(app, command),
             "g" | "go" => Cpu::go(app, command),
             "h" | "help" | "?" => Help::help(app, command),
             "l" | "load" => Load::load_file(app, command),
             "la" | "loada" => Load::load_acme_file(app, command),
+            "lh" | "loadh" => Load::load_hex_file(app, command),
             "ls" | "dir" => Directory::ls(app, command),
             "m" | "mem" => Memory::set_memory(app, command),
             "mr" | "memory_range" => Memory::memory_range(app, command),

@@ -81,10 +81,10 @@ pub static HELP: &str = r#"
     "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    dr\\n    disasm_range\\n    dr 100\\n    dr 0ffh\\n    disasm_range 0x00ff\\n    disasm_range $00ff\\n Note: If only dr or disasm_range is used, then the disassembler range is displayed; otherwise, the range is set to the value provided as a parameter.\\n       End address of disassembler is calculated as start adrress + range."
   },
   {
-    "command": "dump",
+    "command": "d | dump",
     "description": "Displays an area of the RAM for a specific CPU.",
-    "usage": "dump or dump <start address> or dump <start address> <end address>",
-    "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    dump\\n    dump 0xff\\n    dump 0 127\\n    dump 0h 0ffh\\n    dump $0 $ff\\n    dump 0x0 0xff\\n Note: When <start address> and <end address> are defined they are stored internally and next usage of dump command without address range will use these value.\\n       When only \"dump <start address>\" is defined then end address is calculated as <start + dump_range> where dump_range is by default 128 and can be changed by \"set dump_range <value>\" command."
+    "usage": "dump or d or dump <start address> or d <start address> or dump <start address> <end address> or d <start address> <end address>",
+    "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    dump\\n    dump 0xff\\n    dump 0 127\\n    d 0h 0ffh\\n    d $0 $ff\\n    d 0x0 0xff\\n Note: When <start address> and <end address> are defined they are stored internally and next usage of dump command without address range will use these value.\\n       When only \"dump <start address>\" is defined then end address is calculated as <start + dump_range> where dump_range is by default 128 and can be changed by \"set dump_range <value>\" command."
   },
   {
     "command": "g | go",
@@ -93,22 +93,28 @@ pub static HELP: &str = r#"
     "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    g\\n    g 0x1000\\n    go\\n    go $1000"
   },
   {
-    "command": "help | h | ?",
+    "command": "h | help | ?",
     "description": "Shows a help for specific command",
     "usage": "help <command> or h <command> or ? <command>",
     "examples": "\\n    help pwd\\n    h ls\\n    ? disasm"
   },
   {
-    "command": "load | l",
+    "command": "l | load",
     "description": "Loads a content of specified binary file into memory.",
     "usage": "load <start address> <file name> or l <start address> <file name>",
     "examples": "\\n    l 0ffh file.o\nn    l 1024 file.obj\\n    load $ff file.o\\n    load 0xff file.obj"
   },
   {
-    "command": "loada | la",
+    "command": "la | loada",
     "description": "Loads a content of specified ACME binary file into memory.",
     "usage": "loada <file name> or la <file name>",
-    "examples": "\\n    load file.o\\n    la file.o\\n Note: ACME binary file contains start address in first two bytes of the file so the start address doesn't have to be specified."
+    "examples": "\\n    loada file.o\\n    la file.o\\n Note: ACME binary file contains start address in first two bytes of the file so the start address doesn't have to be specified."
+  },
+  {
+    "command": "lh | loadh",
+    "description": "Loads a content of specified INTELHEX file into memory.",
+    "usage": "loadh <file name> or lh <file name>",
+    "examples": "\\n    loadh file.hex\\n    lh file.ohex"
   },
   {
     "command": "ls",
@@ -156,7 +162,7 @@ pub static HELP: &str = r#"
     "command": "ser | serial",
     "description": "Sets serial port's address, name, clock frequency and default parameters.",
     "usage": "ser <address> <port name> [clock] or serial <address> <port name> [clock]",
-    "examples": "\\n    ser 0x40 COM3\\n    serial 0x40 /dev/tty4 2048000\\n Note: Default clock frequency is 416400, baud rate factor is 64x and other parameters are 8 bit, 1 stop bit, no parity."
+    "examples": "\\n    ser 0x40 COM3\\n    ser 0x40 /dev/tty4 2048000\\n    serial M0x1234 COM3\\n    serial M0x1234 /dev/tty4 20480000\\n Note: Address can be defined as <address 8bit> if mapped to io memory or as M<address 16bit> if mapped to cpu's memory.\\n Note: Default clock frequency is 416400, baud rate factor is 64x and other parameters are 8 bit, 1 stop bit, no parity."
   }
 ]
 "#;

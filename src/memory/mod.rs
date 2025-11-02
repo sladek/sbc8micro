@@ -1,6 +1,11 @@
 //! Generic memory implementation
+use crate::io::IoPort;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::{Error, Read};
+use crate::ui::app::AppState;
+use intelhex::IntelHexFile;
+use intelhex::file::RecordType;
 
 const CAPACITY: usize = 0x10000;
 
@@ -16,15 +21,28 @@ impl Region {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
 pub enum MemCell {
-    Memory(u8),
-    Io(u8),
+    Memory(u8), // Direct value
+    Io(u16), // Address in the memory
 }
-#[derive(Clone)]
+/// This can be used only for comparing 8 bit content of memory
+/// For 16 bit it always return false
+impl PartialEq<u8> for MemCell {
+    fn eq(&self, other: &u8) -> bool {
+        match (self, other) {
+            (MemCell::Memory(data), other) => data == other,
+            (MemCell::Io(_data), _other) => false,
+        }
+    }
+}
+
+//#[derive(Clone)]
 /// Memory that can be assigned to specific CPU
 pub struct Memory {
     /// Data of the memory
-    data: [u8; CAPACITY], // 64KB
+    data: [MemCell; CAPACITY], // 64KB
+    ports: HashMap<u16, Box<dyn IoPort>>,
 }
 
 impl Default for Memory {
@@ -36,19 +54,87 @@ impl Default for Memory {
 impl Memory {
     pub fn new() -> Self {
         Self {
-            data: [0; CAPACITY],
+            data: [MemCell::Memory(0); CAPACITY],
+            ports: HashMap::new(),
         }
     }
+    pub fn map_port(&mut self, port: Box<dyn IoPort>) -> Result<(), String> {
+        let offset = port.get_ports_offset();
+        match port.get_memory_base_address() {
+            Some(address) => {
+                for i in offset {
+                    self.data[(address + *i as u16) as usize] = MemCell::Io(address);
+                }
+                self.ports.insert(address, port);
+                Ok(())
+            }
+            None => Err("Base address is not defined".to_string()),
+        }
+    }
+    /// Removes ports mapped to base address
+    pub fn remove(&mut self, base_address: u16) -> Result<AppState, String> {
+        match self.ports.get(&base_address) {
+            Some(port) => {
+                // Remove ports from memory
+                let offsets = port.get_ports_offset();
+                for offset in offsets {
+                    let address = base_address + *offset as u16;
+                    self.data[address as usize] = MemCell::Memory(0);
+                }
+                // remove port from ports HashMap
+                self.ports.remove(&base_address);
+            }
+            None => {
+                return Err(format!("No device mapped to this address [{base_address}]"));
+            }
+        }
+        Ok(AppState::Home)
+    }
+    /// Gets io port info
+    pub fn get_io_ports_info(&self) -> Vec<String> {
+        let ports = &self.ports;
+        let mut info: Vec<String> = Vec::new();
+        for v in ports.values() {
+            info.push(v.get_io_port_info());
+        }
+        info
+    }
+    /// Gets ports mapped into memory
+    pub fn get_ports(&mut self) -> &mut HashMap<u16, Box<dyn IoPort>> {
+        &mut self.ports
+    }
     /// Reads a byte from specific address
-    pub fn read_byte(&self, addr: u16) -> u8 {
-        self.data[addr as usize]
+    pub fn read_byte(&mut self, addr: u16) -> u8 {
+        self.get_byte(addr, self.data[addr as usize])
+    }
+    /// Gets a byte from MemCell
+    fn get_byte(&mut self, addr: u16, cell: MemCell) -> u8 {
+        match cell {
+            MemCell::Memory(value) => value,
+            MemCell::Io(address) => {
+                if let Some(port) = self.ports.get_mut(&address) {
+                    port.read_from_mem_address(addr).unwrap_or(0xff)
+                } else {
+                    0xff // Not yet implemented
+                }
+            }
+        }
     }
     /// Writes a byte to specific address
-    pub fn write_byte(&mut self, addr: u16, value: u8) {
-        self.data[addr as usize] = value;
+    pub fn write_byte(&mut self, address: u16, value: u8) {
+        match self.data[address as usize] {
+            MemCell::Memory(_) => {
+                self.data[address as usize] = MemCell::Memory(value);
+            }
+            MemCell::Io(addr) => {
+                if let Some(port) = self.ports.get_mut(&addr) {
+                        port.write_to_memory_address(address, value);
+                }
+            }
+        }
     }
     /// Reads a word from specific address
-    pub fn read_word(&self, addr: u16) -> u16 {
+    pub fn read_word(&mut self, addr: u16) -> u16 {
         let lo = self.read_byte(addr) as u16;
         let hi = self.read_byte(addr.wrapping_add(1)) as u16;
         (hi << 8) | lo
@@ -62,7 +148,7 @@ impl Memory {
     ///
     /// Address is only 8bit long so it can read a data from address range of 0x00 .. 0xff.
     /// This is used by the CPU like mos6502
-    pub fn read_byte_zero_page(&self, addr: u8) -> u8 {
+    pub fn read_byte_zero_page(&mut self, addr: u8) -> u8 {
         self.read_byte(addr as u16)
     }
     /// Writes a byte to zero_page [0, 0xff]
@@ -76,7 +162,7 @@ impl Memory {
     ///
     /// Address is only 8bit long so it can read a data from address range of 0x00 .. 0xff.
     /// This is used by the CPU like mos6502
-    pub fn read_word_zero_page(&self, addr: u8) -> u16 {
+    pub fn read_word_zero_page(&mut self, addr: u8) -> u16 {
         let lo = self.read_byte(addr as u16) as u16;
         let hi = self.read_byte(addr.wrapping_add(1) as u16) as u16;
         (hi << 8) | lo
@@ -92,9 +178,9 @@ impl Memory {
     ///
     /// Loads a binary code from a file to specific location in memory starting
     /// at start_addr
-    pub fn load_program(&mut self, program: &[u8], start_addr: u16) -> Result<Region, Error> {
+    pub fn load_data(&mut self, data: &[u8], start_addr: u16) -> Result<Region, Error> {
         let mut end_addr = start_addr;
-        for (i, &byte) in program.iter().enumerate() {
+        for (i, &byte) in data.iter().enumerate() {
             end_addr = start_addr.saturating_add(i as u16);
             self.write_byte(end_addr, byte);
             if end_addr == 0xffffu16 {
@@ -114,7 +200,7 @@ impl Memory {
     ///
     /// Loads .obj file to memory. The first 2 bytes of the file contain load address.
     /// This format is generated by ACME 6502 compiler
-    pub fn load_program_from_acme_file(&mut self, file_name: &str) -> Result<Region, Error> {
+    pub fn load_data_from_acme_file(&mut self, file_name: &str) -> Result<Region, Error> {
         // Open the binary file
         let mut file = File::open(file_name)?;
         // Create a buffer to hold the data
@@ -124,11 +210,37 @@ impl Memory {
         let start_addr_lo = buffer[0];
         let start_addr_hi = buffer[1];
         let start_addr = (start_addr_hi as u16) << 8 | start_addr_lo as u16;
-
-        self.load_program(&buffer[2..], start_addr)
+        self.load_data(&buffer[2..], start_addr)
+    }
+    /// Loads data from IntelHex file
+    pub fn load_data_from_intelhex_file(&mut self, file_name: &str) -> Result<Region, Error> {
+        let mut start: u16 = 0;
+        let mut end: u16 = 0;
+        match IntelHexFile::load_file(file_name) {
+            Ok(file) => {
+                let n_records = file.records.len();
+                start = file.records[0].addr;                
+                for i in 0..n_records {
+                    let record = &file.records[i];                    
+                    match  &record.rtype {
+                        RecordType::Data => {
+                            let addr = record.addr;
+                            let data = record.data.to_vec();
+                            self.load_data(&data, addr)?;                        }
+                        RecordType::EndOfFile => {
+                            end = record.addr;
+                            break;
+                        }
+                        _ => {}
+                    }
+                }
+            },
+            Err(err) => println!("{:?}", err)
+        }
+        Ok(Region { start, end })
     }
     /// Retusrns memory data as an array
-    pub fn get_data(&self) -> [u8; CAPACITY] {
+    pub fn get_data(&self) -> [MemCell; CAPACITY] {
         self.data
     }
     /// Prints content of memory slice [start_addr, end_addr] as hexadecimal dump via println!
@@ -141,26 +253,31 @@ impl Memory {
     /// Gets content of memory slice [start_addr, end_addr] as hexadecimal dump in Vector<String>
     pub fn hex_dump(&mut self, start_addr: u16, end_addr: u16) -> Vec<String> {
         let mut hex_dump: Vec<String> = Vec::new();
-        for (i, chunk) in self.data[start_addr as usize..=end_addr as usize]
-            .chunks(16)
-            .enumerate()
-        {
+        let mut input_data: Vec<(u16, MemCell)> = Vec::new();
+        // To prevent multiple mutable borrows of self later, we clone the array to data variable
+        for (i, cell) in self.data[start_addr as usize..=end_addr as usize].iter().enumerate() {
+            input_data.push((i as u16, *cell));
+        }
+        for (i, chunk) in input_data.chunks(16).enumerate() {
             let mut line = String::new();
             line += &format!("{:08X}: ", (i * 16) + start_addr as usize);
             // Print hex values
-            for byte in chunk {
-                line += &format!("{:02X} ", byte);
+            for cell in chunk {
+                let (addr, c) = *cell;
+                let value = self.get_byte(addr, c);
+                line += &format!("{:02X} ", value);
             }
 
             // Pad if less than 16 bytes
             for _ in 0..(16 - chunk.len()) {
                 line += "   ";
             }
-
             // Print ASCII representation
             line += "|";
             let mut c_count = 16;
-            for &byte in chunk {
+            for &cell in chunk {
+                let (addr, c) = cell;
+                let byte = self.get_byte(addr, c);
                 let c = if byte.is_ascii_graphic() || byte == b' ' {
                     byte as char
                 } else {
@@ -183,7 +300,7 @@ impl Memory {
 
 #[cfg(test)]
 mod tests {
-    use crate::memory::{self, Memory};
+    use crate::memory::{self, MemCell, Memory};
     #[test]
     ///
     /// Writes and reads back byte from memory
@@ -307,8 +424,55 @@ mod tests {
             0x00, // BRK
         ];
         let start = 0x0000;
-        let _ = memory.load_program(&program, start);
+        let _ = memory.load_data(&program, start);
         let mem_slice = &memory.data[0..=8];
         assert_eq!(mem_slice, program);
     }
+    #[test]
+    fn test_io_map_remove() {
+        use crate::io::memory::DummyIo;
+        let base_memory_address = 0x1234;
+        let mut memory = Memory::new();
+        let _ = memory.map_port(Box::new(DummyIo::new())).unwrap();
+        let port = memory.ports.get(&base_memory_address);
+        assert!(!port.is_none());
+        let offsets = port.unwrap().get_ports_offset();
+        let mem1 = base_memory_address + offsets[0] as u16; 
+        let mem2 = base_memory_address + offsets[1] as u16;
+        match memory.data[mem1 as usize] {
+            MemCell::Io(address) => {
+                assert!(address == base_memory_address);
+            }
+            _ => {
+                assert!(false);
+            }
+        }
+        match memory.data[mem2 as usize] {
+            MemCell::Io(address) => {
+                assert!(address == base_memory_address);
+            }
+            _ => {
+                assert!(false);
+            }
+        }
+        let result = memory.remove(base_memory_address);
+        assert!(result.is_ok());
+        match memory.data[mem1 as usize] { // Is Memory cell back?
+            MemCell::Memory(data) => {
+                assert_eq!(data, 0); // Default data should be 0
+            }
+            _ => {
+                assert!(false);
+            }
+        }
+        match memory.data[mem2 as usize] { // Is memory cell back?
+            MemCell::Memory(data) => {
+                assert_eq!(data, 0); // Default data should be 0
+            }
+            _ => {
+                assert!(false);
+            }
+        }
+    }
+
 }

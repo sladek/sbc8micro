@@ -5,7 +5,7 @@ pub struct Disasm;
 
 impl Disasm {
     pub fn disasm(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
-        app.check_cpu()?; // Check if cpu is defined
+        app.is_cpu_set()?; // Check if cpu is defined
         let start_address: u16;
         let end_address: u16;
         match command.len() {

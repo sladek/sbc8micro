@@ -20,7 +20,7 @@
 //!     let end = start + program.len() as u16;
 //!     memory.load_program(&program, start);
 //!  
-//!     let disassembly = disassemble(&memory, start, end, &opcodes);
+//!     let disassembly = disassemble(&mut memory, start, end, &opcodes);
 //!     for line in disassembly {
 //!         println!("{}", line);
 //!     }
@@ -55,7 +55,7 @@ pub fn load_opcodes_table() -> HashMap<u8, OpcodeDef> {
 }
 
 pub fn disassemble(
-    memory: &Memory,
+    memory: &mut Memory,
     start: u16,
     end: u16,
     opcodes: &HashMap<u8, OpcodeDef>,
@@ -65,37 +65,39 @@ pub fn disassemble(
 
     while pc <= end && pc >= start {
         //pc >= start means that pc wrapped over maximum address so we have to check also this possibility
-        let memory_data = memory.get_data();
-        let opcode_byte = memory_data[pc as usize];
+        let opcode_byte = memory.read_byte(pc);
         if let Some(def) = opcodes.get(&opcode_byte) {
-            let args = &memory_data[(pc.wrapping_add(1)) as usize..];
+            let addr_0 = pc.wrapping_add(1);
+            let addr_1 = addr_0.wrapping_add(1);
+            let args_0 = memory.read_byte(addr_0);
+            let args_1 = memory.read_byte(addr_1);
             let operand_str = match def.mode.as_str() {
                 "accumulator" => "A".to_string(),
-                "immediate" => format!("#${:02X}", args[0]),
-                "zeropage" => format!("${:02X}", args[0]),
-                "zeropage,X" => format!("${:02X},X", args[0]),
-                "zeropage,Y" => format!("${:02X},Y", args[0]),
-                "absolute" => format!("${:04X}", u16::from_le_bytes([args[0], args[1]])),
-                "absolute,X" => format!("${:04X},X", u16::from_le_bytes([args[0], args[1]])),
-                "absolute,Y" => format!("${:04X},Y", u16::from_le_bytes([args[0], args[1]])),
-                "indirect" => format!("(${:04X})", u16::from_le_bytes([args[0], args[1]])),
+                "immediate" => format!("#${:02X}", args_0),
+                "zeropage" => format!("${:02X}", args_0),
+                "zeropage,X" => format!("${:02X},X", args_0),
+                "zeropage,Y" => format!("${:02X},Y", args_0),
+                "absolute" => format!("${:04X}", u16::from_le_bytes([args_0, args_1])),
+                "absolute,X" => format!("${:04X},X", u16::from_le_bytes([args_0, args_1])),
+                "absolute,Y" => format!("${:04X},Y", u16::from_le_bytes([args_0, args_1])),
+                "indirect" => format!("(${:04X})", u16::from_le_bytes([args_0, args_1])),
                 "relative" => {
-                    let offset = args[0] as i8;
+                    let offset = args_0 as i8;
                     let target = (pc as i16 + 2 + offset as i16) as u16;
                     format!("${:04X}", target)
                 }
                 "implied" => "".to_string(),
-                "(indirect,X)" => format!("(${:02X},X)", args[0]),
-                "(indirect),Y" => format!("(${:02X}),Y", args[0]),
+                "(indirect,X)" => format!("(${:02X},X)", args_0),
+                "(indirect),Y" => format!("(${:02X}),Y", args_0),
                 _ => format!("?? {}", def.mode),
             };
             let operand_bytes = match def.mode.as_str() {
                 "immediate" | "zeropage" | "zeropage,X" | "zeropage,Y" | "relative"
                 | "(indirect,X)" | "(indirect),Y" => {
-                    format!("{:02X}", args[0])
+                    format!("{:02X}", args_0)
                 }
                 "absolute" | "absolute,X" | "absolute,Y" => {
-                    format!("{:02X} {:02X}", args[0], args[1])
+                    format!("{:02X} {:02X}", args_0, args_1)
                 }
                 "implied" => "".to_string(),
                 _ => "".to_string(),

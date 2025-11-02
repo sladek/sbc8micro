@@ -9,9 +9,9 @@ fn main() {
     let start_addr = 0x0200;
     let size = cpu
         .memory
-        .load_program_from_acme_file("examples/test_6502.o")
+        .load_data_from_acme_file("examples/test_6502.o")
         .unwrap();
-    let disassembly = disassemble(&cpu.memory, start_addr, start_addr + size.end, &opcodes);
+    let disassembly = disassemble(&mut cpu.memory, start_addr, start_addr + size.end, &opcodes);
     println!("---------------------------");
     println!("Main programm.");
     println!("---------------------------");

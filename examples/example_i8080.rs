@@ -22,7 +22,12 @@ fn main() {
     let start_addr = 0x0200;
     let size = program.len();
     cpu.load_program(&program, start_addr);
-    let disassembly = disassemble(&cpu.memory, start_addr, start_addr + size as u16, &opcodes);
+    let disassembly = disassemble(
+        &mut cpu.memory,
+        start_addr,
+        start_addr + size as u16,
+        &opcodes,
+    );
     println!("---------------------------");
     println!("Main programm - disassembler");
     println!("---------------------------");

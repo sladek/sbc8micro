@@ -22,4 +22,3 @@ LOOP:   IN      CONTROL
         MVI     A, 0AH
         OUT     DATA
         JMP LOOP
-xa

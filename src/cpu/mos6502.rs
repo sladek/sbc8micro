@@ -38,8 +38,8 @@
 use crate::cpu::{CpuUi, Reg};
 use crate::debugger::Breakpoints;
 use crate::disassembler::mos6502_opcode_consts::*;
-use crate::memory::Memory;
 use crate::io::memory;
+use crate::memory::Memory;
 use crate::status::mos6502;
 
 /// Internal registers and flags for MOS6502 CPU
@@ -59,7 +59,7 @@ pub struct Cpu {
     pub p: mos6502::Status,
     /// Memory assigned to CPU
     pub memory: Memory,
-    pub io_memory: memory::IoMemory,
+    pub io_memory: Option<memory::IoMemory>,
     /// Breakpoints
     pub breakpoints: Breakpoints,
     /// Debug flag
@@ -81,7 +81,7 @@ impl Cpu {
             pc: 0,
             p: mos6502::Status::default(),
             memory: Memory::new(),
-            io_memory: memory::IoMemory::new(),
+            io_memory: None,
             breakpoints: Breakpoints::new(),
             debug: true,
         }
@@ -141,7 +141,7 @@ impl Cpu {
 
     /// Loads program to the memory and set PC to start address of the programm
     pub fn load_program(&mut self, program: &[u8], start_addr: u16) {
-        let _ = self.memory.load_program(program, start_addr);
+        let _ = self.memory.load_data(program, start_addr);
         self.pc = start_addr;
     }
     ///
@@ -249,46 +249,47 @@ impl Cpu {
     /// Gets zero page address
     ///
     /// Gets address in zero page as immediate byte
-    fn get_zero_page_address(&self) -> u8 {
+    fn get_zero_page_address(&mut self) -> u8 {
         self.memory.read_byte(self.pc)
     }
     ///  Gets zero page X
     ///
     /// Gets address in zero page increased by the offset from X register
-    fn get_zero_page_address_x(&self) -> u8 {
+    fn get_zero_page_address_x(&mut self) -> u8 {
         self.memory.read_byte(self.pc).wrapping_add(self.x)
     }
     /// Gets absolute immediate address
-    fn get_absolute_address(&self) -> u16 {
+    fn get_absolute_address(&mut self) -> u16 {
         self.memory.read_word(self.pc)
     }
     /// Gets indirect address X - (indirect,X)
     ///
     /// It first gets intermediate address of zero page address increased by content of X register,
     /// then it reads a byte from zero page
-    fn get_indirect_address_x(&self) -> u16 {
-        self.memory
-            .read_word_zero_page(self.get_zero_page_address_x())
+    fn get_indirect_address_x(&mut self) -> u16 {
+        let get_zero_page_address_x = self.get_zero_page_address_x();
+        self.memory.read_word_zero_page(get_zero_page_address_x)
     }
     /// Gets indirect address Y - (indirect),Y
     ///
     /// It first reads immediate address for zero page, then reads a new address from that zero page address
     /// which is afterwords increased by the content of Y register
-    fn get_indirect_address_y(&self) -> u16 {
+    fn get_indirect_address_y(&mut self) -> u16 {
+        let get_zero_page_address = self.get_zero_page_address();
         self.memory
-            .read_word_zero_page(self.get_zero_page_address())
+            .read_word_zero_page(get_zero_page_address)
             .wrapping_add(self.y as u16)
     }
     /// Reads an absolut address X
     ///
     /// Reads immediate address and increases it by the content of X register
-    fn get_absolute_address_x(&self) -> u16 {
+    fn get_absolute_address_x(&mut self) -> u16 {
         self.memory.read_word(self.pc).wrapping_add(self.x as u16)
     }
     /// Reads an absolut address Y
     ///
     /// Reads immediate address and increases it by the content of Y register
-    fn get_absolute_address_y(&self) -> u16 {
+    fn get_absolute_address_y(&mut self) -> u16 {
         self.memory.read_word(self.pc).wrapping_add(self.y as u16)
     }
     /// Reads zero page X
@@ -1656,11 +1657,11 @@ impl CpuUi for Cpu {
     fn get_memory(&mut self) -> &mut Memory {
         &mut self.memory
     }
-    fn get_io_memory(&mut self) -> &mut crate::io::memory::IoMemory {
-        &mut self.io_memory
+    fn get_io_memory(&mut self) -> Option<&mut crate::io::memory::IoMemory> {
+        None
     }
     fn disasm(&mut self, start: u16, end: u16) -> Vec<String> {
-        disassemble(&self.memory, start, end, &load_opcodes_table())
+        disassemble(&mut self.memory, start, end, &load_opcodes_table())
     }
     fn show_registers(&mut self) -> Vec<String> {
         self.get_registers().lines().map(String::from).collect()
@@ -1705,5 +1706,4 @@ impl CpuUi for Cpu {
     fn set_debug_flag(&mut self, debug: bool) {
         self.debug = debug;
     }
-
 }

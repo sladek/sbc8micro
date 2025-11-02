@@ -1,0 +1,29 @@
+
+Assembly Listing                                                                                                 Page: 1
+------------------------------------------------------------------------------------------------------------------------
+
+                            1 | DATA    EQU 1234H
+                            2 | CONTROL EQU 1235H
+                            3 | 
+                            4 |         ORG     0100H
+0100: 3E 00                 5 |         MVI     A, 00H
+0102: 32 35 12              6 |         STA     CONTROL
+0105: 32 35 12              7 |         STA     CONTROL
+0108: 32 35 12              8 |         STA     CONTROL
+010B: 3E 40                 9 |         MVI     A, 40H       ; reet USART
+010D: 32 35 12             10 |         STA     CONTROL
+0110: 3E 4F                11 |         MVI     A, 01001111B ; 8,N, 1
+0112: 32 35 12             12 |         STA     CONTROL
+0115: 3E 05                13 |         MVI     A, 00000101B ; RxE, TxEN
+0117: 32 35 12             14 |         STA     CONTROL
+011A: 3A 35 12             15 | LOOP:   LDA     CONTROL
+011D: E6 02                16 |         ANI     00000010B ; Rxrdy
+011F: CA 1A 01             17 |         JZ      LOOP
+0122: 3A 34 12             18 |         LDA     DATA
+0125: 32 34 12             19 |         STA     DATA
+0128: 3E 0D                20 |         MVI     A, 0DH
+012A: 32 34 12             21 |         STA     DATA
+012D: 3E 0A                22 |         MVI     A, 0AH
+012F: 32 34 12             23 |         STA     DATA
+0132: C3 1A 01             24 |         JMP LOOP
+

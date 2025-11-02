@@ -1,10 +1,8 @@
 //! Disassembler for INTEL i8080 CPU
+use crate::disassembler::i8080_opcodes::OPCODES;
+use crate::memory::Memory;
 use serde::Deserialize;
 use std::collections::HashMap;
-
-use crate::disassembler::i8080_opcodes::OPCODES;
-
-use crate::memory::Memory;
 
 #[derive(Debug, Deserialize)]
 pub struct OpcodeDef {
@@ -22,7 +20,7 @@ pub fn load_opcodes_table() -> HashMap<u8, OpcodeDef> {
 }
 
 pub fn disassemble(
-    memory: &Memory,
+    memory: &mut Memory,
     start: u16,
     end: u16,
     opcodes: &HashMap<u8, OpcodeDef>,
@@ -32,27 +30,29 @@ pub fn disassemble(
 
     while pc <= end && pc >= start {
         //pc >= start means that pc wrapped over maximum address so we have to check also this possibility
-        let memory_data = memory.get_data();
-        let opcode_byte = memory_data[pc as usize];
+        let opcode_byte = memory.read_byte(pc);
         let mut mnemonic = "";
         if let Some(def) = opcodes.get(&opcode_byte) {
-            let args = &memory_data[(pc.wrapping_add(1)) as usize..];
+            let addr_0 = pc.wrapping_add(1);
+            let addr_1 = addr_0.wrapping_add(1);
+            let args_0 = memory.read_byte(addr_0);
+            let args_1 = memory.read_byte(addr_1);
             let operand_str = match def.mode.as_str() {
                 "immediate8" | "direct port" => {
                     mnemonic = &def.mnemonic;
                     mnemonic = mnemonic.trim_end_matches("data");
                     mnemonic = mnemonic.trim_end_matches("port");
-                    if args[0] > 0x9F {
-                        format!("0{:02X}H", args[0])
+                    if memory.read_byte(addr_0) > 0x9F {
+                        format!("0{:02X}H", args_0)
                     } else {
-                        format!("{:02X}H", args[0])
+                        format!("{:02X}H", args_0)
                     }
                 }
                 "immediate16" | "direct" => {
                     mnemonic = &def.mnemonic;
                     mnemonic = mnemonic.trim_end_matches("address").trim();
-                    let data = u16::from_le_bytes([args[0], args[1]]);
-                    if args[1] > 0x9F {
+                    let data = u16::from_le_bytes([args_0, args_1]);
+                    if memory.read_byte(addr_1) > 0x9F {
                         format!(" 0{:04X}H", data)
                     } else {
                         format!(" {:04X}H", data)
@@ -66,10 +66,10 @@ pub fn disassemble(
                     mnemonic = &def.mnemonic;
                     if mnemonic.contains(",data") {
                         mnemonic = mnemonic.trim_end_matches("data");
-                        if args[0] > 0x9F {
-                            format!("0{:02X}H", args[0])
+                        if args_0 > 0x9F {
+                            format!("0{:02X}H", args_0)
                         } else {
-                            format!("{:02X}H", args[0])
+                            format!("{:02X}H", args_0)
                         }
                     } else {
                         "".to_string()
@@ -79,18 +79,18 @@ pub fn disassemble(
             };
             let operand_bytes = match def.mode.as_str() {
                 "immediate8" | "direct port" => {
-                    format!("{:02X}", args[0])
+                    format!("{:02X}", args_0)
                 }
                 "register indirect" => {
                     mnemonic = def.mnemonic.trim_end_matches("data");
                     if mnemonic.ends_with(",") {
-                        format!("{:02X}", args[0])
+                        format!("{:02X}", args_0)
                     } else {
                         "".to_string()
                     }
                 }
                 "immediate16" | "direct" => {
-                    format!("{:02X} {:02X}", args[0], args[1])
+                    format!("{:02X} {:02X}", args_0, args_1)
                 }
                 _ => "".to_string(),
             };

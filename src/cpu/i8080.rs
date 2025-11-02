@@ -148,7 +148,7 @@ impl Cpu {
     /// Loads program to the memory and set PC to start address of the programm
     ///
     pub fn load_program(&mut self, program: &[u8], start_addr: u16) {
-        let _ = self.memory.load_program(program, start_addr);
+        let _ = self.memory.load_data(program, start_addr);
         self.pc = start_addr;
     }
     ///
@@ -188,7 +188,6 @@ impl Cpu {
     }
     fn out(&mut self, address: u8) {
         self.io_memory.write(address, self.a);
-
     }
     fn read_immediate_byte(&mut self) -> u8 {
         let value = self.memory.read_byte(self.pc);
@@ -209,7 +208,7 @@ impl Cpu {
     fn get_hl(&self) -> u16 {
         (self.h as u16) << 8 | self.l as u16
     }
-    fn get_m(&self) -> u8 {
+    fn get_m(&mut self) -> u8 {
         let addr = self.get_hl();
         self.memory.read_byte(addr)
     }
@@ -346,7 +345,7 @@ impl Cpu {
     /// Reads a byte from the memory address
     /// which is in HL register pair
     ///
-    fn read_m(&self) -> u8 {
+    fn read_m(&mut self) -> u8 {
         let h = self.h as u16;
         let l = self.l as u16;
         let hl = (h << 8) | l;
@@ -676,7 +675,8 @@ impl Cpu {
             }
             CMP_M => {
                 let tmp = self.a;
-                self.sub(self.read_m(), false);
+                let val = self.read_m();
+                self.sub(val, false);
                 self.a = tmp;
                 disasm = dbg!("{}CMP M", self.code_to_str(1));
             }
@@ -1457,7 +1457,7 @@ impl Cpu {
             OUT => {
                 let addr = self.read_immediate_byte();
                 self.out(addr);
-                disasm = dbg!("{}OUT {:02X}H", self.code_to_str(2), addr);                
+                disasm = dbg!("{}OUT {:02X}H", self.code_to_str(2), addr);
             }
             PCHL => {
                 let hl = self.get_hl();
@@ -1825,11 +1825,11 @@ impl CpuUi for Cpu {
     fn get_memory(&mut self) -> &mut Memory {
         &mut self.memory
     }
-    fn get_io_memory(&mut self) -> &mut io::memory::IoMemory {
-        &mut self.io_memory
+    fn get_io_memory(&mut self) -> Option<&mut io::memory::IoMemory> {
+        Some(&mut self.io_memory)
     }
     fn disasm(&mut self, start: u16, end: u16) -> Vec<String> {
-        disassemble(&self.memory, start, end, &load_opcodes_table())
+        disassemble(&mut self.memory, start, end, &load_opcodes_table())
     }
     fn show_registers(&mut self) -> Vec<String> {
         self.get_registers().lines().map(String::from).collect()

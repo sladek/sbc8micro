@@ -1,7 +1,7 @@
 //! Provides a code for specific CPU
 
-use crate::memory::Memory;
 use crate::io::memory;
+use crate::memory::Memory;
 
 pub mod i8080;
 pub mod i8080_tests;
@@ -18,7 +18,7 @@ pub enum Cpu {
 pub trait CpuUi {
     fn memory_dump(&mut self, start: u16, end: u16) -> Vec<String>;
     fn get_memory(&mut self) -> &mut Memory;
-    fn get_io_memory(&mut self) -> &mut memory::IoMemory;
+    fn get_io_memory(&mut self) -> Option<&mut memory::IoMemory>;
     fn get_pc(&mut self) -> u16;
     fn set_pc(&mut self, pc: u16);
     fn disasm(&mut self, start: u16, end: u16) -> Vec<String>;

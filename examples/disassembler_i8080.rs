@@ -74,6 +74,7 @@ fn main() {
         NOP,     // NOP
         ORA_B, ORA_C, ORA_D, ORA_E, ORA_H, ORA_L, ORA_M, ORA_A, // ORA
         ORI, 0x55, // ORI
+        OUT, 0x55, // OUT
         PCHL, // PCHL
         POP_B, POP_D, POP_H, POP_PSW, // POP
         PUSH_B, PUSH_D, PUSH_H, PUSH_PSW, // PUSH
@@ -105,8 +106,8 @@ fn main() {
         XTHL, // XTHL
     ];
     let start = 0x0600;
-    let _ = memory.load_program(&program, start);
-    let disassembly = disassemble(&memory, start, start + program.len() as u16, &opcodes);
+    let _ = memory.load_data(&program, start);
+    let disassembly = disassemble(&mut memory, start, start + program.len() as u16, &opcodes);
 
     for line in disassembly {
         println!("{}", line);

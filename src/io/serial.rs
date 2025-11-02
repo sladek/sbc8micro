@@ -1,10 +1,10 @@
 //! Limited async mode Intel 8251A serial interface
 //!
 //! It emulates async mode of Intel 8251A serial interface
+use crate::io::IoPort;
 use serialport::{DataBits, Parity, SerialPort, SerialPortInfo};
 use std::collections::VecDeque;
 use std::time::Duration;
-use crate::io::{IoPort};
 
 pub struct Async8251 {
     data: Data,
@@ -16,6 +16,7 @@ pub struct Async8251 {
     clock: u32,
     pub port: Option<Box<dyn SerialPort>>,
     base_address: Option<u8>,
+    memory_base_address: Option<u16>,
     port_offsets: [u8; 2],
     name: Option<String>,
 }
@@ -33,10 +34,18 @@ impl Default for Async8251 {
             clock: 614_400, // with 64x baud rate factor baud rate us 9600
             port: None,
             base_address: None,
+            memory_base_address: None,
             port_offsets: [0, 1],
             name: None,
         }
     }
+}
+
+#[derive(Clone)]
+pub enum BaseAddress {
+    A8(u8),
+    A16(u16),
+    NotSet,
 }
 #[derive(Clone, Default)]
 pub struct Data {
@@ -44,7 +53,7 @@ pub struct Data {
     rx_data: u8,
 }
 impl Data {
-    pub fn new() -> Self{
+    pub fn new() -> Self {
         Self {
             rx_buffer: FiFo::new(DEFAULT_CAPACITY),
             rx_data: 0,
@@ -174,8 +183,8 @@ pub enum Control {
     EH = 0b1000_0000,
 }
 pub enum Status {
-    TxRDY = 0b0000_0001, // Output buffer is ready to receive a character from CPU
-    RxRDY = 0b0000_0010, // Character is ready in an input buffer
+    TxRDY = 0b0000_0001,   // Output buffer is ready to receive a character from CPU
+    RxRDY = 0b0000_0010,   // Character is ready in an input buffer
     TxEMPTY = 0b0000_0100, // Output buffer is empty
     #[allow(clippy::upper_case_acronyms)]
     PE = 0b0000_1000,
@@ -212,10 +221,6 @@ impl<T> FiFo<T> {
         }
         self.buf.pop_front()
     }
-    /// Test if buffer is empty
-    fn is_empty(&self) -> bool {
-        self.buf.is_empty()
-    }
     fn is_full(&self) -> bool {
         self.buf.len() == self.capacity
     }
@@ -238,7 +243,8 @@ impl Async8251 {
             sync_char_num: 0, // Part of mode state machine
             port: None,
             base_address: None,
-            .. Default::default()
+            memory_base_address: None,
+            ..Default::default()
         }
     }
     /// Reads a byte from rx_data
@@ -246,7 +252,8 @@ impl Async8251 {
     /// Reads a byte from rx_data and returns new data if data is available
     /// or old data if buffer is empty
     pub fn read_rx_data(&mut self) -> u8 {
-        if self.status_control.control & Control::RxE as u8 == 0x0 { // Check if Rx is enabled
+        if self.status_control.control & Control::RxE as u8 == 0x0 {
+            // Check if Rx is enabled
             return self.data.rx_data;
         };
         if let Some(data) = self.data.rx_buffer.pop() {
@@ -492,15 +499,26 @@ impl Async8251 {
         }
     }
     /// Sets base address of serial port (8251).
-    /// 
+    ///
     /// Base address is data port for 8251
     /// Base address + 1 is address of controll and status port of 8251
     pub fn set_base_address(&mut self, address: u8) {
         self.base_address = Some(address)
     }
+    /// Sets base address of serial port (8251) mapped to memory (16 bits).
+    ///
+    /// Base address is data port for 8251
+    /// Base address + 1 is address of controll and status port of 8251    
+    pub fn set_memory_base_address(&mut self, address: u16) {
+        self.memory_base_address = Some(address)
+    }
     /// Gets base address of serial port (8251)
     pub fn get_base_address(&self) -> Option<u8> {
         self.base_address
+    }
+    /// Gets base address of serial port (8251) mapped to memory (16 bits)
+    pub fn get_memory_base_address(&self) -> Option<u16> {
+        self.memory_base_address
     }
     /// Sets name of the serial port.   
     ///
@@ -517,56 +535,90 @@ impl Async8251 {
 }
 impl IoPort for Async8251 {
     fn write_to_address(&mut self, address: u8, data: u8) {
-        if let Some(base_address) = self.base_address  {
-                if address == base_address {
-                    self.write_tx_data(data)
-                };
-                if address ==  base_address + 1 {
-                    self.write_to_control(data)
-                }
+        if let Some(base_address) = self.base_address {
+            if address == base_address {
+                self.write_tx_data(data);
+                return;
+            };
+            if address == base_address + 1 {
+                self.write_to_control(data)
+            }
         }
-        
+    }
+    fn write_to_memory_address(&mut self, address: u16, data: u8) {
+        if let Some(base_address) = self.memory_base_address {
+            if address == base_address {
+                self.write_tx_data(data);
+                return;
+            }
+            if address == base_address + 1 {
+                self.write_to_control(data);
+            }
+        }      
     }
     fn read_from_address(&mut self, address: u8) -> Option<u8> {
         if let Some(base_address) = self.base_address {
             if address == base_address {
-                return Some(self.read_rx_data())
+                return Some(self.read_rx_data());
             }
             if address == base_address + 1 {
-                return Some(self.read_status())
+                return Some(self.read_status());
             }
         }
         None
     }
-    fn get_ports_offset (& self) -> &[u8] {
+    fn read_from_mem_address(&mut self, address: u16) -> Option<u8> {
+        if let Some(base_address) = self.memory_base_address {
+            if address == base_address {
+                return Some(self.read_rx_data());
+            }
+            if address == base_address + 1 {
+                return Some(self.read_status());
+            }
+        }
+        None
+    }
+    fn get_ports_offset(&self) -> &[u8] {
         &self.port_offsets
     }
-    fn get_base_address(& self) -> Option<u8> {
+    fn get_base_address(&self) -> Option<u8> {
         self.base_address
     }
+    fn get_memory_base_address(&self) -> Option<u16> {
+        self.memory_base_address
+    }
     fn get_io_port_info(&self) -> String {
-        let base_address = match self.get_base_address() {
-            Some(address) => {
+        let base_address = match (self.get_base_address(), self.get_memory_base_address()) {
+            (Some(address), None) => {
                 format!("0x{:02X}", address)
             }
-            None => "Not defined".to_string()
+            (None, Some(address)) => {
+                format!("M0x{:04X}", address)
+            }
+            _ => "Not defined".to_string(),
         };
         let name = match self.get_name() {
-            Some(name) => {
-                name
-            }
-            None => "Not defined".to_string()
-        }; 
-        let parity = if self.get_parity_enable(){
-            if self.is_even_parity() {"even"} else {"odd"}
-        } else {"none"};
-        let stop_bits = match self.get_stop_bits() {
-            StopBits::One => { "one"}
-            StopBits::OneAndHalf => { "one and half"}
-            StopBits::Two => { "two"}
-            _ => { "invalid"}
+            Some(name) => name,
+            None => "Not defined".to_string(),
         };
-        format!("Serial port: base address[{base_address}], name[{name}], baud rate[{}], character length[{}], parity[{}], stop bits[{}]", self.get_baud_rate(), self.get_character_length(), parity, stop_bits)
+        let parity = if self.get_parity_enable() {
+            if self.is_even_parity() { "even" } else { "odd" }
+        } else {
+            "none"
+        };
+        let stop_bits = match self.get_stop_bits() {
+            StopBits::One => "one",
+            StopBits::OneAndHalf => "one and half",
+            StopBits::Two => "two",
+            _ => "invalid",
+        };
+        format!(
+            "Serial port: base address[{base_address}], name[{name}], baud rate[{}], character length[{}], parity[{}], stop bits[{}]",
+            self.get_baud_rate(),
+            self.get_character_length(),
+            parity,
+            stop_bits
+        )
     }
 }
 
@@ -725,7 +777,7 @@ mod tests {
     /// Test set stop bits
     fn test_fifo() {
         let mut fifo = FiFo::new(3);
-        assert!(fifo.is_empty()); // Fifo empty
+        assert!(fifo.buf.is_empty()); // Fifo empty again
         _ = fifo.push(0x99);
         _ = fifo.push(0x55);
         _ = fifo.push(0xaa);
@@ -738,7 +790,7 @@ mod tests {
         assert_eq!(0x55, value);
         value = fifo.pop().unwrap();
         assert_eq!(0xaa, value);
-        assert!(fifo.is_empty()); // Fifo empty again
+        assert!(fifo.buf.is_empty()); // Fifo empty again
         let value = fifo.pop(); // Reading from empty buffer
         assert_eq!(None, value);
     }

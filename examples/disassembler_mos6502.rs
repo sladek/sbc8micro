@@ -159,8 +159,8 @@ fn main() {
         TYA,  // TYA
         BRK,  // BRK
     ];
-    let _ = memory.load_program(&program, start);
-    let disassembly = disassemble(&memory, start, start + program.len() as u16, &opcodes);
+    let _ = memory.load_data(&program, start);
+    let disassembly = disassemble(&mut memory, start, start + program.len() as u16, &opcodes);
 
     for line in disassembly {
         println!("{}", line);

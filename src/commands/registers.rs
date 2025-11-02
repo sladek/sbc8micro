@@ -8,9 +8,7 @@ pub struct Registers;
 impl Registers {
     /// Gets or sets register via terminal UI
     pub fn set_get_reg(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
-        if app.cpu_ui.is_none() {
-            return cpu_not_set_error();
-        }
+        app.is_cpu_set()?; // Check if cpu is defined
         match &mut app.cpu_ui {
             Some(cpu) => match command.len() {
                 1 => {
