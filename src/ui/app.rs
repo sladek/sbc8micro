@@ -8,10 +8,9 @@ use ratatui::widgets::{Scrollbar, ScrollbarOrientation, ScrollbarState};
 use ratatui::{
     DefaultTerminal, Frame,
     crossterm::{
-        event::DisableMouseCapture,
+        event::{DisableMouseCapture},
         event::{self, Event, KeyCode, KeyEventKind},
         execute,
-        terminal::LeaveAlternateScreen,
     },
     layout::{Constraint, Layout, Position},
     style::{Color, Modifier, Style, Stylize},
@@ -71,18 +70,19 @@ impl CommandHistory {
         if self.command_history_position < self.command_history.len() as i16 - 1 {
             self.command_history_position += 1;
         }
-        if self.command_history_position < 0 {
-            self.command_history_position += 0;
-        }
         Some(self.command_history[self.command_history_position as usize].clone())
     }
     /// Returns previous line from command history
     fn command_history_down(&mut self) -> Option<String> {
+        if self.command_history.is_empty() || self.command_history_position == COMMAND_HISTORY_SIZE_INIT_INDEX {
+            return None;
+        }
         if self.command_history_position == 0 {
             return Some("".to_string());
         }
-        //        let current_position = self.command_history_position;
-        self.command_history_position -= 1;
+        if self.command_history_position > 0 {
+            self.command_history_position -= 1;
+        } 
         Some(self.command_history[self.command_history_position as usize].clone())
     }
 }
@@ -365,7 +365,7 @@ impl App {
     ///
     /// Renders UIs and processes events from terminal (keyboard, mouse)
     /// This is a central part of this application as it renders different UIs
-    /// (command UI or opcodes help hor i8080 or mos6502 and others can also be added)
+    /// (command UI or opcodes help for i8080 or mos6502 and others can also be added)
     pub fn run(&mut self, terminal: &mut DefaultTerminal) -> Result<AppState> {
         let mut event: Event;
         loop {
@@ -374,7 +374,6 @@ impl App {
             if let Some(Ok(state)) = self.event_handler(event) {
                 execute!(
                     terminal.backend_mut(),
-                    LeaveAlternateScreen,
                     DisableMouseCapture
                 )?;
                 return Ok(state);
@@ -409,14 +408,14 @@ impl App {
                     KeyCode::Right => self.move_cursor_right(),
                     KeyCode::Esc => self.input_mode = InputMode::Normal,
                     KeyCode::Up => {
-                        if key.modifiers.contains(KeyModifiers::SHIFT) {
+                        if key.modifiers.contains(KeyModifiers::CONTROL) {
                             self.move_command_history_up()
                         } else {
                             self.move_output_up_line()
                         }
                     }
                     KeyCode::Down => {
-                        if key.modifiers.contains(KeyModifiers::SHIFT) {
+                        if key.modifiers.contains(KeyModifiers::CONTROL) {
                             self.move_command_history_down()
                         } else {
                             self.move_output_down_line()

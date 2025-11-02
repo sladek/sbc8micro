@@ -23,7 +23,6 @@ fn main() -> Result<()> {
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
-    //    let terminal = ratatui::init();
 
     let mut app = App::new();
     let mut state = AppState::Home;

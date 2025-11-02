@@ -1,0 +1,25 @@
+        !to "serial_6502.o", cbm	; set output file and format
+		*= $0100		; set program counter
+
+		data = $1234	; data register
+        control = $1235
+		lda	#$00        ; reset sequence
+        sta control
+        sta control
+        sta control
+        lda $40         ; reset usart
+        sta control
+        lda #%01001111  ; 8,N, 1
+        sta control
+loop:   lda control
+        and #$02        ; Test Rxrdy
+        beq loop
+        lda data        ; read data from usart
+        sta data        ; send it back to usart
+        lda #$0d        ; and send back CR 
+        sta data
+        lda #$0a        ; and LF 
+        sta data
+        jmp loop
+
+

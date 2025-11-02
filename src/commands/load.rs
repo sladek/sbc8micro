@@ -104,7 +104,7 @@ impl Load {
                 match region {
                     Ok(region) => {
                         app.messages.push(format!(
-                            "Loaded: start: 0x{:04X}H, end: 0x{:04X}H",
+                            "Loaded: start: 0x{:04X}, end: 0x{:04X}",
                             region.start, region.end
                         ));
                     }
@@ -145,7 +145,7 @@ impl Load {
                 match region {
                     Ok(region) => {
                         app.messages.push(format!(
-                            "Loaded: start: 0x{:04X}H, end: 0x{:04X}H",
+                            "Loaded: start: 0x{:04X}, end: 0x{:04X}",
                             region.start, region.end
                         ));
                     }
