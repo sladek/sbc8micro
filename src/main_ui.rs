@@ -1,20 +1,3 @@
-//! # [Ratatui] User Input example
-//!
-//! The latest version of this example is available in the [examples] folder in the repository.
-//!
-//! Please note that the examples are designed to be run against the `main` branch of the Github
-//! repository. This means that you may not be able to compile with the latest release version on
-//! crates.io, or the one that you have installed locally.
-//!
-//! See the [examples readme] for more information on finding examples that match the version of the
-//! library you are using.
-//!
-//! [Ratatui]: https://github.com/ratatui/ratatui
-//! [examples]: https://github.com/ratatui/ratatui/blob/main/examples
-//! [examples readme]: https://github.com/ratatui/ratatui/blob/main/examples/README.md
-//mod ui;
-
-//use crossterm::{event, execute, terminal::LeaveAlternateScreen, event::DisableMouseCapture};
 use ratatui::{
     Terminal,
     crossterm::{
@@ -40,7 +23,6 @@ fn main() -> Result<()> {
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
-    //    let terminal = ratatui::init();
 
     let mut app = App::new();
     let mut state = AppState::Home;

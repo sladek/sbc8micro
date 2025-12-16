@@ -10,12 +10,12 @@
 //! use sbc8micro::disassembler::i8080_opcode_consts::*;
 //!
 //! let mut cpu = Cpu::new();
-//! cpu.memory.write_byte(0x1234, 0x12);
+//! cpu.memory.borrow_mut().write_byte(0x1234, 0x12);
 //! cpu.status.set_carry(true);
 //! let program: Vec<u8> = vec![MVI_H, 0x12, MVI_L, 0x34, MVI_A, 0x34, ADC_M, HLT];
 //! cpu.load_program(&program, 0x0600);
 //! loop {
-//!     let opcode = cpu.memory.read_byte(cpu.pc);
+//!     let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
 //!     cpu.step();
 //!     if opcode == HLT {
 //!         break;
@@ -30,8 +30,10 @@ use crate::debugger::Breakpoints;
 use crate::disassembler::i8080::disassemble;
 use crate::disassembler::i8080_opcode_consts::*;
 use crate::io;
-use crate::memory::Memory;
+use crate::memory::{Memory};
 use crate::status::i8080::*;
+use std::cell::{RefCell, RefMut};
+use std::rc::Rc;
 
 /// CPU registers, flags, counters and memory
 #[derive(Default)]
@@ -59,7 +61,7 @@ pub struct Cpu {
     /// Interrupt enable
     pub inte: bool,
     /// Memory assigned to CPU
-    pub memory: Memory,
+    pub memory: Box<Rc<RefCell<Memory>>>,
     /// Io memory
     pub io_memory: io::memory::IoMemory,
     /// Breakpoints
@@ -77,6 +79,7 @@ impl Cpu {
     /// Returns initialised instance of CPU 8080
     ///
     pub fn new() -> Cpu {
+        let memory = Box::new(Rc::new(RefCell::new(Memory::new())));
         Self {
             a: 0,
             b: 0,
@@ -89,7 +92,8 @@ impl Cpu {
             pc: 0,
             sp: 0,
             inte: false,
-            memory: Memory::new(),
+//            memory: Box::new(Rc::new(RefCell::new(Memory::new()))),
+            memory: memory.clone(),
             io_memory: io::memory::IoMemory::new(),
             breakpoints: Breakpoints::new(),
             debug: true,
@@ -148,7 +152,8 @@ impl Cpu {
     /// Loads program to the memory and set PC to start address of the programm
     ///
     pub fn load_program(&mut self, program: &[u8], start_addr: u16) {
-        let _ = self.memory.load_data(program, start_addr);
+        let memory = Rc::clone(&self.memory);
+        let _ = memory.borrow_mut().load_data(program, start_addr);
         self.pc = start_addr;
     }
     ///
@@ -187,10 +192,11 @@ impl Cpu {
         self.io_memory.read(address)
     }
     fn out(&mut self, address: u8) {
-        self.io_memory.write(address, self.a);
+        let mut memory = self.memory.borrow_mut().get_data();
+        self.io_memory.write(&mut memory, address, self.a);
     }
     fn read_immediate_byte(&mut self) -> u8 {
-        let value = self.memory.read_byte(self.pc);
+        let value = self.memory.borrow_mut().read_byte(self.pc);
         self.pc = self.pc.wrapping_add(1);
         value
     }
@@ -210,7 +216,7 @@ impl Cpu {
     }
     fn get_m(&mut self) -> u8 {
         let addr = self.get_hl();
-        self.memory.read_byte(addr)
+        self.memory.borrow_mut().read_byte(addr)
     }
     fn set_bc(&mut self, data: u16) {
         self.b = ((data & 0xff00) >> 8) as u8;
@@ -241,13 +247,13 @@ impl Cpu {
         let mut result = String::new();
         result.push_str(format!("{:04X}  ", addr).as_str());
         while neg_offset != 0 {
-            result.push_str(format!("{:02X} ", self.memory.read_byte(addr)).as_str());
+            result.push_str(format!("{:02X} ", self.memory.borrow_mut().read_byte(addr)).as_str());
             neg_offset -= 1;
             addr = addr.wrapping_add(1);
         }
         format!("{:<18}", result)
     }
-
+    /// Sets the parity flag
     fn set_parity(&mut self, data: u8) {
         let mut mask = 0x01;
         let mut result: u8 = 0;
@@ -258,6 +264,14 @@ impl Cpu {
             mask <<= 1;
         }
         self.status.set_parity(result.is_multiple_of(2))
+    }
+    /// Sets sign flag
+    fn set_sign(&mut self, data: u8) {
+        self.status.set_negative(data & 0x80 != 0);
+    }
+    /// Sets zero flag
+    fn set_zero(&mut self, data: u8) {
+        self.status.set_zero(data == 0);
     }
     fn addc(&mut self, value: u8) {
         self.add(value, true);
@@ -276,9 +290,9 @@ impl Cpu {
         let sum = self.a as u16 + value as u16 + carry as u16;
         self.a = sum as u8;
         self.status.set_carry(sum > 0xFF);
-        self.status.set_zero(self.a == 0);
-        self.status.set_negative(self.a & 0x80 != 0);
-        self.set_parity(sum as u8);
+        self.set_zero(self.a);
+        self.set_sign(self.a);
+        self.set_parity(self.a);
     }
     fn sub(&mut self, value: u8, with_carry: bool) {
         let mut operand = value as u16;
@@ -349,7 +363,7 @@ impl Cpu {
         let h = self.h as u16;
         let l = self.l as u16;
         let hl = (h << 8) | l;
-        self.memory.read_byte(hl)
+        self.memory.borrow_mut().read_byte(hl)
     }
     ///
     /// Stores a byte to the memory address
@@ -359,16 +373,17 @@ impl Cpu {
         let h = self.h as u16;
         let l = self.l as u16;
         let hl = (h << 8) | l;
-        self.memory.write_byte(hl, data);
+        self.memory.borrow_mut().write_byte(hl, data);
     }
     ///
     ///  PUSH
     ///
     fn push(&mut self, rph: u8, rpl: u8) {
         let mut addr = self.sp.wrapping_sub(1);
-        self.memory.write_byte(addr, rph);
+        let mut memory = self.memory.borrow_mut();
+        memory.write_byte(addr, rph);
         addr = self.sp.wrapping_sub(2);
-        self.memory.write_byte(addr, rpl);
+        memory.write_byte(addr, rpl);
         self.sp = addr;
     }
     ///
@@ -376,9 +391,10 @@ impl Cpu {
     ///
     fn pop(&mut self) -> (u8, u8) {
         let mut addr = self.sp;
-        let rpl = self.memory.read_byte(addr);
+        let mut memory = self.memory.borrow_mut();
+        let rpl = memory.read_byte(addr);
         addr = addr.wrapping_add(1);
-        let rph = self.memory.read_byte(addr);
+        let rph = memory.read_byte(addr);
         self.sp = self.sp.wrapping_add(2);
         (rph, rpl)
     }
@@ -386,7 +402,8 @@ impl Cpu {
     /// CALL
     ///
     fn call(&mut self) {
-        let addr = self.memory.read_word(self.pc);
+        //        let memory = &mut self.memory.borrow_mut();
+        let addr = self.memory.borrow_mut().read_word(self.pc);
         self.pc = self.pc.wrapping_add(2);
         let pcl = (self.pc & 0xff) as u8;
         let pch = ((self.pc & 0xff00) >> 8) as u8;
@@ -397,43 +414,39 @@ impl Cpu {
     /// JMP
     ///
     fn jmp(&mut self) {
-        let addr = self.memory.read_word(self.pc);
+        let addr = self.memory.borrow_mut().read_word(self.pc);
         self.pc = addr;
     }
     ///
     /// RET
     ///
     fn ret(&mut self) {
-        let addrl = self.memory.read_byte(self.sp) as u16;
+        let mut memory = self.memory.borrow_mut();
+        let addrl = memory.read_byte(self.sp) as u16;
         self.sp = self.sp.wrapping_add(1);
-        let addrh = (self.memory.read_byte(self.sp) as u16) << 8;
+        let addrh = (memory.read_byte(self.sp) as u16) << 8;
         self.sp = self.sp.wrapping_add(1);
         self.pc = addrh | addrl;
     }
-    ///
     /// DAA
     ///
     /// The eight-bit number in the accumulator is adjusted
     /// to form two four-bit Binary-Coded-Decimal digits
     ///
     fn daa(&mut self) {
-        let mut accl: u8 = self.a & 0x0f;
-        let mut acch: u16 = self.a as u16 & 0xf0;
-        if (self.a & 0x0f > 0x09) || self.status.is_ac() {
-            accl = accl.wrapping_add(0x06);
-            self.status.set_ac(accl > 0x0f);
+        let mut accl = (self.a & 0xf) as u16;
+        if (accl > 0x09) || self.status.is_ac() {
+            accl += 0x06;
+            self.status.set_ac(accl > 0xf);
         }
-        if (self.a & 0xf0 > 0x90) || self.status.is_carry() {
-            acch = acch.wrapping_add(0x60);
+        let mut acc = (self.a & 0xf0) as u16 + accl;
+        if (acc & 0xf0 > 0x90) || acc > 0xff || self.status.is_carry() {
+            acc += 0x60;
             self.status.set_carry(true);
         }
-        self.a = acch.wrapping_add(accl as u16) as u8;
-        if self.a == 0 {
-            self.status.set_zero(true);
-        }
-        if (self.a & 0x80) != 0 {
-            self.status.set_negative(true);
-        }
+        self.a = acc as u8;
+        self.set_zero(self.a);
+        self.set_sign(self.a);
         self.set_parity(self.a);
     }
     ///
@@ -441,7 +454,6 @@ impl Cpu {
     ///
     fn dad(&mut self, rp: u16) {
         let result: u32 = self.get_hl() as u32 + rp as u32;
-        println!("Result: {:08X}", result);
         self.set_hl(result as u16);
         self.status.set_carry(result > 0x0ffff);
     }
@@ -487,10 +499,9 @@ impl Cpu {
     /// If debug flag is set to true it will also print mnemonic code of the instruction that is executed.
     ///
     pub fn step(&mut self) -> Option<String> {
-        //        macro_rules! dbg { ($($x:tt)*) => { if self.debug { println!($($x)*); } } }
         macro_rules! dbg { ($($x:tt)*) => { if self.debug { format!($($x)*)} else { "".to_string() }}}
 
-        let opcode = self.memory.read_byte(self.pc);
+        let opcode = self.memory.borrow_mut().read_byte(self.pc);
         self.pc = self.pc.wrapping_add(1);
         let mut disasm: String = String::from("");
         match opcode {
@@ -695,7 +706,7 @@ impl Cpu {
             }
             CALL => {
                 if self.debug {
-                    let addr = self.memory.read_word(self.pc);
+                    let addr = self.memory.borrow_mut().read_word(self.pc);
                     self.pc = self.pc.wrapping_add(2);
                     let code = self.code_to_str(3);
                     self.pc = self.pc.wrapping_sub(2);
@@ -706,7 +717,7 @@ impl Cpu {
             CNZ => {
                 if !self.status.is_zero() {
                     if self.debug {
-                        let addr = self.memory.read_word(self.pc);
+                        let addr = self.memory.borrow_mut().read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
@@ -720,7 +731,7 @@ impl Cpu {
             CZ => {
                 if self.status.is_zero() {
                     if self.debug {
-                        let addr = self.memory.read_word(self.pc);
+                        let addr = self.memory.borrow_mut().read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
@@ -734,7 +745,7 @@ impl Cpu {
             CNC => {
                 if !self.status.is_carry() {
                     if self.debug {
-                        let addr = self.memory.read_word(self.pc);
+                        let addr = self.memory.borrow_mut().read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
@@ -748,7 +759,7 @@ impl Cpu {
             CC => {
                 if self.status.is_carry() {
                     if self.debug {
-                        let addr = self.memory.read_word(self.pc);
+                        let addr = self.memory.borrow_mut().read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
@@ -762,7 +773,7 @@ impl Cpu {
             CPO => {
                 if !self.status.is_parity() {
                     if self.debug {
-                        let addr = self.memory.read_word(self.pc);
+                        let addr = self.memory.borrow_mut().read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
@@ -776,7 +787,7 @@ impl Cpu {
             CPE => {
                 if self.status.is_parity() {
                     if self.debug {
-                        let addr = self.memory.read_word(self.pc);
+                        let addr = self.memory.borrow_mut().read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
@@ -790,7 +801,7 @@ impl Cpu {
             CP => {
                 if !self.status.is_negative() {
                     if self.debug {
-                        let addr = self.memory.read_word(self.pc);
+                        let addr = self.memory.borrow_mut().read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
@@ -804,7 +815,7 @@ impl Cpu {
             CM => {
                 if self.status.is_negative() {
                     if self.debug {
-                        let addr = self.memory.read_word(self.pc);
+                        let addr = self.memory.borrow_mut().read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
@@ -954,7 +965,7 @@ impl Cpu {
             JNZ => {
                 if !self.status.is_zero() {
                     if self.debug {
-                        let addr = self.memory.read_word(self.pc);
+                        let addr = self.memory.borrow_mut().read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
@@ -968,7 +979,7 @@ impl Cpu {
             JZ => {
                 if self.status.is_zero() {
                     if self.debug {
-                        let addr = self.memory.read_word(self.pc);
+                        let addr = self.memory.borrow_mut().read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
@@ -982,7 +993,7 @@ impl Cpu {
             JNC => {
                 if !self.status.is_carry() {
                     if self.debug {
-                        let addr = self.memory.read_word(self.pc);
+                        let addr = self.memory.borrow_mut().read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
@@ -996,7 +1007,7 @@ impl Cpu {
             JC => {
                 if self.status.is_carry() {
                     if self.debug {
-                        let addr = self.memory.read_word(self.pc);
+                        let addr = self.memory.borrow_mut().read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
@@ -1010,7 +1021,7 @@ impl Cpu {
             JPO => {
                 if !self.status.is_parity() {
                     if self.debug {
-                        let addr = self.memory.read_word(self.pc);
+                        let addr = self.memory.borrow_mut().read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
@@ -1024,7 +1035,7 @@ impl Cpu {
             JPE => {
                 if self.status.is_parity() {
                     if self.debug {
-                        let addr = self.memory.read_word(self.pc);
+                        let addr = self.memory.borrow_mut().read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
@@ -1038,7 +1049,7 @@ impl Cpu {
             JP => {
                 if !self.status.is_negative() {
                     if self.debug {
-                        let addr = self.memory.read_word(self.pc);
+                        let addr = self.memory.borrow_mut().read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
@@ -1052,7 +1063,7 @@ impl Cpu {
             JM => {
                 if self.status.is_negative() {
                     if self.debug {
-                        let addr = self.memory.read_word(self.pc);
+                        let addr = self.memory.borrow_mut().read_word(self.pc);
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
@@ -1065,7 +1076,7 @@ impl Cpu {
             }
             JMP => {
                 if self.debug {
-                    let addr = self.memory.read_word(self.pc);
+                    let addr = self.memory.borrow_mut().read_word(self.pc);
                     self.pc = self.pc.wrapping_add(2);
                     let code = self.code_to_str(3);
                     self.pc = self.pc.wrapping_sub(2);
@@ -1075,23 +1086,23 @@ impl Cpu {
             }
             LDA => {
                 let addr = self.read_immediate_word();
-                self.a = self.memory.read_byte(addr);
+                self.a = self.memory.borrow_mut().read_byte(addr);
                 disasm = dbg!("{}LDA {:04X}H", self.code_to_str(3), addr);
             }
             LDAX_B => {
                 let addr = self.get_bc();
-                self.a = self.memory.read_byte(addr);
+                self.a = self.memory.borrow_mut().read_byte(addr);
                 disasm = dbg!("{}LDAX B", self.code_to_str(1));
             }
             LDAX_D => {
                 let addr = self.get_de();
-                self.a = self.memory.read_byte(addr);
+                self.a = self.memory.borrow_mut().read_byte(addr);
                 disasm = dbg!("{}LDAX B", self.code_to_str(1));
             }
             LHLD => {
                 let addr = self.read_immediate_word();
-                self.l = self.memory.read_byte(addr);
-                self.h = self.memory.read_byte(addr + 1);
+                self.l = self.memory.borrow_mut().read_byte(addr);
+                self.h = self.memory.borrow_mut().read_byte(addr + 1);
                 disasm = dbg!("{}LHLD {:04X}H", self.code_to_str(3), addr);
             }
             LXI_B => {
@@ -1151,7 +1162,7 @@ impl Cpu {
             MVI_M => {
                 let addr = self.get_hl();
                 let value = self.read_immediate_byte();
-                self.memory.write_byte(addr, value);
+                self.memory.borrow_mut().write_byte(addr, value);
                 disasm = dbg!("{}MVI M,{:02X}H", self.code_to_str(2), value);
             }
             MOV_A_B => {
@@ -1179,7 +1190,7 @@ impl Cpu {
                 disasm = dbg!("{}MOV A,L", self.code_to_str(1));
             }
             MOV_A_M => {
-                self.a = self.memory.read_byte(self.get_hl());
+                self.a = self.memory.borrow_mut().read_byte(self.get_hl());
                 disasm = dbg!("{}MOV A,M", self.code_to_str(1));
             }
             MOV_A_A => {
@@ -1209,7 +1220,7 @@ impl Cpu {
                 disasm = dbg!("{}MOV B,L", self.code_to_str(1));
             }
             MOV_B_M => {
-                self.b = self.memory.read_byte(self.get_hl());
+                self.b = self.memory.borrow_mut().read_byte(self.get_hl());
                 disasm = dbg!("{}MOV B,M", self.code_to_str(1));
             }
             MOV_B_A => {
@@ -1240,7 +1251,7 @@ impl Cpu {
                 disasm = dbg!("{}MOV C,L", self.code_to_str(1));
             }
             MOV_C_M => {
-                self.c = self.memory.read_byte(self.get_hl());
+                self.c = self.memory.borrow_mut().read_byte(self.get_hl());
                 disasm = dbg!("{}MOV C,M", self.code_to_str(1));
             }
             MOV_C_A => {
@@ -1271,7 +1282,7 @@ impl Cpu {
                 disasm = dbg!("{}MOV D,L", self.code_to_str(1));
             }
             MOV_D_M => {
-                self.d = self.memory.read_byte(self.get_hl());
+                self.d = self.memory.borrow_mut().read_byte(self.get_hl());
                 disasm = dbg!("{}MOV D,M", self.code_to_str(1));
             }
             MOV_D_A => {
@@ -1302,7 +1313,7 @@ impl Cpu {
                 disasm = dbg!("{}MOV E,L", self.code_to_str(1));
             }
             MOV_E_M => {
-                self.e = self.memory.read_byte(self.get_hl());
+                self.e = self.memory.borrow_mut().read_byte(self.get_hl());
                 disasm = dbg!("{}MOV E,M", self.code_to_str(1));
             }
             MOV_E_A => {
@@ -1333,7 +1344,7 @@ impl Cpu {
                 disasm = dbg!("{}MOV H,L", self.code_to_str(1));
             }
             MOV_H_M => {
-                self.h = self.memory.read_byte(self.get_hl());
+                self.h = self.memory.borrow_mut().read_byte(self.get_hl());
                 disasm = dbg!("{}MOV H,M", self.code_to_str(1));
             }
             MOV_H_A => {
@@ -1364,7 +1375,7 @@ impl Cpu {
                 disasm = dbg!("{}MOV L,L", self.code_to_str(1));
             }
             MOV_L_M => {
-                self.l = self.memory.read_byte(self.get_hl());
+                self.l = self.memory.borrow_mut().read_byte(self.get_hl());
                 disasm = dbg!("{}MOV L,M", self.code_to_str(1));
             }
             MOV_L_A => {
@@ -1373,37 +1384,37 @@ impl Cpu {
             }
             MOV_M_B => {
                 let addr = self.get_hl();
-                self.memory.write_byte(addr, self.b);
+                self.memory.borrow_mut().write_byte(addr, self.b);
                 disasm = dbg!("{}MOV M,B", self.code_to_str(1));
             }
             MOV_M_C => {
                 let addr = self.get_hl();
-                self.memory.write_byte(addr, self.c);
+                self.memory.borrow_mut().write_byte(addr, self.c);
                 disasm = dbg!("{}MOV M,C", self.code_to_str(1));
             }
             MOV_M_D => {
                 let addr = self.get_hl();
-                self.memory.write_byte(addr, self.d);
+                self.memory.borrow_mut().write_byte(addr, self.d);
                 disasm = dbg!("{}MOV M,D", self.code_to_str(1));
             }
             MOV_M_E => {
                 let addr = self.get_hl();
-                self.memory.write_byte(addr, self.e);
+                self.memory.borrow_mut().write_byte(addr, self.e);
                 disasm = dbg!("{}MOV M,E", self.code_to_str(1));
             }
             MOV_M_H => {
                 let addr = self.get_hl();
-                self.memory.write_byte(addr, self.h);
+                self.memory.borrow_mut().write_byte(addr, self.h);
                 disasm = dbg!("{}MOV M,H", self.code_to_str(1));
             }
             MOV_M_L => {
                 let addr = self.get_hl();
-                self.memory.write_byte(addr, self.l);
+                self.memory.borrow_mut().write_byte(addr, self.l);
                 disasm = dbg!("{}MOV M,L", self.code_to_str(1));
             }
             MOV_M_A => {
                 let addr = self.get_hl();
-                self.memory.write_byte(addr, self.a);
+                self.memory.borrow_mut().write_byte(addr, self.a);
                 disasm = dbg!("{}MOV M,A", self.code_to_str(1));
             }
             NOP => {
@@ -1440,7 +1451,7 @@ impl Cpu {
                 disasm = dbg!("{}ORA L", self.code_to_str(1));
             }
             ORA_M => {
-                let value = self.memory.read_byte(self.get_hl());
+                let value = self.memory.borrow_mut().read_byte(self.get_hl());
                 self.or(value);
                 disasm = dbg!("{}ORA M", self.code_to_str(1));
             }
@@ -1479,14 +1490,14 @@ impl Cpu {
             }
             POP_PSW => {
                 let mut addr = self.sp;
-                let value = self.memory.read_byte(addr);
+                let value = self.memory.borrow_mut().read_byte(addr);
                 self.status.set_negative((value & SIGN) != 0);
                 self.status.set_zero((value & ZERO) != 0);
                 self.status.set_ac((value & AUX_CARRY) != 0);
                 self.status.set_parity((value & PARITY) != 0);
                 self.status.set_carry((value & CARRY) != 0);
                 addr = addr.wrapping_add(1);
-                self.a = self.memory.read_byte(addr);
+                self.a = self.memory.borrow_mut().read_byte(addr);
                 self.sp = self.sp.wrapping_add(2);
                 disasm = dbg!("{}POP PSW", self.code_to_str(1));
             }
@@ -1504,7 +1515,7 @@ impl Cpu {
             }
             PUSH_PSW => {
                 self.push(self.a, self.status.value);
-                disasm = dbg!("{}PUSH B", self.code_to_str(1));
+                disasm = dbg!("{}PUSH PSW", self.code_to_str(1));
             }
             RAL => {
                 let mut val = (self.a as u16) << 1;
@@ -1718,23 +1729,25 @@ impl Cpu {
             }
             SHLD => {
                 let addr = self.read_immediate_word();
-                self.memory.write_byte(addr, self.l);
-                self.memory.write_byte(addr.wrapping_add(1), self.h);
+                self.memory.borrow_mut().write_byte(addr, self.l);
+                self.memory
+                    .borrow_mut()
+                    .write_byte(addr.wrapping_add(1), self.h);
                 disasm = dbg!("{}SHLD {:04X}H", self.code_to_str(3), addr);
             }
             STA => {
                 let addr = self.read_immediate_word();
-                self.memory.write_byte(addr, self.a);
+                self.memory.borrow_mut().write_byte(addr, self.a);
                 disasm = dbg!("{}STA {:04X}H", self.code_to_str(3), addr);
             }
             STAX_B => {
                 let addr = self.get_bc();
-                self.memory.write_byte(addr, self.a);
+                self.memory.borrow_mut().write_byte(addr, self.a);
                 disasm = dbg!("{}STAX B", self.code_to_str(1));
             }
             STAX_D => {
                 let addr = self.get_de();
-                self.memory.write_byte(addr, self.a);
+                self.memory.borrow_mut().write_byte(addr, self.a);
                 disasm = dbg!("{}STAX B", self.code_to_str(1));
             }
             STC => {
@@ -1799,9 +1812,9 @@ impl Cpu {
             XTHL => {
                 let addr = self.sp;
                 let hl = self.get_hl();
-                self.l = self.memory.read_byte(addr);
-                self.h = self.memory.read_byte(addr + 1);
-                self.memory.write_word(addr, hl);
+                self.l = self.memory.borrow_mut().read_byte(addr);
+                self.h = self.memory.borrow_mut().read_byte(addr + 1);
+                self.memory.borrow_mut().write_word(addr, hl);
                 disasm = dbg!("{}XTHL", self.code_to_str(1));
             }
 
@@ -1820,16 +1833,16 @@ use crate::disassembler::i8080::load_opcodes_table;
 
 impl CpuUi for Cpu {
     fn memory_dump(&mut self, start: u16, end: u16) -> Vec<String> {
-        self.memory.hex_dump(start, end)
+        self.memory.borrow_mut().hex_dump(start, end)
     }
-    fn get_memory(&mut self) -> &mut Memory {
-        &mut self.memory
+    fn get_memory(&mut self) -> RefMut<'_, Memory> {
+        self.memory.borrow_mut()
     }
     fn get_io_memory(&mut self) -> Option<&mut io::memory::IoMemory> {
         Some(&mut self.io_memory)
     }
     fn disasm(&mut self, start: u16, end: u16) -> Vec<String> {
-        disassemble(&mut self.memory, start, end, &load_opcodes_table())
+        disassemble(&mut self.get_memory(), start, end, &load_opcodes_table())
     }
     fn show_registers(&mut self) -> Vec<String> {
         self.get_registers().lines().map(String::from).collect()

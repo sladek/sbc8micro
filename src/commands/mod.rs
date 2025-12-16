@@ -4,6 +4,7 @@ use crate::ui::app::AppState;
 pub mod breakpoints;
 pub mod command;
 pub mod cpu;
+pub mod dev;
 pub mod directory;
 pub mod disasm;
 pub mod help;
@@ -12,7 +13,6 @@ pub mod memory;
 pub mod opcodes;
 pub mod registers;
 pub mod serial;
-pub mod dev;
 
 pub const CPU_LIST: &str = "i8080 | 8080 | mos6502 | 6502";
 pub const MIN_MEMORY_RANGE: u16 = 16;

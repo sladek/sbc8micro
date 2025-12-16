@@ -23,7 +23,7 @@ fn main() {
     let size = program.len();
     cpu.load_program(&program, start_addr);
     let disassembly = disassemble(
-        &mut cpu.memory,
+        &mut cpu.memory.borrow_mut(),
         start_addr,
         start_addr + size as u16,
         &opcodes,
@@ -41,7 +41,7 @@ fn main() {
     cpu.pc = start_addr;
     let mut max_op = 100; // Max number of instructions executed. It prevents never endin loops.
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         // If HLT end simulation
         if opcode == 0x76 {
@@ -56,9 +56,10 @@ fn main() {
     }
     print!("{}", cpu.get_registers());
     println!("Test area");
-    cpu.memory.print_hex_dump(0x0200, 0x0200 + 31);
+    let mut memory = cpu.memory.borrow_mut();
+    memory.print_hex_dump(0x0200, 0x0200 + 31);
     println!("Upper stack:");
-    cpu.memory.print_hex_dump(0xffff - 0x5f, 0xffff);
+    memory.print_hex_dump(0xffff - 0x5f, 0xffff);
     //    log::set_max_level(log::LevelFilter::Debug);
     log::info!("Hahaha {:02X}", 0x34);
     log::debug!("I am here!");

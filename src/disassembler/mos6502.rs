@@ -18,7 +18,7 @@
 //!    ];
 //!     let start = 0x0600;
 //!     let end = start + program.len() as u16;
-//!     memory.load_program(&program, start);
+//!     memory.load_data(&program, start);
 //!  
 //!     let disassembly = disassemble(&mut memory, start, end, &opcodes);
 //!     for line in disassembly {

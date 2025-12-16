@@ -8,9 +8,10 @@ use ratatui::widgets::{Scrollbar, ScrollbarOrientation, ScrollbarState};
 use ratatui::{
     DefaultTerminal, Frame,
     crossterm::{
-        event::{DisableMouseCapture},
+        event::DisableMouseCapture,
         event::{self, Event, KeyCode, KeyEventKind},
         execute,
+        terminal::EnterAlternateScreen,
     },
     layout::{Constraint, Layout, Position},
     style::{Color, Modifier, Style, Stylize},
@@ -74,7 +75,9 @@ impl CommandHistory {
     }
     /// Returns previous line from command history
     fn command_history_down(&mut self) -> Option<String> {
-        if self.command_history.is_empty() || self.command_history_position == COMMAND_HISTORY_SIZE_INIT_INDEX {
+        if self.command_history.is_empty()
+            || self.command_history_position == COMMAND_HISTORY_SIZE_INIT_INDEX
+        {
             return None;
         }
         if self.command_history_position == 0 {
@@ -82,7 +85,7 @@ impl CommandHistory {
         }
         if self.command_history_position > 0 {
             self.command_history_position -= 1;
-        } 
+        }
         Some(self.command_history[self.command_history_position as usize].clone())
     }
 }
@@ -374,6 +377,7 @@ impl App {
             if let Some(Ok(state)) = self.event_handler(event) {
                 execute!(
                     terminal.backend_mut(),
+                    EnterAlternateScreen,
                     DisableMouseCapture
                 )?;
                 return Ok(state);

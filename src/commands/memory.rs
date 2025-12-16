@@ -216,39 +216,45 @@ impl Memory {
         }
         Ok(AppState::Home)
     }
-    /// Parses string parameter 
-    /// 
+    /// Parses string parameter
+    ///
     /// Parses string parameter, turns it into byte array and push it into buffer vector.
     /// String parameter is a parameter enclosed by double quotes as "parameter".
-    /// Note: Normally ASCII characters have size of 8 bits. But in case of UTF8 2 bit characters, like áÁúÚöÖäÄ and so on, 
+    /// Note: Normally ASCII characters have size of 8 bits. But in case of UTF8 2 bit characters, like áÁúÚöÖäÄ and so on,
     /// it pushes 2 bytes representing UTF8 character. Fo example the string "abcdef]}äÄ" is represented in the hex dump of memory as
     /// 61 62 63 64 65 66 5D 7D C3 A4 C3 84 00 00 00 00 |abcdef]}........|
     fn parse_string(data: String, buffer: &mut Vec<u8>) -> Result<(), String> {
         if !data.ends_with("\"") {
-            return Err(format!("Wrong format of string [{data}]. String has to start and end with \"."))
+            return Err(format!(
+                "Wrong format of string [{data}]. String has to start and end with \"."
+            ));
         }
-        let data_bytes = &data.as_bytes()[1 .. data.len()-1];
+        let data_bytes = &data.as_bytes()[1..data.len() - 1];
         for data in data_bytes {
             buffer.push(*data);
         }
         Ok(())
     }
     /// Parses char parameter
-    /// 
+    ///
     /// Parses character parameter, turns it into byte and push it into buffer vector.
     /// Character parameter is a parameter enclosed by single quotes as 'char'.
     /// Note: Only ASCII characters are allowed as a parameter and if the length is bigger that 1 error is generated.
     fn parse_char(data: String, buffer: &mut Vec<u8>) -> Result<(), String> {
         if !data.ends_with("\'") {
-            return Err(format!("Wrong format of the character [{data}]. Character has to start and end with \'."))
+            return Err(format!(
+                "Wrong format of the character [{data}]. Character has to start and end with \'."
+            ));
         }
         if data.len() > 3 {
-            return Err(format!("Wrong length of the character [{data}]. Length of the character cannot be longer than 1."))
+            return Err(format!(
+                "Wrong length of the character [{data}]. Length of the character cannot be longer than 1."
+            ));
         }
-        if !&data[1 .. data.len()-1].is_ascii() {
-            return Err("Not ASCII charcter".to_string())
+        if !&data[1..data.len() - 1].is_ascii() {
+            return Err("Not ASCII charcter".to_string());
         }
-        let data_bytes = &data.as_bytes()[1 .. data.len()-1];
+        let data_bytes = &data.as_bytes()[1..data.len() - 1];
         for data in data_bytes {
             buffer.push(*data);
         }

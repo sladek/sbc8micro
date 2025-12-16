@@ -1,6 +1,6 @@
-use crate::memory::MemCell;
-use crate::ui::app::{AppState, App};
 use crate::commands::memory::Memory;
+use crate::memory::MemCell;
+use crate::ui::app::{App, AppState};
 
 enum IoAddress {
     Io(u8),
@@ -16,9 +16,7 @@ impl Dev {
                 1 => {
                     let mut mapped = false;
                     let io_info = match cpu.get_io_memory() {
-                        Some(io_memory) => {
-                            io_memory.get_io_ports_info()
-                        }
+                        Some(io_memory) => io_memory.get_io_ports_info(),
                         None => {
                             Vec::new() // Just a fake empty memory if it is not supported by CPU (like 6502)
                         }
@@ -41,72 +39,69 @@ impl Dev {
                 2 => {
                     let address = Self::parse_address(command[1].to_string())?;
                     match address {
-                        IoAddress::Io(address) => {
-                            match cpu.get_io_memory() {
-                                Some(memory) => {
-                                    let mem = memory.get_port_map();
-                                    match mem[address as usize] {
-                                        Some(port_address) => {
-                                            match memory.get_ports().get(&port_address) {
-                                                Some(port) => {
-                                                    app.messages.push(port.get_io_port_info());
-                                                    return Ok(AppState::Home);
-                                                }
-                                                None => {
-                                                    return Self::error_not_mapped(address as u16);
-                                                }
+                        IoAddress::Io(address) => match cpu.get_io_memory() {
+                            Some(memory) => {
+                                let mem = memory.get_port_map();
+                                match mem[address as usize] {
+                                    Some(port_address) => {
+                                        match memory.get_ports().get(&port_address) {
+                                            Some(port) => {
+                                                app.messages.push(port.get_io_port_info());
+                                                return Ok(AppState::Home);
+                                            }
+                                            None => {
+                                                return Self::error_not_mapped(address as u16);
                                             }
                                         }
-                                        None => {
-                                            return Self::error_not_mapped(address as u16);
-                                        }
                                     }
-                                }
-                                None => {
-                                    return Err("Io memory is not supported by this CPU".to_string());
+                                    None => {
+                                        return Self::error_not_mapped(address as u16);
+                                    }
                                 }
                             }
-                        }
+                            None => {
+                                return Err("Io memory is not supported by this CPU".to_string());
+                            }
+                        },
                         IoAddress::Mem(address) => {
-                            let memory =  cpu.get_memory();
+                            let mut memory = cpu.get_memory();
                             match memory.get_data()[address as usize] {
-                                MemCell::Io(addres) => {
-                                    match memory.get_ports().get(&addres) {
-                                        Some(port) => {
-                                            app.messages.push(port.get_io_port_info());
-                                            return Ok(AppState::Home);
-                                        }
-                                        None => {
-                                            return Self::error_not_mapped(address);
-                                        }
+                                MemCell::Io(addres) => match memory.get_ports().get(&addres) {
+                                    Some(port) => {
+                                        app.messages.push(port.get_io_port_info());
+                                        return Ok(AppState::Home);
                                     }
-                                }
+                                    None => {
+                                        return Self::error_not_mapped(address);
+                                    }
+                                },
                                 MemCell::Memory(address) => {
                                     return Self::error_not_mapped(address as u16);
                                 }
-                            }                
+                            }
                         }
                     }
                 }
                 3 => {
                     if command[1].to_uppercase() != "REMOVE" {
-                        return Err(format!("Invalid parameter: {}. Usage: \'dev\' or \'dev <address>\' or \'dev remove <address>\' ", command[1]));
+                        return Err(format!(
+                            "Invalid parameter: {}. Usage: \'dev\' or \'dev <address>\' or \'dev remove <address>\' ",
+                            command[1]
+                        ));
                     }
                     let address = Self::parse_address(command[2].to_string())?;
                     match address {
-                        IoAddress::Io(address) => {
-                            match cpu.get_io_memory() {
-                                Some(memory) => {
-                                    let ports = memory.get_ports();
-                                    ports.remove(&address);
-                                }
-                                None => {
-                                    return Err("Io memory is not supported by this CPU".to_string());
-                                }
+                        IoAddress::Io(address) => match cpu.get_io_memory() {
+                            Some(memory) => {
+                                let ports = memory.get_ports();
+                                ports.remove(&address);
                             }
-                        }
+                            None => {
+                                return Err("Io memory is not supported by this CPU".to_string());
+                            }
+                        },
                         IoAddress::Mem(address) => {
-                            let memory =  cpu.get_memory();
+                            let mut memory = cpu.get_memory();
                             match memory.get_data()[address as usize] {
                                 MemCell::Io(address) => {
                                     memory.get_ports().remove(&address);
@@ -114,11 +109,10 @@ impl Dev {
                                 MemCell::Memory(address) => {
                                     return Self::error_not_mapped(address as u16);
                                 }
-                            }                
+                            }
                         }
                     }
-
-                }        
+                }
                 _ => {
                     app.messages.push("Invalid number of parameters. Usage: \'dev\' or \'dev <address>\' or \'dev remove <address>\'".to_string());
                 }
@@ -136,33 +130,29 @@ impl Dev {
         app.messages.push("---".to_string());
     }
     /// Parses io address
-    /// 
+    ///
     /// Parses Io address and resturns IoAddress which indicates if it is memoru or io mapped
     /// IoMemory::Io(address) means that it is Io mapped, IoMemory::Mem(address) means that it is memory mapped
     fn parse_address(address: String) -> Result<IoAddress, String> {
         if address.to_uppercase().starts_with("M") {
             let address = address[1..].to_string();
             match Memory::from_hex_string(address) {
-                Ok(address) => {
-                    Ok(IoAddress::Mem(address))
-                }
-                Err(err) => {
-                    Err(err.to_string())
-                }
-            }   
-        }
-        else {
+                Ok(address) => Ok(IoAddress::Mem(address)),
+                Err(err) => Err(err.to_string()),
+            }
+        } else {
             match Memory::from_hex_string(address) {
                 Ok(address) => {
                     if address > 0xff {
-                        return Err(format!("Address [0x{:4X}] of Io mapped dvice cannot be bigger than 0xff.", address))
+                        return Err(format!(
+                            "Address [0x{:4X}] of Io mapped dvice cannot be bigger than 0xff.",
+                            address
+                        ));
                     }
                     Ok(IoAddress::Io(address as u8))
                 }
-                Err(err) => {
-                    Err(err.to_string())
-                }
-            }   
+                Err(err) => Err(err.to_string()),
+            }
         }
     }
 }

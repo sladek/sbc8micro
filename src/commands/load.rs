@@ -42,7 +42,7 @@ impl Load {
                 let cpu = &mut app.cpu_ui;
                 match cpu {
                     Some(cpu) => {
-                        let memory: &mut Memory = cpu.get_memory();
+                        let memory: &mut Memory = &mut cpu.get_memory();
                         match memory.load_data(&bytes, start_address) {
                             Ok(region) => {
                                 app.messages.push(format!(
@@ -99,7 +99,7 @@ impl Load {
         let cpu = &mut app.cpu_ui;
         match cpu {
             Some(cpu) => {
-                let memory: &mut Memory = cpu.get_memory();
+                let memory: &mut Memory = &mut cpu.get_memory();
                 let region = memory.load_data_from_acme_file(&filename);
                 match region {
                     Ok(region) => {
@@ -140,7 +140,7 @@ impl Load {
         let cpu = &mut app.cpu_ui;
         match cpu {
             Some(cpu) => {
-                let memory: &mut Memory = cpu.get_memory();
+                let memory: &mut Memory = &mut cpu.get_memory();
                 let region = memory.load_data_from_intelhex_file(&filename);
                 match region {
                     Ok(region) => {

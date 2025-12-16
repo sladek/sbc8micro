@@ -17,7 +17,7 @@ fn adc_direct_no_c() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -42,7 +42,7 @@ fn adc_direct_c() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -60,7 +60,7 @@ fn adc_direct_c() {
 ///
 fn adc_zero_page() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.memory.write_byte_zero_page(0x10, 0x55);
+    cpu.memory.borrow_mut().write_byte_zero_page(0x10, 0x55);
     let program = vec![
         0xA9, 0x42, // LDA #$42
         0x65, 0x10, // ADC $10
@@ -68,7 +68,7 @@ fn adc_zero_page() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -89,7 +89,7 @@ fn adc_zero_page_x() {
     let addr = 0x1Fu16;
     let value = 0x55u8;
     cpu.x = 0x0Fu8;
-    cpu.memory.write_byte(addr, value);
+    cpu.memory.borrow_mut().write_byte(addr, value);
     let program = vec![
         0xA9, 0x42, // LDA #$42
         0x75, 0x10, // ADC $10,X
@@ -97,7 +97,7 @@ fn adc_zero_page_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -118,7 +118,7 @@ fn adc_zero_page_x_wrap_around() {
     let addr = 0x0Fu16;
     let value = 0x55u8;
     cpu.x = 0xFFu8;
-    cpu.memory.write_byte(addr, value);
+    cpu.memory.borrow_mut().write_byte(addr, value);
     let program = vec![
         0xA9, 0x42, // LDA #$42
         0x75, 0x10, // ADC $10,X
@@ -126,7 +126,7 @@ fn adc_zero_page_x_wrap_around() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -146,7 +146,7 @@ fn adc_absolute() {
     let mut cpu = mos6502::Cpu::new();
     let addr = 0x1234u16;
     let value = 0x55u8;
-    cpu.memory.write_byte(addr, value);
+    cpu.memory.borrow_mut().write_byte(addr, value);
 
     let program = vec![
         0xA9, 0x42, // LDA #$42
@@ -156,7 +156,7 @@ fn adc_absolute() {
 
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -177,7 +177,7 @@ fn adc_absolute_x() {
     let addr = 0x100fu16;
     let value = 0x55u8;
     cpu.x = 0x0F;
-    cpu.memory.write_byte(addr, value);
+    cpu.memory.borrow_mut().write_byte(addr, value);
 
     let program = vec![
         0xA9, 0x42, // LDA #$42
@@ -187,7 +187,7 @@ fn adc_absolute_x() {
 
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -208,7 +208,7 @@ fn adc_absolute_y() {
     let addr = 0x100fu16;
     let value = 0x55u8;
     cpu.y = 0x0F;
-    cpu.memory.write_byte(addr, value);
+    cpu.memory.borrow_mut().write_byte(addr, value);
 
     let program = vec![
         0xA9, 0x42, // LDA #$42
@@ -218,7 +218,7 @@ fn adc_absolute_y() {
 
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -239,8 +239,8 @@ fn adc_indirect_x() {
     let addr = 0x001Fu16;
     let value = 0x55u8;
     cpu.x = 0x0F;
-    cpu.memory.write_word(addr, 0x1234);
-    cpu.memory.write_byte(0x1234 as u16, value);
+    cpu.memory.borrow_mut().write_word(addr, 0x1234);
+    cpu.memory.borrow_mut().write_byte(0x1234 as u16, value);
 
     let program = vec![
         0xA9, 0x42, // LDA #$42
@@ -250,7 +250,7 @@ fn adc_indirect_x() {
 
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -271,8 +271,10 @@ fn adc_indirect_y() {
     let addr = 0x0010u16;
     let value = 0x55u8;
     cpu.y = 0x0F;
-    cpu.memory.write_word(addr, 0x1234);
-    cpu.memory.write_byte(0x1234 + cpu.y as u16, value);
+    cpu.memory.borrow_mut().write_word(addr, 0x1234);
+    cpu.memory
+        .borrow_mut()
+        .write_byte(0x1234 + cpu.y as u16, value);
 
     let program = vec![
         0xA9, 0x42, // LDA #$42
@@ -282,7 +284,7 @@ fn adc_indirect_y() {
 
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -307,7 +309,7 @@ fn and_direct() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -330,7 +332,7 @@ fn and_direct_zero() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -353,7 +355,7 @@ fn and_direct_negative() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -369,7 +371,7 @@ fn and_direct_negative() {
 ///
 fn and_zero_page() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.memory.write_byte_zero_page(0x10, 0x55);
+    cpu.memory.borrow_mut().write_byte_zero_page(0x10, 0x55);
     let program = vec![
         0xA9, 0x42u8, // LDA #$42
         0x25, 0x10u8, // AND $10
@@ -377,7 +379,7 @@ fn and_zero_page() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -394,7 +396,9 @@ fn and_zero_page() {
 fn and_zero_page_x() {
     let mut cpu = mos6502::Cpu::new();
     cpu.x = 0x0Fu8;
-    cpu.memory.write_byte_zero_page(0x10 + cpu.x, 0x55);
+    cpu.memory
+        .borrow_mut()
+        .write_byte_zero_page(0x10 + cpu.x, 0x55);
     let program = vec![
         0xA9, 0x42u8, // LDA #$42
         0x35, 0x10u8, // AND $10
@@ -402,7 +406,7 @@ fn and_zero_page_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -418,7 +422,7 @@ fn and_zero_page_x() {
 ///
 fn and_absolute() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.memory.write_byte(0x1234, 0x55);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0x55);
     let program = vec![
         0xA9, 0x42u8, // LDA #$42
         0x2D, 0x34u8, 0x12, // AND $1234
@@ -426,7 +430,7 @@ fn and_absolute() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -443,7 +447,9 @@ fn and_absolute() {
 fn and_absolute_x() {
     let mut cpu = mos6502::Cpu::new();
     cpu.x = 0xF;
-    cpu.memory.write_byte(0x1234 + cpu.x as u16, 0x55);
+    cpu.memory
+        .borrow_mut()
+        .write_byte(0x1234 + cpu.x as u16, 0x55);
     let program = vec![
         0xA9, 0x42u8, // LDA #$42
         0x3D, 0x34u8, 0x12, // AND $1234
@@ -451,7 +457,7 @@ fn and_absolute_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -468,7 +474,9 @@ fn and_absolute_x() {
 fn and_absolute_y() {
     let mut cpu = mos6502::Cpu::new();
     cpu.y = 0xF;
-    cpu.memory.write_byte(0x1234 + cpu.y as u16, 0x55);
+    cpu.memory
+        .borrow_mut()
+        .write_byte(0x1234 + cpu.y as u16, 0x55);
     let program = vec![
         0xA9, 0x42u8, // LDA #$42
         0x39, 0x34u8, 0x12, // AND $1234
@@ -476,7 +484,7 @@ fn and_absolute_y() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -495,8 +503,8 @@ fn and_indirect_x() {
     let addr = 0x001Fu16;
     let value = 0x55u8;
     cpu.x = 0x0F;
-    cpu.memory.write_word(addr, 0x1234);
-    cpu.memory.write_byte(0x1234 as u16, value);
+    cpu.memory.borrow_mut().write_word(addr, 0x1234);
+    cpu.memory.borrow_mut().write_byte(0x1234 as u16, value);
 
     let program = vec![
         0xA9, 0x42, // LDA #$42
@@ -506,7 +514,7 @@ fn and_indirect_x() {
 
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -525,8 +533,10 @@ fn and_indirect_y() {
     let addr = 0x0010u16;
     let value = 0x55u8;
     cpu.y = 0x0F;
-    cpu.memory.write_word(addr, 0x1234);
-    cpu.memory.write_byte(0x1234 + cpu.y as u16, value);
+    cpu.memory.borrow_mut().write_word(addr, 0x1234);
+    cpu.memory
+        .borrow_mut()
+        .write_byte(0x1234 + cpu.y as u16, value);
     let program = vec![
         0xA9, 0x42, // LDA #$42
         0x31, 0x10u8, // ADC ($10),Y ;Y=0x0f
@@ -534,7 +544,7 @@ fn and_indirect_y() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -558,7 +568,7 @@ fn asl_accumulator() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -583,7 +593,7 @@ fn asl_accumulator_z() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -601,20 +611,20 @@ fn asl_accumulator_z() {
 fn asl_zerro_page() {
     let mut cpu = mos6502::Cpu::new();
     let z_addr = 0x10;
-    cpu.memory.write_byte_zero_page(z_addr, 0x42);
+    cpu.memory.borrow_mut().write_byte_zero_page(z_addr, 0x42);
     let program = vec![
         0x06, 0x10, // ASL $10
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
-    let result = cpu.memory.read_byte_zero_page(z_addr);
+    let result = cpu.memory.borrow_mut().read_byte_zero_page(z_addr);
     assert_eq!(result, 0x84u8);
     assert_eq!(cpu.p.is_zero(), false);
     assert_eq!(cpu.p.is_negative(), true);
@@ -627,7 +637,7 @@ fn asl_zerro_page() {
 fn asl_zerro_page_x() {
     let mut cpu = mos6502::Cpu::new();
     let z_addr = 0x1F;
-    cpu.memory.write_byte_zero_page(z_addr, 0x42);
+    cpu.memory.borrow_mut().write_byte_zero_page(z_addr, 0x42);
     cpu.x = 0x0Fu8;
     let program = vec![
         0x16, 0x10, // ASL $10,X
@@ -635,13 +645,13 @@ fn asl_zerro_page_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
-    assert_eq!(cpu.memory.read_byte_zero_page(z_addr), 0x84u8);
+    assert_eq!(cpu.memory.borrow_mut().read_byte_zero_page(z_addr), 0x84u8);
     assert_eq!(cpu.p.is_zero(), false);
     assert_eq!(cpu.p.is_negative(), true);
     assert_eq!(cpu.p.is_carry(), false);
@@ -653,20 +663,20 @@ fn asl_zerro_page_x() {
 fn asl_absolute() {
     let mut cpu = mos6502::Cpu::new();
     let addr = 0x1234u16;
-    cpu.memory.write_byte(addr, 0x42);
+    cpu.memory.borrow_mut().write_byte(addr, 0x42);
     let program = vec![
         0x0E, 0x34, 0x12, // ASL $1234
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
-    assert_eq!(cpu.memory.read_byte(addr), 0x84u8);
+    assert_eq!(cpu.memory.borrow_mut().read_byte(addr), 0x84u8);
     assert_eq!(cpu.p.is_zero(), false);
     assert_eq!(cpu.p.is_negative(), true);
     assert_eq!(cpu.p.is_carry(), false);
@@ -679,21 +689,25 @@ fn asl_absolute_x() {
     let mut cpu = mos6502::Cpu::new();
     let addr = 0x1234u16;
     cpu.x = 0x0Fu8;
-    cpu.memory.write_byte(addr.wrapping_add(cpu.x as u16), 0x42);
+    cpu.memory
+        .borrow_mut()
+        .write_byte(addr.wrapping_add(cpu.x as u16), 0x42);
     let program = vec![
         0x1E, 0x34, 0x12, // ASL $1234
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
     assert_eq!(
-        cpu.memory.read_byte(addr.wrapping_add(cpu.x as u16)),
+        cpu.memory
+            .borrow_mut()
+            .read_byte(addr.wrapping_add(cpu.x as u16)),
         0x84u8
     );
     assert_eq!(cpu.p.is_zero(), false);
@@ -717,7 +731,7 @@ fn bcc_no_c() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -742,7 +756,7 @@ fn bcc_c() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -767,7 +781,7 @@ fn bcs_no_c() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -792,7 +806,7 @@ fn bcs_c() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -816,7 +830,7 @@ fn beq_no_z() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -840,7 +854,7 @@ fn beq_z() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -854,7 +868,7 @@ fn beq_z() {
 ///
 fn bit_zero_page() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.memory.write_byte(0x0010, 0xc0);
+    cpu.memory.borrow_mut().write_byte(0x0010, 0xc0);
     let program = vec![
         0xA9, 0xc0, // LDA #$00
         0x24, 0x10, // // BIT $10
@@ -862,7 +876,7 @@ fn bit_zero_page() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -880,7 +894,7 @@ fn bit_zero_page() {
 ///
 fn bit_zero_page_z() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.memory.write_byte(0x0010, 0x55);
+    cpu.memory.borrow_mut().write_byte(0x0010, 0x55);
     let program = vec![
         0xA9, 0x00, // LDA #$00
         0x24, 0x10, // // BIT $10
@@ -888,7 +902,7 @@ fn bit_zero_page_z() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -905,7 +919,7 @@ fn bit_zero_page_z() {
 ///
 fn bit_zero_page_v_n() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.memory.write_byte(0x0010, 0xC5);
+    cpu.memory.borrow_mut().write_byte(0x0010, 0xC5);
     let program = vec![
         0xA9, 0x00, // LDA #$00
         0x24, 0x10, // // BIT $10
@@ -913,7 +927,7 @@ fn bit_zero_page_v_n() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -930,7 +944,7 @@ fn bit_zero_page_v_n() {
 ///
 fn bit_absolute() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.memory.write_byte(0x1234, 0xc0);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0xc0);
     let program = vec![
         0xA9, 0xc0, // LDA #$00
         0x2C, 0x34, 0x12, // // BIT $1234
@@ -938,7 +952,7 @@ fn bit_absolute() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -955,7 +969,7 @@ fn bit_absolute() {
 ///
 fn bit_absolute_z() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.memory.write_byte(0x1234, 0xc0);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0xc0);
     let program = vec![
         0xA9, 0x00, // LDA #$00
         0x2C, 0x34, 0x12, // // BIT $1234
@@ -963,7 +977,7 @@ fn bit_absolute_z() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -990,7 +1004,7 @@ fn bmi_mi() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1014,7 +1028,7 @@ fn bmi_no_mi() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1038,7 +1052,7 @@ fn bmi_z_0() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1062,7 +1076,7 @@ fn bmi_z_1() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1086,7 +1100,7 @@ fn bpl_n_0() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1111,7 +1125,7 @@ fn bpl_n_1() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1137,7 +1151,7 @@ fn bvc_v_1() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1162,7 +1176,7 @@ fn bvc_v_0() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1187,7 +1201,7 @@ fn bvs_v_1() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1212,7 +1226,7 @@ fn bvs_v_0() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1233,7 +1247,7 @@ fn cls() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1254,7 +1268,7 @@ fn cld() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1277,13 +1291,13 @@ fn cli() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
-    let status = cpu.memory.read_byte(0x1ff);
+    let status = cpu.memory.borrow_mut().read_byte(0x1ff);
     assert_eq!(status, status::mos6502::BREAK | status::mos6502::UNUSED);
 }
 #[test]
@@ -1299,7 +1313,7 @@ fn clv() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1322,7 +1336,7 @@ fn cmp_equal() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1347,7 +1361,7 @@ fn cmp_bigger() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1372,7 +1386,7 @@ fn cmp_smaller() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1389,7 +1403,7 @@ fn cmp_smaller() {
 ///
 fn cmp_zp() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.memory.write_byte_zero_page(0x10, 0x40);
+    cpu.memory.borrow_mut().write_byte_zero_page(0x10, 0x40);
     let program = vec![
         0xA9, 0x20, // LDA #$40
         0xC5, 0x10, // CMP #$10
@@ -1397,7 +1411,7 @@ fn cmp_zp() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1415,7 +1429,9 @@ fn cmp_zp() {
 fn cmp_zp_x() {
     let mut cpu = mos6502::Cpu::new();
     cpu.x = 0x0F;
-    cpu.memory.write_byte_zero_page(0x10 + cpu.x, 0x40);
+    cpu.memory
+        .borrow_mut()
+        .write_byte_zero_page(0x10 + cpu.x, 0x40);
     let program = vec![
         0xA9, 0x20, // LDA #$40
         0xD5, 0x10, // CMP #$10,X
@@ -1423,7 +1439,7 @@ fn cmp_zp_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1440,7 +1456,7 @@ fn cmp_zp_x() {
 ///
 fn cmp_abs() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.memory.write_byte(0x1234, 0x40);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0x40);
     let program = vec![
         0xA9, 0x20, // LDA #$40
         0xCD, 0x34, 0x12, // CMP #$040
@@ -1448,7 +1464,7 @@ fn cmp_abs() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1466,7 +1482,9 @@ fn cmp_abs() {
 fn cmp_abs_x() {
     let mut cpu = mos6502::Cpu::new();
     cpu.x = 0x0f;
-    cpu.memory.write_byte(0x1234 + cpu.x as u16, 0x40);
+    cpu.memory
+        .borrow_mut()
+        .write_byte(0x1234 + cpu.x as u16, 0x40);
     let program = vec![
         0xA9, 0x20, // LDA #$40
         0xDD, 0x34, 0x12, // CMP #$1234
@@ -1474,7 +1492,7 @@ fn cmp_abs_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1492,7 +1510,9 @@ fn cmp_abs_x() {
 fn cmp_abs_y() {
     let mut cpu = mos6502::Cpu::new();
     cpu.y = 0x0f;
-    cpu.memory.write_byte(0x1234 + cpu.y as u16, 0x40);
+    cpu.memory
+        .borrow_mut()
+        .write_byte(0x1234 + cpu.y as u16, 0x40);
     let program = vec![
         0xA9, 0x20, // LDA #$40
         0xD9, 0x34, 0x12, // CMP #$1234
@@ -1500,7 +1520,7 @@ fn cmp_abs_y() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1520,8 +1540,8 @@ fn cmp_indirect_x() {
     let addr = 0x001Fu16;
     let value = 0x40u8;
     cpu.x = 0x0F;
-    cpu.memory.write_word(addr, 0x1234);
-    cpu.memory.write_byte(0x1234 as u16, value);
+    cpu.memory.borrow_mut().write_word(addr, 0x1234);
+    cpu.memory.borrow_mut().write_byte(0x1234 as u16, value);
     let program = vec![
         0xA9, 0x20, // LDA #$40
         0xC1, 0x10, // CMP ($10,x)
@@ -1529,7 +1549,7 @@ fn cmp_indirect_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1549,8 +1569,10 @@ fn cmp_ind_y() {
     let addr = 0x0010u16;
     let value = 0x40u8;
     cpu.y = 0x0F;
-    cpu.memory.write_word(addr, 0x1234);
-    cpu.memory.write_byte(0x1234 + cpu.y as u16, value);
+    cpu.memory.borrow_mut().write_word(addr, 0x1234);
+    cpu.memory
+        .borrow_mut()
+        .write_byte(0x1234 + cpu.y as u16, value);
     let program = vec![
         0xA9, 0x20, // LDA #$40
         0xD1, 0x10, // CPX #$040
@@ -1558,7 +1580,7 @@ fn cmp_ind_y() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1581,7 +1603,7 @@ fn cpx_z() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1604,7 +1626,7 @@ fn cpx_c() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1623,14 +1645,14 @@ fn cpx_zp() {
     let addr = 0x10u8;
     let value = 0x40u8;
     cpu.x = 0x20u8;
-    cpu.memory.write_byte_zero_page(addr, value);
+    cpu.memory.borrow_mut().write_byte_zero_page(addr, value);
     let program = vec![
         0xE4, 0x10, // CPX $40
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1649,14 +1671,14 @@ fn cpx_abs() {
     let addr = 0x1234u16;
     let value = 0x40u8;
     cpu.x = 0x20u8;
-    cpu.memory.write_byte(addr, value);
+    cpu.memory.borrow_mut().write_byte(addr, value);
     let program = vec![
         0xEC, 0x34, 0x12, // CPX $1234
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1679,7 +1701,7 @@ fn cpy_z() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1702,7 +1724,7 @@ fn cpy_c() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1721,14 +1743,14 @@ fn cpy_zp() {
     let addr = 0x10u8;
     let value = 0x40u8;
     cpu.y = 0x20u8;
-    cpu.memory.write_byte_zero_page(addr, value);
+    cpu.memory.borrow_mut().write_byte_zero_page(addr, value);
     let program = vec![
         0xC4, 0x10, // CPY $10
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1747,14 +1769,14 @@ fn cpy_abs() {
     let addr = 0x1234u16;
     let value = 0x40u8;
     cpu.y = 0x20u8;
-    cpu.memory.write_byte(addr, value);
+    cpu.memory.borrow_mut().write_byte(addr, value);
     let program = vec![
         0xCC, 0x34, 0x12, // CPY $1234
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1772,20 +1794,20 @@ fn dec_zp() {
     let mut cpu = mos6502::Cpu::new();
     let addr = 0x10u8;
     let value = 0x40u8;
-    cpu.memory.write_byte_zero_page(addr, value);
+    cpu.memory.borrow_mut().write_byte_zero_page(addr, value);
     let program = vec![
         0xC6, 0x10, // DEC $40
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
-    let result = cpu.memory.read_byte_zero_page(addr);
+    let result = cpu.memory.borrow_mut().read_byte_zero_page(addr);
     assert_eq!(result, value.wrapping_sub(1));
     assert_eq!(cpu.p.is_negative(), false);
     assert_eq!(cpu.p.is_zero(), false);
@@ -1800,6 +1822,7 @@ fn dec_zp_x() {
     let value = 0x40u8;
     cpu.x = 0x0f;
     cpu.memory
+        .borrow_mut()
         .write_byte_zero_page(addr.wrapping_add(cpu.x), value);
     let program = vec![
         0xD6, 0x10, // DEC $10,X
@@ -1807,13 +1830,16 @@ fn dec_zp_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
-    let result = cpu.memory.read_byte_zero_page(addr.wrapping_add(cpu.x));
+    let result = cpu
+        .memory
+        .borrow_mut()
+        .read_byte_zero_page(addr.wrapping_add(cpu.x));
     assert_eq!(result, value.wrapping_sub(1));
     assert_eq!(cpu.p.is_negative(), false);
     assert_eq!(cpu.p.is_zero(), false);
@@ -1828,6 +1854,7 @@ fn dec_zp_x_wrapping_ff() {
     let value = 0x40u8;
     cpu.x = 0x01;
     cpu.memory
+        .borrow_mut()
         .write_byte_zero_page(addr.wrapping_add(cpu.x), value);
     let program = vec![
         0xD6, 0xff, // DEC $FF,X
@@ -1835,13 +1862,13 @@ fn dec_zp_x_wrapping_ff() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
-    let result = cpu.memory.read_byte_zero_page(0x00u8);
+    let result = cpu.memory.borrow_mut().read_byte_zero_page(0x00u8);
     assert_eq!(result, value.wrapping_sub(1));
     assert_eq!(cpu.p.is_negative(), false);
     assert_eq!(cpu.p.is_zero(), false);
@@ -1854,20 +1881,20 @@ fn dec_abs() {
     let mut cpu = mos6502::Cpu::new();
     let addr = 0x1234u16;
     let value = 0x40u8;
-    cpu.memory.write_byte(addr, value);
+    cpu.memory.borrow_mut().write_byte(addr, value);
     let program = vec![
         0xCE, 0x34, 0x12, // DEC $1234
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
-    let result = cpu.memory.read_byte(addr);
+    let result = cpu.memory.borrow_mut().read_byte(addr);
     assert_eq!(result, value.wrapping_sub(1));
     assert_eq!(cpu.p.is_negative(), false);
     assert_eq!(cpu.p.is_zero(), false);
@@ -1882,6 +1909,7 @@ fn dec_abs_x() {
     let value = 0x40u8;
     cpu.x = 0x0f;
     cpu.memory
+        .borrow_mut()
         .write_byte(addr.wrapping_add(cpu.x as u16), value);
     let program = vec![
         0xDE, 0x34, 0x12, // DEC $1234,X
@@ -1889,13 +1917,16 @@ fn dec_abs_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
-    let result = cpu.memory.read_byte(addr.wrapping_add(cpu.x as u16));
+    let result = cpu
+        .memory
+        .borrow_mut()
+        .read_byte(addr.wrapping_add(cpu.x as u16));
     assert_eq!(result, value.wrapping_sub(1));
     assert_eq!(cpu.p.is_negative(), false);
     assert_eq!(cpu.p.is_zero(), false);
@@ -1910,6 +1941,7 @@ fn dec_abs_wrapping_ff() {
     let value = 0x40u8;
     cpu.x = 0x01;
     cpu.memory
+        .borrow_mut()
         .write_byte(addr.wrapping_add(cpu.x as u16), value);
     let program = vec![
         0xDE, 0xff, 0xff, // DEC $FFFF,X
@@ -1917,13 +1949,13 @@ fn dec_abs_wrapping_ff() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
-    let result = cpu.memory.read_byte(0x0000u16);
+    let result = cpu.memory.borrow_mut().read_byte(0x0000u16);
     assert_eq!(result, value.wrapping_sub(1));
     assert_eq!(cpu.p.is_negative(), false);
     assert_eq!(cpu.p.is_zero(), false);
@@ -1942,7 +1974,7 @@ fn dex() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1966,7 +1998,7 @@ fn dex_wrapping_00() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -1990,7 +2022,7 @@ fn dey() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2014,7 +2046,7 @@ fn dey_wrapping_00() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2037,7 +2069,7 @@ fn eor_imm() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2060,7 +2092,7 @@ fn eor_imm_a0() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2077,7 +2109,7 @@ fn eor_zp() {
     let mut cpu = mos6502::Cpu::new();
     let addr = 0x10u8;
     let value = 0x0Fu8;
-    cpu.memory.write_byte_zero_page(addr, value);
+    cpu.memory.borrow_mut().write_byte_zero_page(addr, value);
     let program = vec![
         0xA9, 0xF0, // LDA #$f0
         0x45, 0x10, // EOR zp
@@ -2085,7 +2117,7 @@ fn eor_zp() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2104,6 +2136,7 @@ fn eor_zp_x() {
     let value = 0x0Fu8;
     cpu.x = 0x0fu8;
     cpu.memory
+        .borrow_mut()
         .write_byte_zero_page(addr.wrapping_add(cpu.x), value);
     let program = vec![
         0xA9, 0xF0, // LDA #$f0
@@ -2112,7 +2145,7 @@ fn eor_zp_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2129,7 +2162,7 @@ fn eor_zp_abs() {
     let mut cpu = mos6502::Cpu::new();
     let addr = 0x1234u16;
     let value = 0x0Fu8;
-    cpu.memory.write_byte(addr, value);
+    cpu.memory.borrow_mut().write_byte(addr, value);
     let program = vec![
         0xA9, 0xF0, // LDA #$f0
         0x4D, 0x34, 0x12, // EOR $1234
@@ -2137,7 +2170,7 @@ fn eor_zp_abs() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2156,6 +2189,7 @@ fn eor_zp_abs_x() {
     let value = 0x0Fu8;
     cpu.x = 0x0fu8;
     cpu.memory
+        .borrow_mut()
         .write_byte(addr.wrapping_add(cpu.x as u16), value);
     let program = vec![
         0xA9, 0xF0, // LDA #$f0
@@ -2164,7 +2198,7 @@ fn eor_zp_abs_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2183,6 +2217,7 @@ fn eor_zp_abs_y() {
     let value = 0x0Fu8;
     cpu.y = 0x0fu8;
     cpu.memory
+        .borrow_mut()
         .write_byte(addr.wrapping_add(cpu.y as u16), value);
     let program = vec![
         0xA9, 0xF0, // LDA #$f0
@@ -2191,7 +2226,7 @@ fn eor_zp_abs_y() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2210,8 +2245,9 @@ fn eor_indirect_x() {
     let value = 0x0Fu8;
     cpu.x = 0x0F;
     cpu.memory
+        .borrow_mut()
         .write_word(addr.wrapping_add(cpu.x as u16), 0x1234);
-    cpu.memory.write_byte(0x1234 as u16, value);
+    cpu.memory.borrow_mut().write_byte(0x1234 as u16, value);
     let program = vec![
         0xA9, 0xF0, // LDA #$f0
         0x41, 0x10, // EOR ($10,X)
@@ -2219,7 +2255,7 @@ fn eor_indirect_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2237,8 +2273,9 @@ fn eor_indirect_y() {
     let addr = 0x0010u16;
     let value = 0x0Fu8;
     cpu.y = 0x0F;
-    cpu.memory.write_word(addr, 0x1234);
+    cpu.memory.borrow_mut().write_word(addr, 0x1234);
     cpu.memory
+        .borrow_mut()
         .write_byte(0x1234u16.wrapping_add(cpu.y as u16), value);
     let program = vec![
         0xA9, 0xF0, // LDA #$f0
@@ -2247,7 +2284,7 @@ fn eor_indirect_y() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2265,20 +2302,20 @@ fn inc_zp() {
     let mut cpu = mos6502::Cpu::new();
     let addr = 0x10u8;
     let value = 0x40u8;
-    cpu.memory.write_byte_zero_page(addr, value);
+    cpu.memory.borrow_mut().write_byte_zero_page(addr, value);
     let program = vec![
         0xE6, 0x10, // INC $10
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
-    let result = cpu.memory.read_byte_zero_page(addr);
+    let result = cpu.memory.borrow_mut().read_byte_zero_page(addr);
     assert_eq!(result, value.wrapping_add(1));
     assert_eq!(cpu.p.is_negative(), false);
     assert_eq!(cpu.p.is_zero(), false);
@@ -2293,6 +2330,7 @@ fn inc_zp_x() {
     let value = 0x40u8;
     cpu.x = 0x0f;
     cpu.memory
+        .borrow_mut()
         .write_byte_zero_page(addr.wrapping_add(cpu.x), value);
     let program = vec![
         0xF6, 0x10, // INC $10,X
@@ -2300,13 +2338,16 @@ fn inc_zp_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
-    let result = cpu.memory.read_byte_zero_page(addr.wrapping_add(cpu.x));
+    let result = cpu
+        .memory
+        .borrow_mut()
+        .read_byte_zero_page(addr.wrapping_add(cpu.x));
     assert_eq!(result, value.wrapping_add(1));
     assert_eq!(cpu.p.is_negative(), false);
     assert_eq!(cpu.p.is_zero(), false);
@@ -2321,6 +2362,7 @@ fn inc_zp_x_wrapping_ff() {
     let value = 0x40u8;
     cpu.x = 0x01;
     cpu.memory
+        .borrow_mut()
         .write_byte_zero_page(addr.wrapping_add(cpu.x), value);
     let program = vec![
         0xF6, 0xff, // INC $FF,X
@@ -2328,13 +2370,13 @@ fn inc_zp_x_wrapping_ff() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
-    let result = cpu.memory.read_byte_zero_page(0x00u8);
+    let result = cpu.memory.borrow_mut().read_byte_zero_page(0x00u8);
     assert_eq!(result, value.wrapping_add(1));
     assert_eq!(cpu.p.is_negative(), false);
     assert_eq!(cpu.p.is_zero(), false);
@@ -2347,20 +2389,20 @@ fn inc_abs() {
     let mut cpu = mos6502::Cpu::new();
     let addr = 0x1234u16;
     let value = 0x40u8;
-    cpu.memory.write_byte(addr, value);
+    cpu.memory.borrow_mut().write_byte(addr, value);
     let program = vec![
         0xEE, 0x34, 0x12, // INC $1234
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
-    let result = cpu.memory.read_byte(addr);
+    let result = cpu.memory.borrow_mut().read_byte(addr);
     assert_eq!(result, value.wrapping_add(1));
     assert_eq!(cpu.p.is_negative(), false);
     assert_eq!(cpu.p.is_zero(), false);
@@ -2375,6 +2417,7 @@ fn inc_abs_x() {
     let value = 0x40u8;
     cpu.x = 0x0f;
     cpu.memory
+        .borrow_mut()
         .write_byte(addr.wrapping_add(cpu.x as u16), value);
     let program = vec![
         0xFE, 0x34, 0x12, // INC $1234,X
@@ -2382,13 +2425,16 @@ fn inc_abs_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
-    let result = cpu.memory.read_byte(addr.wrapping_add(cpu.x as u16));
+    let result = cpu
+        .memory
+        .borrow_mut()
+        .read_byte(addr.wrapping_add(cpu.x as u16));
     assert_eq!(result, value.wrapping_add(1));
     assert_eq!(cpu.p.is_negative(), false);
     assert_eq!(cpu.p.is_zero(), false);
@@ -2403,6 +2449,7 @@ fn inc_abs_wrapping_ff() {
     let value = 0x40u8;
     cpu.x = 0x01;
     cpu.memory
+        .borrow_mut()
         .write_byte(addr.wrapping_add(cpu.x as u16), value);
     let program = vec![
         0xFE, 0xff, 0xff, // INC $1234,X
@@ -2410,13 +2457,13 @@ fn inc_abs_wrapping_ff() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
-    let result = cpu.memory.read_byte(0x0000u16);
+    let result = cpu.memory.borrow_mut().read_byte(0x0000u16);
     assert_eq!(result, value.wrapping_add(1));
     assert_eq!(cpu.p.is_negative(), false);
     assert_eq!(cpu.p.is_zero(), false);
@@ -2435,7 +2482,7 @@ fn inx() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2459,7 +2506,7 @@ fn inx_wrapping_ff() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2483,7 +2530,7 @@ fn iny() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2507,7 +2554,7 @@ fn iny_wrapping_ff() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2532,7 +2579,7 @@ fn jmp_absolute() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2557,7 +2604,7 @@ fn jmp_indirect() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2575,9 +2622,9 @@ fn jmp_indirect() {
 ///
 fn jmp_indirect_30ff() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.memory.write_byte(0x3000, 0x40);
-    cpu.memory.write_byte(0x30ff, 0x80);
-    cpu.memory.write_byte(0x3100, 0x50);
+    cpu.memory.borrow_mut().write_byte(0x3000, 0x40);
+    cpu.memory.borrow_mut().write_byte(0x30ff, 0x80);
+    cpu.memory.borrow_mut().write_byte(0x3100, 0x50);
     let program = vec![
         0xA9, 0x55, // LDA #$55
         0x6C, 0xff, 0x30, // JMP ($30FF)
@@ -2590,7 +2637,7 @@ fn jmp_indirect_30ff() {
     cpu.load_program(&program_jmp, 0x4080);
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -2620,7 +2667,7 @@ fn jsr() {
     cpu.load_program(&program_2, 0x1234);
     cpu.load_program(&program, 0x0600); // This also sets PC to start address: 0x600
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -2628,6 +2675,7 @@ fn jsr() {
     }
     let addr_instack = cpu
         .memory
+        .borrow_mut()
         .read_word((cpu.s as u16).wrapping_add(0x100u16).wrapping_add(1));
     assert_eq!(cpu.a, 0xAAu8);
     assert_eq!(cpu.pc, 0x1236);
@@ -2646,7 +2694,7 @@ fn lda_direct() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2668,7 +2716,7 @@ fn lda_direct_zero() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2690,7 +2738,7 @@ fn lda_direct_negative() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2706,14 +2754,14 @@ fn lda_direct_negative() {
 ///
 fn lda_zero_page() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.memory.write_byte_zero_page(0x10, 0x55);
+    cpu.memory.borrow_mut().write_byte_zero_page(0x10, 0x55);
     let program = vec![
         0xA5, 0x10u8, // LDA $10
         0x00,   // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2730,14 +2778,16 @@ fn lda_zero_page() {
 fn lda_zero_page_x() {
     let mut cpu = mos6502::Cpu::new();
     cpu.x = 0x0Fu8;
-    cpu.memory.write_byte_zero_page(0x10 + cpu.x, 0x55);
+    cpu.memory
+        .borrow_mut()
+        .write_byte_zero_page(0x10 + cpu.x, 0x55);
     let program = vec![
         0xB5, 0x10u8, // LDA $10,X
         0x00,   // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2753,14 +2803,14 @@ fn lda_zero_page_x() {
 ///
 fn lda_absolute() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.memory.write_byte(0x1234, 0x55);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0x55);
     let program = vec![
         0xAD, 0x34u8, 0x12, // LDA $1234
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2777,14 +2827,16 @@ fn lda_absolute() {
 fn lda_absolute_x() {
     let mut cpu = mos6502::Cpu::new();
     cpu.x = 0xF;
-    cpu.memory.write_byte(0x1234 + cpu.x as u16, 0x55);
+    cpu.memory
+        .borrow_mut()
+        .write_byte(0x1234 + cpu.x as u16, 0x55);
     let program = vec![
         0xBD, 0x34u8, 0x12, // LDA $1234,X
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2801,14 +2853,16 @@ fn lda_absolute_x() {
 fn lda_absolute_y() {
     let mut cpu = mos6502::Cpu::new();
     cpu.y = 0xF;
-    cpu.memory.write_byte(0x1234 + cpu.y as u16, 0x55);
+    cpu.memory
+        .borrow_mut()
+        .write_byte(0x1234 + cpu.y as u16, 0x55);
     let program = vec![
         0xB9, 0x34u8, 0x12, // LDA $1234
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2827,8 +2881,8 @@ fn lda_indirect_x() {
     let addr = 0x001Fu16;
     let value = 0x55u8;
     cpu.x = 0x0F;
-    cpu.memory.write_word(addr, 0x1234);
-    cpu.memory.write_byte(0x1234 as u16, value);
+    cpu.memory.borrow_mut().write_word(addr, 0x1234);
+    cpu.memory.borrow_mut().write_byte(0x1234 as u16, value);
 
     let program = vec![
         0xA1, 0x10u8, // LDA ($10,X) ;X=0x0f
@@ -2837,7 +2891,7 @@ fn lda_indirect_x() {
 
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2856,15 +2910,17 @@ fn lda_indirect_y() {
     let addr = 0x0010u16;
     let value = 0x55u8;
     cpu.y = 0x0F;
-    cpu.memory.write_word(addr, 0x1234);
-    cpu.memory.write_byte(0x1234 + cpu.y as u16, value);
+    cpu.memory.borrow_mut().write_word(addr, 0x1234);
+    cpu.memory
+        .borrow_mut()
+        .write_byte(0x1234 + cpu.y as u16, value);
     let program = vec![
         0xB1, 0x10u8, // LDA ($10),Y ;Y=0x0f
         0x00,   // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2886,7 +2942,7 @@ fn ldx_direct() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2908,7 +2964,7 @@ fn ldx_direct_zero() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2930,7 +2986,7 @@ fn ldx_direct_negative() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2947,14 +3003,14 @@ fn ldx_direct_negative() {
 fn ldx_zero_page() {
     let mut cpu = mos6502::Cpu::new();
     let value = 0x55u8;
-    cpu.memory.write_byte(0x10, value);
+    cpu.memory.borrow_mut().write_byte(0x10, value);
     let program = vec![
         0xA6, 0x10u8, // LDX $10
         0x00,   // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2973,6 +3029,7 @@ fn ldx_zero_page_y() {
     let value = 0x55u8;
     cpu.y = 0x0Fu8;
     cpu.memory
+        .borrow_mut()
         .write_byte(0x10u8.wrapping_add(cpu.y) as u16, value);
     let program = vec![
         0xB6, 0x10u8, // LDX $10,Y
@@ -2980,7 +3037,7 @@ fn ldx_zero_page_y() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -2997,14 +3054,14 @@ fn ldx_zero_page_y() {
 fn ldx_abs() {
     let mut cpu = mos6502::Cpu::new();
     let value = 0x55u8;
-    cpu.memory.write_byte(0x1234u16, value);
+    cpu.memory.borrow_mut().write_byte(0x1234u16, value);
     let program = vec![
         0xAE, 0x34u8, 0x12u8, // LDX $1234
         0x00,   // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -3023,6 +3080,7 @@ fn ldx_abs_y() {
     let value = 0x55u8;
     cpu.y = 0x0Fu8;
     cpu.memory
+        .borrow_mut()
         .write_byte(0x1234u16.wrapping_add(cpu.y as u16), value);
     let program = vec![
         0xBE, 0x34u8, 0x12u8, // LDX $1234
@@ -3030,7 +3088,7 @@ fn ldx_abs_y() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -3052,7 +3110,7 @@ fn ldy_direct() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -3074,7 +3132,7 @@ fn ldy_direct_zero() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -3096,7 +3154,7 @@ fn ldy_direct_negative() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -3113,14 +3171,14 @@ fn ldy_direct_negative() {
 fn ldy_zero_page() {
     let mut cpu = mos6502::Cpu::new();
     let value = 0x55u8;
-    cpu.memory.write_byte(0x10, value);
+    cpu.memory.borrow_mut().write_byte(0x10, value);
     let program = vec![
         0xA4, 0x10u8, // LDY #$80
         0x00,   // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -3139,6 +3197,7 @@ fn ldy_zero_page_x() {
     let value = 0x55u8;
     cpu.x = 0x0Fu8;
     cpu.memory
+        .borrow_mut()
         .write_byte(0x10u8.wrapping_add(cpu.x) as u16, value);
     let program = vec![
         0xB4, 0x10u8, // LDY $10,X
@@ -3146,7 +3205,7 @@ fn ldy_zero_page_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -3163,14 +3222,14 @@ fn ldy_zero_page_x() {
 fn ldy_abs() {
     let mut cpu = mos6502::Cpu::new();
     let value = 0x55u8;
-    cpu.memory.write_byte(0x1234u16, value);
+    cpu.memory.borrow_mut().write_byte(0x1234u16, value);
     let program = vec![
         0xAC, 0x34u8, 0x12u8, // LDY $1234
         0x00,   // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -3189,6 +3248,7 @@ fn ldy_abs_x() {
     let value = 0x55u8;
     cpu.x = 0x0Fu8;
     cpu.memory
+        .borrow_mut()
         .write_byte(0x1234u16.wrapping_add(cpu.x as u16), value);
     let program = vec![
         0xBC, 0x34u8, 0x12u8, // LDX $1234
@@ -3196,7 +3256,7 @@ fn ldy_abs_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -3219,7 +3279,7 @@ fn lsr_accumulator() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -3244,7 +3304,7 @@ fn lsr_accumulator_z() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -3262,20 +3322,20 @@ fn lsr_accumulator_z() {
 fn lsr_zerro_page() {
     let mut cpu = mos6502::Cpu::new();
     let z_addr = 0x10;
-    cpu.memory.write_byte_zero_page(z_addr, 0x42);
+    cpu.memory.borrow_mut().write_byte_zero_page(z_addr, 0x42);
     let program = vec![
         0x46, 0x10, // LSR $10
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
-    let result = cpu.memory.read_byte_zero_page(z_addr);
+    let result = cpu.memory.borrow_mut().read_byte_zero_page(z_addr);
     assert_eq!(result, 0x21u8);
     assert_eq!(cpu.p.is_zero(), false);
     assert_eq!(cpu.p.is_negative(), false);
@@ -3288,7 +3348,7 @@ fn lsr_zerro_page() {
 fn lsr_zerro_page_x() {
     let mut cpu = mos6502::Cpu::new();
     let z_addr = 0x1F;
-    cpu.memory.write_byte_zero_page(z_addr, 0x42);
+    cpu.memory.borrow_mut().write_byte_zero_page(z_addr, 0x42);
     cpu.x = 0x0Fu8;
     let program = vec![
         0x56, 0x10, // LSR $10,X
@@ -3296,13 +3356,13 @@ fn lsr_zerro_page_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
-    assert_eq!(cpu.memory.read_byte_zero_page(z_addr), 0x21u8);
+    assert_eq!(cpu.memory.borrow_mut().read_byte_zero_page(z_addr), 0x21u8);
     assert_eq!(cpu.p.is_zero(), false);
     assert_eq!(cpu.p.is_negative(), false);
     assert_eq!(cpu.p.is_carry(), false);
@@ -3314,20 +3374,20 @@ fn lsr_zerro_page_x() {
 fn lsr_absolute() {
     let mut cpu = mos6502::Cpu::new();
     let addr = 0x1234u16;
-    cpu.memory.write_byte(addr, 0x42);
+    cpu.memory.borrow_mut().write_byte(addr, 0x42);
     let program = vec![
         0x4E, 0x34, 0x12, // ASL $1234
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
-    assert_eq!(cpu.memory.read_byte(addr), 0x21u8);
+    assert_eq!(cpu.memory.borrow_mut().read_byte(addr), 0x21u8);
     assert_eq!(cpu.p.is_zero(), false);
     assert_eq!(cpu.p.is_negative(), false);
     assert_eq!(cpu.p.is_carry(), false);
@@ -3340,21 +3400,25 @@ fn lsr_absolute_x() {
     let mut cpu = mos6502::Cpu::new();
     let addr = 0x1234u16;
     cpu.x = 0x0Fu8;
-    cpu.memory.write_byte(addr.wrapping_add(cpu.x as u16), 0x42);
+    cpu.memory
+        .borrow_mut()
+        .write_byte(addr.wrapping_add(cpu.x as u16), 0x42);
     let program = vec![
         0x5E, 0x34, 0x12, // ASL $1234,X
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
     assert_eq!(
-        cpu.memory.read_byte(addr.wrapping_add(cpu.x as u16)),
+        cpu.memory
+            .borrow_mut()
+            .read_byte(addr.wrapping_add(cpu.x as u16)),
         0x21u8
     );
     assert_eq!(cpu.p.is_zero(), false);
@@ -3375,14 +3439,14 @@ fn nop() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
         cpu.step();
     }
     assert_eq!(cpu.a, 0x55u8);
-    assert_eq!(cpu.memory.read_byte(cpu.pc - 0x03), 0x0EA);
+    assert_eq!(cpu.memory.borrow_mut().read_byte(cpu.pc - 0x03), 0x0EA);
     assert_eq!(cpu.p.is_zero(), false);
     assert_eq!(cpu.p.is_negative(), false);
     assert_eq!(cpu.p.is_carry(), false);
@@ -3400,7 +3464,7 @@ fn ora_direct() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -3423,7 +3487,7 @@ fn ora_direct_zero() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -3446,7 +3510,7 @@ fn ora_direct_negative() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -3462,7 +3526,7 @@ fn ora_direct_negative() {
 ///
 fn ora_zero_page() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.memory.write_byte_zero_page(0x10, 0x55);
+    cpu.memory.borrow_mut().write_byte_zero_page(0x10, 0x55);
     let program = vec![
         0xA9, 0x42u8, // LDA #$42
         0x05, 0x10u8, // ORA $10
@@ -3470,7 +3534,7 @@ fn ora_zero_page() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -3487,7 +3551,9 @@ fn ora_zero_page() {
 fn ora_zero_page_x() {
     let mut cpu = mos6502::Cpu::new();
     cpu.x = 0x0Fu8;
-    cpu.memory.write_byte_zero_page(0x10 + cpu.x, 0x55);
+    cpu.memory
+        .borrow_mut()
+        .write_byte_zero_page(0x10 + cpu.x, 0x55);
     let program = vec![
         0xA9, 0x42u8, // LDA #$42
         0x15, 0x10u8, // ORA $10,X
@@ -3495,7 +3561,7 @@ fn ora_zero_page_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -3511,7 +3577,7 @@ fn ora_zero_page_x() {
 ///
 fn ora_absolute() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.memory.write_byte(0x1234, 0x55);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0x55);
     let program = vec![
         0xA9, 0x42u8, // LDA #$42
         0x0D, 0x34u8, 0x12, // ORA $1234
@@ -3519,7 +3585,7 @@ fn ora_absolute() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -3536,7 +3602,9 @@ fn ora_absolute() {
 fn ora_absolute_x() {
     let mut cpu = mos6502::Cpu::new();
     cpu.x = 0xF;
-    cpu.memory.write_byte(0x1234 + cpu.x as u16, 0x55);
+    cpu.memory
+        .borrow_mut()
+        .write_byte(0x1234 + cpu.x as u16, 0x55);
     let program = vec![
         0xA9, 0x42u8, // LDA #$42
         0x1D, 0x34u8, 0x12, // AND $1234
@@ -3544,7 +3612,7 @@ fn ora_absolute_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -3561,7 +3629,9 @@ fn ora_absolute_x() {
 fn ora_absolute_y() {
     let mut cpu = mos6502::Cpu::new();
     cpu.y = 0xF;
-    cpu.memory.write_byte(0x1234 + cpu.y as u16, 0x55);
+    cpu.memory
+        .borrow_mut()
+        .write_byte(0x1234 + cpu.y as u16, 0x55);
     let program = vec![
         0xA9, 0x42u8, // LDA #$42
         0x19, 0x34u8, 0x12, // ORA $1234,Y
@@ -3569,7 +3639,7 @@ fn ora_absolute_y() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -3588,8 +3658,8 @@ fn ora_indirect_x() {
     let addr = 0x001Fu16;
     let value = 0x55u8;
     cpu.x = 0x0F;
-    cpu.memory.write_word(addr, 0x1234);
-    cpu.memory.write_byte(0x1234 as u16, value);
+    cpu.memory.borrow_mut().write_word(addr, 0x1234);
+    cpu.memory.borrow_mut().write_byte(0x1234 as u16, value);
 
     let program = vec![
         0xA9, 0x42, // LDA #$42
@@ -3599,7 +3669,7 @@ fn ora_indirect_x() {
 
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -3618,8 +3688,10 @@ fn ora_indirect_y() {
     let addr = 0x0010u16;
     let value = 0x55u8;
     cpu.y = 0x0F;
-    cpu.memory.write_word(addr, 0x1234);
-    cpu.memory.write_byte(0x1234 + cpu.y as u16, value);
+    cpu.memory.borrow_mut().write_word(addr, 0x1234);
+    cpu.memory
+        .borrow_mut()
+        .write_byte(0x1234 + cpu.y as u16, value);
     let program = vec![
         0xA9, 0x42, // LDA #$42
         0x11, 0x10u8, // ORA ($10),Y ;Y=0x0f
@@ -3627,7 +3699,7 @@ fn ora_indirect_y() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -3651,14 +3723,14 @@ fn pha() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
         cpu.step();
     }
     assert_eq!(cpu.a, 0xAAu8);
-    assert_eq!(cpu.memory.read_byte(0x01ff), 0xAAu8);
+    assert_eq!(cpu.memory.borrow_mut().read_byte(0x01ff), 0xAAu8);
     assert_eq!(cpu.s, 0xFE);
 }
 #[test]
@@ -3676,13 +3748,13 @@ fn php() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
         cpu.step();
     }
-    assert_eq!(cpu.memory.read_byte(0x01ff), 0xB1u8);
+    assert_eq!(cpu.memory.borrow_mut().read_byte(0x01ff), 0xB1u8);
     assert_eq!(cpu.s, 0xFE);
     assert_eq!(cpu.p.value, 0x81);
 }
@@ -3702,14 +3774,14 @@ fn pla() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
         cpu.step();
     }
     assert_eq!(cpu.a, 0xAAu8);
-    assert_eq!(cpu.memory.read_byte(0x01ff), 0xAAu8);
+    assert_eq!(cpu.memory.borrow_mut().read_byte(0x01ff), 0xAAu8);
     assert_eq!(cpu.s, 0xFF);
 }
 #[test]
@@ -3729,13 +3801,13 @@ fn plp() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
         cpu.step();
     }
-    assert_eq!(cpu.memory.read_byte(0x01ff), 0xB1u8);
+    assert_eq!(cpu.memory.borrow_mut().read_byte(0x01ff), 0xB1u8);
     assert_eq!(cpu.s, 0xFF);
     assert_eq!(cpu.p.value, 0x81);
 }
@@ -3753,7 +3825,7 @@ fn rol_accumulator() {
     cpu.p.set_carry(true);
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -3778,7 +3850,7 @@ fn rol_accumulator_c() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -3802,7 +3874,7 @@ fn rol_accumulator_z() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -3820,20 +3892,20 @@ fn rol_accumulator_z() {
 fn rol_zerro_page() {
     let mut cpu = mos6502::Cpu::new();
     let z_addr = 0x10;
-    cpu.memory.write_byte_zero_page(z_addr, 0x42);
+    cpu.memory.borrow_mut().write_byte_zero_page(z_addr, 0x42);
     let program = vec![
         0x26, 0x10, // ROL $10
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
-    let result = cpu.memory.read_byte_zero_page(z_addr);
+    let result = cpu.memory.borrow_mut().read_byte_zero_page(z_addr);
     assert_eq!(result, 0x84u8);
     assert_eq!(cpu.p.is_zero(), false);
     assert_eq!(cpu.p.is_negative(), true);
@@ -3846,7 +3918,7 @@ fn rol_zerro_page() {
 fn rol_zerro_page_x() {
     let mut cpu = mos6502::Cpu::new();
     let z_addr = 0x1F;
-    cpu.memory.write_byte_zero_page(z_addr, 0x42);
+    cpu.memory.borrow_mut().write_byte_zero_page(z_addr, 0x42);
     cpu.x = 0x0Fu8;
     let program = vec![
         0x36, 0x10, // ROL $10
@@ -3854,13 +3926,13 @@ fn rol_zerro_page_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
-    assert_eq!(cpu.memory.read_byte_zero_page(z_addr), 0x84u8);
+    assert_eq!(cpu.memory.borrow_mut().read_byte_zero_page(z_addr), 0x84u8);
     assert_eq!(cpu.p.is_zero(), false);
     assert_eq!(cpu.p.is_negative(), true);
     assert_eq!(cpu.p.is_carry(), false);
@@ -3872,20 +3944,20 @@ fn rol_zerro_page_x() {
 fn rol_absolute() {
     let mut cpu = mos6502::Cpu::new();
     let addr = 0x1234u16;
-    cpu.memory.write_byte(addr, 0x42);
+    cpu.memory.borrow_mut().write_byte(addr, 0x42);
     let program = vec![
         0x2E, 0x34, 0x12, // ROL $1234
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
-    assert_eq!(cpu.memory.read_byte(addr), 0x84u8);
+    assert_eq!(cpu.memory.borrow_mut().read_byte(addr), 0x84u8);
     assert_eq!(cpu.p.is_zero(), false);
     assert_eq!(cpu.p.is_negative(), true);
     assert_eq!(cpu.p.is_carry(), false);
@@ -3898,21 +3970,25 @@ fn rol_absolute_x() {
     let mut cpu = mos6502::Cpu::new();
     let addr = 0x1234u16;
     cpu.x = 0x0Fu8;
-    cpu.memory.write_byte(addr.wrapping_add(cpu.x as u16), 0x42);
+    cpu.memory
+        .borrow_mut()
+        .write_byte(addr.wrapping_add(cpu.x as u16), 0x42);
     let program = vec![
         0x3E, 0x34, 0x12, // ROL $1234,X
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
     assert_eq!(
-        cpu.memory.read_byte(addr.wrapping_add(cpu.x as u16)),
+        cpu.memory
+            .borrow_mut()
+            .read_byte(addr.wrapping_add(cpu.x as u16)),
         0x84u8
     );
     assert_eq!(cpu.p.is_zero(), false);
@@ -3933,7 +4009,7 @@ fn ror_accumulator() {
     cpu.p.set_carry(true);
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -3958,7 +4034,7 @@ fn ror_accumulator_c() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -3982,7 +4058,7 @@ fn ror_accumulator_z() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
@@ -4000,7 +4076,7 @@ fn ror_accumulator_z() {
 fn ror_zerro_page_x() {
     let mut cpu = mos6502::Cpu::new();
     let z_addr = 0x1F;
-    cpu.memory.write_byte_zero_page(z_addr, 0x42);
+    cpu.memory.borrow_mut().write_byte_zero_page(z_addr, 0x42);
     cpu.x = 0x0Fu8;
     let program = vec![
         0x76, 0x10, // ROR $10,X
@@ -4008,13 +4084,13 @@ fn ror_zerro_page_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
-    assert_eq!(cpu.memory.read_byte_zero_page(z_addr), 0x21u8);
+    assert_eq!(cpu.memory.borrow_mut().read_byte_zero_page(z_addr), 0x21u8);
     assert_eq!(cpu.p.is_zero(), false);
     assert_eq!(cpu.p.is_negative(), false);
     assert_eq!(cpu.p.is_carry(), false);
@@ -4026,20 +4102,20 @@ fn ror_zerro_page_x() {
 fn ror_absolute() {
     let mut cpu = mos6502::Cpu::new();
     let addr = 0x1234u16;
-    cpu.memory.write_byte(addr, 0x42);
+    cpu.memory.borrow_mut().write_byte(addr, 0x42);
     let program = vec![
         0x6E, 0x34, 0x12, // ROR $1234
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
-    assert_eq!(cpu.memory.read_byte(addr), 0x21u8);
+    assert_eq!(cpu.memory.borrow_mut().read_byte(addr), 0x21u8);
     assert_eq!(cpu.p.is_zero(), false);
     assert_eq!(cpu.p.is_negative(), false);
     assert_eq!(cpu.p.is_carry(), false);
@@ -4052,21 +4128,25 @@ fn ror_absolute_x() {
     let mut cpu = mos6502::Cpu::new();
     let addr = 0x1234u16;
     cpu.x = 0x0Fu8;
-    cpu.memory.write_byte(addr.wrapping_add(cpu.x as u16), 0x42);
+    cpu.memory
+        .borrow_mut()
+        .write_byte(addr.wrapping_add(cpu.x as u16), 0x42);
     let program = vec![
         0x7E, 0x34, 0x12, // ROR $1234,X
         0x00, // BRK
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0x00 {
             break;
         }
     }
     assert_eq!(
-        cpu.memory.read_byte(addr.wrapping_add(cpu.x as u16)),
+        cpu.memory
+            .borrow_mut()
+            .read_byte(addr.wrapping_add(cpu.x as u16)),
         0x21u8
     );
     assert_eq!(cpu.p.is_zero(), false);
@@ -4092,13 +4172,13 @@ fn rti() {
     cpu.p.set_carry(true);
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
         cpu.step();
     }
-    let status = cpu.memory.read_byte(0x1fd);
+    let status = cpu.memory.borrow_mut().read_byte(0x1fd);
     assert_eq!(
         status,
         status::mos6502::CARRY | status::mos6502::UNUSED | status::mos6502::BREAK
@@ -4123,7 +4203,7 @@ fn rts() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -4145,7 +4225,7 @@ fn sbc_imm() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -4171,7 +4251,7 @@ fn sbc_imm_c() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -4197,7 +4277,7 @@ fn sbc_imm_z() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -4223,7 +4303,7 @@ fn sbc_imm_n_c() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -4249,7 +4329,7 @@ fn sbc_imm_c_v() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -4267,7 +4347,7 @@ fn sbc_imm_c_v() {
 ///
 fn sbc_zp() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.memory.write_byte_zero_page(0x10, 0x50);
+    cpu.memory.borrow_mut().write_byte_zero_page(0x10, 0x50);
     let program = vec![
         0xA9, 0x80u8, // LDA #$80
         0x18,   // CEC
@@ -4276,7 +4356,7 @@ fn sbc_zp() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -4294,7 +4374,7 @@ fn sbc_zp() {
 ///
 fn sbc_zp_x() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.memory.write_byte_zero_page(0x20, 0x50);
+    cpu.memory.borrow_mut().write_byte_zero_page(0x20, 0x50);
     cpu.x = 0x10u8;
     let program = vec![
         0xA9, 0x80u8, // LDA #$80
@@ -4304,7 +4384,7 @@ fn sbc_zp_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -4322,7 +4402,7 @@ fn sbc_zp_x() {
 ///
 fn sbc_abs() {
     let mut cpu = mos6502::Cpu::new();
-    cpu.memory.write_byte(0x1234, 0x50);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0x50);
     cpu.x = 0x10u8;
     let program = vec![
         0xA9, 0x80, // LDA #$80
@@ -4332,7 +4412,7 @@ fn sbc_abs() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -4352,6 +4432,7 @@ fn sbc_abs_x() {
     let mut cpu = mos6502::Cpu::new();
     cpu.x = 0x10u8;
     cpu.memory
+        .borrow_mut()
         .write_byte(0x1234u16.wrapping_add(cpu.x as u16), 0x50u8);
     let program = vec![
         0xA9, 0x80, // LDA #$80
@@ -4361,7 +4442,7 @@ fn sbc_abs_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -4381,6 +4462,7 @@ fn sbc_abs_y() {
     let mut cpu = mos6502::Cpu::new();
     cpu.y = 0x10u8;
     cpu.memory
+        .borrow_mut()
         .write_byte(0x1234u16.wrapping_add(cpu.y as u16), 0x50u8);
     let program = vec![
         0xA9, 0x80, // LDA #$80
@@ -4390,7 +4472,7 @@ fn sbc_abs_y() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -4411,8 +4493,8 @@ fn sbc_abs_indirect_x() {
     let addr = 0x001Fu16;
     let value = 0x50u8;
     cpu.x = 0x0F;
-    cpu.memory.write_word(addr, 0x1234);
-    cpu.memory.write_byte(0x1234 as u16, value);
+    cpu.memory.borrow_mut().write_word(addr, 0x1234);
+    cpu.memory.borrow_mut().write_byte(0x1234 as u16, value);
     let program = vec![
         0xA9, 0x80, // LDA #$80
         0x18, // CEC
@@ -4421,7 +4503,7 @@ fn sbc_abs_indirect_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -4442,8 +4524,10 @@ fn sbc_abs_indirect_y() {
     let addr = 0x0010u16;
     let value = 0x50u8;
     cpu.y = 0x0F;
-    cpu.memory.write_word(addr, 0x1234);
-    cpu.memory.write_byte(0x1234 + cpu.y as u16, value);
+    cpu.memory.borrow_mut().write_word(addr, 0x1234);
+    cpu.memory
+        .borrow_mut()
+        .write_byte(0x1234 + cpu.y as u16, value);
     let program = vec![
         0xA9, 0x80, // LDA #$80
         0x18, // CEC
@@ -4452,7 +4536,7 @@ fn sbc_abs_indirect_y() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -4477,7 +4561,7 @@ fn sec() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -4502,7 +4586,7 @@ fn sed() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -4526,7 +4610,7 @@ fn sei() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -4551,13 +4635,13 @@ fn sta_zp() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
         cpu.step();
     }
-    assert_eq!(cpu.memory.read_byte_zero_page(0x10u8), 0x55u8);
+    assert_eq!(cpu.memory.borrow_mut().read_byte_zero_page(0x10u8), 0x55u8);
 }
 #[test]
 ///
@@ -4573,13 +4657,13 @@ fn sta_zp_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
         cpu.step();
     }
-    assert_eq!(cpu.memory.read_byte_zero_page(0x1fu8), 0x55u8);
+    assert_eq!(cpu.memory.borrow_mut().read_byte_zero_page(0x1fu8), 0x55u8);
 }
 #[test]
 ///
@@ -4595,13 +4679,13 @@ fn sta_abs() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
         cpu.step();
     }
-    assert_eq!(cpu.memory.read_byte(0x1234u16), 0x55u8);
+    assert_eq!(cpu.memory.borrow_mut().read_byte(0x1234u16), 0x55u8);
 }
 #[test]
 ///
@@ -4617,14 +4701,16 @@ fn sta_abs_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
         cpu.step();
     }
     assert_eq!(
-        cpu.memory.read_byte(0x1234u16.wrapping_add(cpu.x as u16)),
+        cpu.memory
+            .borrow_mut()
+            .read_byte(0x1234u16.wrapping_add(cpu.x as u16)),
         0x55u8
     );
 }
@@ -4642,14 +4728,16 @@ fn sta_abs_y() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
         cpu.step();
     }
     assert_eq!(
-        cpu.memory.read_byte(0x1234u16.wrapping_add(cpu.y as u16)),
+        cpu.memory
+            .borrow_mut()
+            .read_byte(0x1234u16.wrapping_add(cpu.y as u16)),
         0x55u8
     );
 }
@@ -4665,16 +4753,18 @@ fn sta_indirect_x() {
         0x81, 0x10, // STA ($10,X)
         0x00, // BRK
     ];
-    cpu.memory.write_word_zero_page(0x1f, 0x1234u16);
+    cpu.memory
+        .borrow_mut()
+        .write_word_zero_page(0x1f, 0x1234u16);
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
         cpu.step();
     }
-    assert_eq!(cpu.memory.read_byte(0x1234u16), 0x55u8);
+    assert_eq!(cpu.memory.borrow_mut().read_byte(0x1234u16), 0x55u8);
 }
 #[test]
 ///
@@ -4688,17 +4778,21 @@ fn sta_indirect_y() {
         0x91, 0x10, // STA ($10),Y
         0x00, // BRK
     ];
-    cpu.memory.write_word_zero_page(0x10, 0x1234u16);
+    cpu.memory
+        .borrow_mut()
+        .write_word_zero_page(0x10, 0x1234u16);
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
         cpu.step();
     }
     assert_eq!(
-        cpu.memory.read_byte(0x1234u16.wrapping_add(cpu.y as u16)),
+        cpu.memory
+            .borrow_mut()
+            .read_byte(0x1234u16.wrapping_add(cpu.y as u16)),
         0x55u8
     );
 }
@@ -4715,13 +4809,13 @@ fn stx_zp() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
         cpu.step();
     }
-    assert_eq!(cpu.memory.read_byte_zero_page(0x10u8), 0x55u8);
+    assert_eq!(cpu.memory.borrow_mut().read_byte_zero_page(0x10u8), 0x55u8);
 }
 #[test]
 ///
@@ -4737,14 +4831,16 @@ fn stx_zp_y() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
         cpu.step();
     }
     assert_eq!(
-        cpu.memory.read_byte_zero_page(0x10u8.wrapping_add(cpu.y)),
+        cpu.memory
+            .borrow_mut()
+            .read_byte_zero_page(0x10u8.wrapping_add(cpu.y)),
         0x55u8
     );
 }
@@ -4761,13 +4857,13 @@ fn stx_abs() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
         cpu.step();
     }
-    assert_eq!(cpu.memory.read_byte(0x1234u16), 0x55u8);
+    assert_eq!(cpu.memory.borrow_mut().read_byte(0x1234u16), 0x55u8);
 }
 #[test]
 ///////////////////////////////////////////////
@@ -4782,13 +4878,13 @@ fn sty_zp() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
         cpu.step();
     }
-    assert_eq!(cpu.memory.read_byte_zero_page(0x10u8), 0x55u8);
+    assert_eq!(cpu.memory.borrow_mut().read_byte_zero_page(0x10u8), 0x55u8);
 }
 #[test]
 ///
@@ -4804,14 +4900,16 @@ fn sty_zp_x() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
         cpu.step();
     }
     assert_eq!(
-        cpu.memory.read_byte_zero_page(0x10u8.wrapping_add(cpu.x)),
+        cpu.memory
+            .borrow_mut()
+            .read_byte_zero_page(0x10u8.wrapping_add(cpu.x)),
         0x55u8
     );
 }
@@ -4828,13 +4926,13 @@ fn sty_abs() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
         cpu.step();
     }
-    assert_eq!(cpu.memory.read_byte(0x1234u16), 0x55u8);
+    assert_eq!(cpu.memory.borrow_mut().read_byte(0x1234u16), 0x55u8);
 }
 #[test]
 ///////////////////////////////////////////////
@@ -4849,7 +4947,7 @@ fn tax() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -4873,7 +4971,7 @@ fn tax_z() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -4897,7 +4995,7 @@ fn tax_n() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -4920,7 +5018,7 @@ fn tay() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -4943,7 +5041,7 @@ fn tay_z() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -4966,7 +5064,7 @@ fn tay_n() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -4989,7 +5087,7 @@ fn tsx() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -5012,7 +5110,7 @@ fn tsx_z() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -5035,7 +5133,7 @@ fn tsx_n() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -5059,7 +5157,7 @@ fn txa() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -5083,7 +5181,7 @@ fn txa_z() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -5107,7 +5205,7 @@ fn txs() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -5129,7 +5227,7 @@ fn tya_z() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }
@@ -5153,7 +5251,7 @@ fn tya_n() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         if opcode == 0x00 {
             break;
         }

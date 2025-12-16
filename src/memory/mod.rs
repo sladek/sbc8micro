@@ -1,15 +1,16 @@
 //! Generic memory implementation
+
 use crate::io::IoPort;
-use std::collections::HashMap;
-use std::fs::File;
-use std::io::{Error, Read};
 use crate::ui::app::AppState;
 use intelhex::IntelHexFile;
 use intelhex::file::RecordType;
+use std::collections::HashMap;
+use std::fs::File;
+use std::io::{Error, Read};
 
-const CAPACITY: usize = 0x10000;
+pub const CAPACITY: usize = 0x10000;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Region {
     pub start: u16,
     pub end: u16,
@@ -24,7 +25,7 @@ impl Region {
 #[derive(Clone, Copy, Debug)]
 pub enum MemCell {
     Memory(u8), // Direct value
-    Io(u16), // Address in the memory
+    Io(u16),    // Address in the memory
 }
 /// This can be used only for comparing 8 bit content of memory
 /// For 16 bit it always return false
@@ -37,7 +38,6 @@ impl PartialEq<u8> for MemCell {
     }
 }
 
-//#[derive(Clone)]
 /// Memory that can be assigned to specific CPU
 pub struct Memory {
     /// Data of the memory
@@ -128,7 +128,7 @@ impl Memory {
             }
             MemCell::Io(addr) => {
                 if let Some(port) = self.ports.get_mut(&addr) {
-                        port.write_to_memory_address(address, value);
+                    port.write_to_memory_address(&mut self.data, address, value);
                 }
             }
         }
@@ -219,14 +219,15 @@ impl Memory {
         match IntelHexFile::load_file(file_name) {
             Ok(file) => {
                 let n_records = file.records.len();
-                start = file.records[0].addr;                
+                start = file.records[0].addr;
                 for i in 0..n_records {
-                    let record = &file.records[i];                    
-                    match  &record.rtype {
+                    let record = &file.records[i];
+                    match &record.rtype {
                         RecordType::Data => {
                             let addr = record.addr;
                             let data = record.data.to_vec();
-                            self.load_data(&data, addr)?;                        }
+                            self.load_data(&data, addr)?;
+                        }
                         RecordType::EndOfFile => {
                             end = record.addr;
                             break;
@@ -234,8 +235,8 @@ impl Memory {
                         _ => {}
                     }
                 }
-            },
-            Err(err) => println!("{:?}", err)
+            }
+            Err(err) => println!("{:?}", err),
         }
         Ok(Region { start, end })
     }
@@ -243,6 +244,8 @@ impl Memory {
     pub fn get_data(&self) -> [MemCell; CAPACITY] {
         self.data
     }
+    /// Print dump via println!
+    ///
     /// Prints content of memory slice [start_addr, end_addr] as hexadecimal dump via println!
     pub fn print_hex_dump(&mut self, start_addr: u16, end_addr: u16) {
         let hex_dump = self.hex_dump(start_addr, end_addr);
@@ -255,7 +258,10 @@ impl Memory {
         let mut hex_dump: Vec<String> = Vec::new();
         let mut input_data: Vec<(u16, MemCell)> = Vec::new();
         // To prevent multiple mutable borrows of self later, we clone the array to data variable
-        for (i, cell) in self.data[start_addr as usize..=end_addr as usize].iter().enumerate() {
+        for (i, cell) in self.data[start_addr as usize..=end_addr as usize]
+            .iter()
+            .enumerate()
+        {
             input_data.push((i as u16, *cell));
         }
         for (i, chunk) in input_data.chunks(16).enumerate() {
@@ -296,6 +302,11 @@ impl Memory {
         }
         hex_dump
     }
+}
+
+pub enum Reg {
+    R8(u8),
+    R16(u16),
 }
 
 #[cfg(test)]
@@ -437,7 +448,7 @@ mod tests {
         let port = memory.ports.get(&base_memory_address);
         assert!(!port.is_none());
         let offsets = port.unwrap().get_ports_offset();
-        let mem1 = base_memory_address + offsets[0] as u16; 
+        let mem1 = base_memory_address + offsets[0] as u16;
         let mem2 = base_memory_address + offsets[1] as u16;
         match memory.data[mem1 as usize] {
             MemCell::Io(address) => {
@@ -457,7 +468,8 @@ mod tests {
         }
         let result = memory.remove(base_memory_address);
         assert!(result.is_ok());
-        match memory.data[mem1 as usize] { // Is Memory cell back?
+        match memory.data[mem1 as usize] {
+            // Is Memory cell back?
             MemCell::Memory(data) => {
                 assert_eq!(data, 0); // Default data should be 0
             }
@@ -465,7 +477,8 @@ mod tests {
                 assert!(false);
             }
         }
-        match memory.data[mem2 as usize] { // Is memory cell back?
+        match memory.data[mem2 as usize] {
+            // Is memory cell back?
             MemCell::Memory(data) => {
                 assert_eq!(data, 0); // Default data should be 0
             }
@@ -474,5 +487,4 @@ mod tests {
             }
         }
     }
-
 }

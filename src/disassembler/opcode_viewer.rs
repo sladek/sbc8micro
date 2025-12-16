@@ -28,7 +28,7 @@ use ratatui::{
     crossterm::{
         event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
         execute,
-        terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
+        terminal::{EnterAlternateScreen, disable_raw_mode, enable_raw_mode},
     },
     prelude::CrosstermBackend,
     widgets::{ScrollbarState, TableState},
@@ -122,12 +122,6 @@ impl<'a, T> OpcodeViewer<'a, T> {
 
     fn previous_page(&mut self) {
         self.table_state.scroll_up_by(self.opcodes_page_size);
-        /*
-               let i = match self.table_state.selected() {
-                   Some(i) => i,
-                   None => 0,
-               };
-        */
         let i = self.table_state.selected().unwrap_or_default();
         self.scroll_state = self.scroll_state.position(i);
         self.set_page(i);
@@ -161,7 +155,7 @@ impl<'a, T> OpcodeViewer<'a, T> {
             if let Some(Ok(())) = self.event_handler(event) {
                 execute!(
                     terminal.backend_mut(),
-                    LeaveAlternateScreen,
+                    EnterAlternateScreen,
                     DisableMouseCapture
                 )?;
                 return Ok(AppState::Home);

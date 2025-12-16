@@ -13,8 +13,9 @@ fn aci_no_c_neg_p() {
     let mut cpu = Cpu::new();
     let program: Vec<u8> = vec![MVI_A, 0x55, ACI, 0x74, HLT];
     cpu.load_program(&program, 0x0600);
+
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -32,7 +33,7 @@ fn aci_c_ac_p() {
     let program: Vec<u8> = vec![MVI_A, 0x66, ACI, 0xAA, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -54,7 +55,7 @@ fn aci_z_c_ac_p() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -73,7 +74,7 @@ fn aci_2_z_c_ac_p() {
     let program: Vec<u8> = vec![MVI_A, 0x55, ACI, 0xAA, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -92,7 +93,7 @@ fn adc_b_z_ac_p() {
     let program: Vec<u8> = vec![MVI_A, 0x55, MVI_B, 0xaa, ADC_B, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -110,7 +111,7 @@ fn adc_c_neg_p() {
     let program: Vec<u8> = vec![MVI_A, 0x55, MVI_C, 0xaa, ADC_C, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -128,7 +129,7 @@ fn adc_d_neg_p() {
     let program: Vec<u8> = vec![MVI_A, 0x55, MVI_D, 0xaa, ADC_D, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -147,7 +148,7 @@ fn adc_e_z_ac_p() {
     let program: Vec<u8> = vec![MVI_A, 0x55, MVI_E, 0xaa, ADC_E, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -166,7 +167,7 @@ fn adc_h_z_ac_p() {
     let program: Vec<u8> = vec![MVI_A, 0x55, MVI_H, 0xaa, ADC_H, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -184,7 +185,7 @@ fn adc_l_neg_p() {
     let program: Vec<u8> = vec![MVI_A, 0x55, MVI_L, 0xaa, ADC_L, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -203,7 +204,7 @@ fn adc_a_c_ac_neg() {
     let program: Vec<u8> = vec![MVI_A, 0x55, ADC_A, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -218,12 +219,12 @@ fn adc_a_c_ac_neg() {
 ///
 fn adc_m_p() {
     let mut cpu = Cpu::new();
-    cpu.memory.write_byte(0x1234, 0x12);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0x12);
     cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_H, 0x12, MVI_L, 0x34, MVI_A, 0x34, ADC_M, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -238,12 +239,12 @@ fn adc_m_p() {
 ///
 fn adc_m_neg_ac_p_c() {
     let mut cpu = Cpu::new();
-    cpu.memory.write_byte(0x1234, 0xff);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0xff);
     cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_H, 0x12, MVI_L, 0x34, MVI_A, 0xAA, ADC_M, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -258,12 +259,12 @@ fn adc_m_neg_ac_p_c() {
 ///
 fn adc_m_neg_ac_p_c_2() {
     let mut cpu = Cpu::new();
-    cpu.memory.write_byte(0x1234, 0xff);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0xff);
     cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_H, 0x12, MVI_L, 0x34, MVI_A, 0xFF, ADC_M, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -278,12 +279,12 @@ fn adc_m_neg_ac_p_c_2() {
 ///
 fn adc_m_ac_p_c() {
     let mut cpu = Cpu::new();
-    cpu.memory.write_byte(0x1234, 0xaa);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0xaa);
     cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_H, 0x12, MVI_L, 0x34, MVI_A, 0xaa, ADC_M, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -298,11 +299,11 @@ fn adc_m_ac_p_c() {
 ///
 fn adc_m_neg_ac_c() {
     let mut cpu = Cpu::new();
-    cpu.memory.write_byte(0x1234, 0xff);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0xff);
     let program: Vec<u8> = vec![MVI_H, 0x12, MVI_L, 0x34, MVI_A, 0xff, ADC_M, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -317,11 +318,11 @@ fn adc_m_neg_ac_c() {
 ///
 fn adc_m_ac_c() {
     let mut cpu = Cpu::new();
-    cpu.memory.write_byte(0x1234, 0xAA);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0xAA);
     let program: Vec<u8> = vec![MVI_H, 0x12, MVI_L, 0x34, MVI_A, 0xAA, ADC_M, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -341,7 +342,7 @@ fn add_b_neg_p() {
     let program: Vec<u8> = vec![MVI_A, 0x55, MVI_B, 0xaa, ADD_B, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -360,7 +361,7 @@ fn add_c_neg_p() {
     let program: Vec<u8> = vec![MVI_A, 0x55, MVI_C, 0xaa, ADD_C, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -378,7 +379,7 @@ fn add_d_neg_p() {
     let program: Vec<u8> = vec![MVI_A, 0x55, MVI_D, 0xaa, ADD_D, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -396,7 +397,7 @@ fn add_d_acc_c() {
     let program: Vec<u8> = vec![MVI_A, 0x66, MVI_D, 0xaa, ADD_D, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -415,7 +416,7 @@ fn add_e_z_ac_p_c() {
     let program: Vec<u8> = vec![MVI_A, 0x56, MVI_E, 0xaa, ADD_E, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -434,7 +435,7 @@ fn add_h_z_ac_p() {
     let program: Vec<u8> = vec![MVI_A, 0xff, MVI_H, 0xff, ADD_H, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -452,7 +453,7 @@ fn add_l_p() {
     let program: Vec<u8> = vec![MVI_A, 0xaa, MVI_L, 0xaa, ADD_L, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -471,7 +472,7 @@ fn add_a_c_ac_neg() {
     let program: Vec<u8> = vec![MVI_A, 0x55, ADD_A, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -486,12 +487,12 @@ fn add_a_c_ac_neg() {
 ///
 fn add_m_p() {
     let mut cpu = Cpu::new();
-    cpu.memory.write_byte(0x1234, 0x12);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0x12);
     cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_H, 0x12, MVI_L, 0x34, MVI_A, 0x35, ADD_M, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -506,12 +507,12 @@ fn add_m_p() {
 ///
 fn add_m() {
     let mut cpu = Cpu::new();
-    cpu.memory.write_byte(0x1234, 0x12);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0x12);
     cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_H, 0x12, MVI_L, 0x34, MVI_A, 0x34, ADD_M, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -526,12 +527,12 @@ fn add_m() {
 ///
 fn adi_p() {
     let mut cpu = Cpu::new();
-    cpu.memory.write_byte(0x1234, 0x12);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0x12);
     cpu.status.set_carry(true);
     let program: Vec<u8> = vec![MVI_A, 0x34, ADI, 0x34, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -549,7 +550,7 @@ fn ana_b() {
     let program: Vec<u8> = vec![MVI_A, 0x34, MVI_B, 0x34, ANA_B, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -570,7 +571,7 @@ fn ana_b_2() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -591,7 +592,7 @@ fn ana_c_p() {
     ];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -609,7 +610,7 @@ fn ana_d_z_p() {
     let program: Vec<u8> = vec![MVI_A, 0x55, MVI_D, 0xAA, ANA_D, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -627,7 +628,7 @@ fn ana_e_z_p() {
     let program: Vec<u8> = vec![MVI_A, 0x55, MVI_E, 0xAA, ANA_E, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -645,7 +646,7 @@ fn ana_h() {
     let program: Vec<u8> = vec![MVI_A, 0x34, MVI_H, 0x34, ANA_H, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -663,7 +664,7 @@ fn ana_l() {
     let program: Vec<u8> = vec![MVI_A, 0x12, MVI_L, 0x34, ANA_L, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -678,11 +679,11 @@ fn ana_l() {
 ///
 fn ana_m() {
     let mut cpu = Cpu::new();
-    cpu.memory.write_byte(0x200, 0x55);
+    cpu.memory.borrow_mut().write_byte(0x200, 0x55);
     let program: Vec<u8> = vec![MVI_A, 0x12, MVI_L, 0x34, ANA_L, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -700,7 +701,7 @@ fn ana_a() {
     let program: Vec<u8> = vec![MVI_A, 0x55, ANA_A, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -718,7 +719,7 @@ fn ani_no_z() {
     let program: Vec<u8> = vec![MVI_A, 0x08, ANI, 0x08, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -736,7 +737,7 @@ fn ani_08_00() {
     let program: Vec<u8> = vec![MVI_A, 0x08, ANI, 0x00, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -754,7 +755,7 @@ fn ani_ff_ff() {
     let program: Vec<u8> = vec![MVI_A, 0xff, ANI, 0xff, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -772,7 +773,7 @@ fn ani_ff_0f() {
     let program: Vec<u8> = vec![MVI_A, 0xff, ANI, 0x0f, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -790,7 +791,7 @@ fn cma() {
     let program: Vec<u8> = vec![MVI_A, 0x55, CMA, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -808,7 +809,7 @@ fn cmc() {
     let program: Vec<u8> = vec![CMC, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -828,7 +829,7 @@ fn cmp_b_ff_aa() {
     let program: Vec<u8> = vec![MVI_A, 0xff, MVI_B, 0xAA, CMP_B, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -846,7 +847,7 @@ fn cmp_b_aa_ff() {
     let program: Vec<u8> = vec![MVI_A, 0xaa, MVI_B, 0xff, CMP_B, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -864,7 +865,7 @@ fn cmp_c_80_70() {
     let program: Vec<u8> = vec![MVI_A, 0x80, MVI_C, 0x70, CMP_C, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -882,7 +883,7 @@ fn cmp_c_70_80() {
     let program: Vec<u8> = vec![MVI_A, 0x70, MVI_C, 0x80, CMP_C, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -900,7 +901,7 @@ fn cmp_c_55_aa() {
     let program: Vec<u8> = vec![MVI_A, 0x55, MVI_D, 0xAA, CMP_D, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -918,7 +919,7 @@ fn cmp_e_aa_55() {
     let program: Vec<u8> = vec![MVI_A, 0xAA, MVI_E, 0x55, CMP_E, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -936,7 +937,7 @@ fn cmp_e_20_10() {
     let program: Vec<u8> = vec![MVI_A, 0x20, MVI_E, 0x10, CMP_E, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -954,7 +955,7 @@ fn cmp_h_10_20() {
     let program: Vec<u8> = vec![MVI_A, 0x10, MVI_H, 0x20, CMP_H, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -972,7 +973,7 @@ fn cmp_h_05_0a() {
     let program: Vec<u8> = vec![MVI_A, 0x05, MVI_H, 0x0a, CMP_H, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -990,7 +991,7 @@ fn cmp_h_0a_05() {
     let program: Vec<u8> = vec![MVI_A, 0x0a, MVI_H, 0x05, CMP_H, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1008,7 +1009,7 @@ fn cmp_l_05_05() {
     let program: Vec<u8> = vec![MVI_A, 0x05, MVI_L, 0x05, CMP_L, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1026,7 +1027,7 @@ fn cmp_l_55_55() {
     let program: Vec<u8> = vec![MVI_A, 0x55, MVI_L, 0x55, CMP_L, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1041,11 +1042,11 @@ fn cmp_l_55_55() {
 ///
 fn cmp_m_05_01() {
     let mut cpu = Cpu::new();
-    cpu.memory.write_byte(0x1234, 0x05);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0x05);
     let program: Vec<u8> = vec![MVI_H, 0x12, MVI_L, 0x34, MVI_A, 0x01, CMP_M, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1060,11 +1061,11 @@ fn cmp_m_05_01() {
 ///
 fn cmp_m_01_05() {
     let mut cpu = Cpu::new();
-    cpu.memory.write_byte(0x1234, 0x01);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0x01);
     let program: Vec<u8> = vec![MVI_H, 0x12, MVI_L, 0x34, MVI_A, 0x05, CMP_M, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1082,7 +1083,7 @@ fn cmp_a_aa_aa() {
     let program: Vec<u8> = vec![MVI_A, 0xaa, CMP_A, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1101,7 +1102,7 @@ fn cpi_55_aa() {
     let program: Vec<u8> = vec![MVI_A, 0x55, CPI, 0xaa, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1122,7 +1123,7 @@ fn call() {
     ];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1131,7 +1132,7 @@ fn call() {
     assert_eq!(cpu.a, 0xa5u8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0205);
 }
 #[test]
@@ -1145,7 +1146,7 @@ fn cnz_nz() {
     let program: Vec<u8> = vec![CPI, 0xf0, CNZ, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1154,7 +1155,7 @@ fn cnz_nz() {
     assert_eq!(cpu.a, 0xa5u8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0205);
 }
 #[test]
@@ -1168,7 +1169,7 @@ fn cnz_z() {
     let program: Vec<u8> = vec![CPI, 0xff, CNZ, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1177,7 +1178,7 @@ fn cnz_z() {
     assert_eq!(cpu.a, 0xafu8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0000); // No data ahould be on stack
 }
 #[test]
@@ -1191,7 +1192,7 @@ fn cz_z() {
     let program: Vec<u8> = vec![CPI, 0xff, CZ, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1200,7 +1201,7 @@ fn cz_z() {
     assert_eq!(cpu.a, 0xa5u8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0205);
 }
 #[test]
@@ -1214,7 +1215,7 @@ fn cz_nz() {
     let program: Vec<u8> = vec![CPI, 0xf0, CZ, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1223,7 +1224,7 @@ fn cz_nz() {
     assert_eq!(cpu.a, 0xaFu8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0000);
 }
 #[test]
@@ -1237,7 +1238,7 @@ fn cnc_nc() {
     let program: Vec<u8> = vec![ANI, 0xff, CNC, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1246,7 +1247,7 @@ fn cnc_nc() {
     assert_eq!(cpu.a, 0xa5u8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0205);
 }
 #[test]
@@ -1260,7 +1261,7 @@ fn cnc_c() {
     let program: Vec<u8> = vec![ADI, 0x01, CNC, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1269,7 +1270,7 @@ fn cnc_c() {
     assert_eq!(cpu.a, 0x00u8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0000);
 }
 #[test]
@@ -1283,7 +1284,7 @@ fn cc_c() {
     let program: Vec<u8> = vec![ADI, 0xff, CC, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1292,7 +1293,7 @@ fn cc_c() {
     assert_eq!(cpu.a, 0xa4u8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0205);
 }
 #[test]
@@ -1306,7 +1307,7 @@ fn cc_nc() {
     let program: Vec<u8> = vec![ADI, 0x00, CC, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1315,7 +1316,7 @@ fn cc_nc() {
     assert_eq!(cpu.a, 0xafu8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0000);
 }
 #[test]
@@ -1329,7 +1330,7 @@ fn cpo_po() {
     let program: Vec<u8> = vec![ANI, 0x01, CPO, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1338,7 +1339,7 @@ fn cpo_po() {
     assert_eq!(cpu.a, 0x01u8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0205);
 }
 #[test]
@@ -1352,7 +1353,7 @@ fn cpo_npo() {
     let program: Vec<u8> = vec![ANI, 0x03, CPO, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1361,7 +1362,7 @@ fn cpo_npo() {
     assert_eq!(cpu.a, 0x03u8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0000);
 }
 #[test]
@@ -1375,7 +1376,7 @@ fn cpe_pe() {
     let program: Vec<u8> = vec![ANI, 0x03, CPE, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1384,7 +1385,7 @@ fn cpe_pe() {
     assert_eq!(cpu.a, 0x01u8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0205);
 }
 #[test]
@@ -1398,7 +1399,7 @@ fn cpe_po() {
     let program: Vec<u8> = vec![ANI, 0x01, CPE, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1407,7 +1408,7 @@ fn cpe_po() {
     assert_eq!(cpu.a, 0x01u8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0000);
 }
 #[test]
@@ -1421,7 +1422,7 @@ fn cp_p() {
     let program: Vec<u8> = vec![ANI, 0x03, CP, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1430,7 +1431,7 @@ fn cp_p() {
     assert_eq!(cpu.a, 0x01u8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0205);
 }
 #[test]
@@ -1444,7 +1445,7 @@ fn cp_m() {
     let program: Vec<u8> = vec![ANI, 0xff, CP, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1453,7 +1454,7 @@ fn cp_m() {
     assert_eq!(cpu.a, 0xafu8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0000);
 }
 #[test]
@@ -1467,7 +1468,7 @@ fn cm_m() {
     let program: Vec<u8> = vec![ANI, 0xff, CM, 0x08, 0x02, ANI, 0xaf, HLT, ANI, 0xf5, RET];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1476,7 +1477,7 @@ fn cm_m() {
     assert_eq!(cpu.a, 0xa5u8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0205);
 }
 #[test]
@@ -1489,7 +1490,7 @@ fn daa_00() {
     let program: Vec<u8> = vec![MVI_A, 0x00, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1508,7 +1509,7 @@ fn daa_05() {
     let program: Vec<u8> = vec![MVI_A, 0x05, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1527,7 +1528,7 @@ fn daa_0a() {
     let program: Vec<u8> = vec![MVI_A, 0x0A, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1546,7 +1547,7 @@ fn daa_0f() {
     let program: Vec<u8> = vec![MVI_A, 0x0f, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1565,7 +1566,7 @@ fn daa_50() {
     let program: Vec<u8> = vec![MVI_A, 0x50, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1584,7 +1585,7 @@ fn daa_a0() {
     let program: Vec<u8> = vec![MVI_A, 0xa0, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1603,7 +1604,7 @@ fn daa_f0() {
     let program: Vec<u8> = vec![MVI_A, 0xf0, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1622,7 +1623,7 @@ fn daa_55() {
     let program: Vec<u8> = vec![MVI_A, 0x55, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1641,7 +1642,7 @@ fn daa_aa() {
     let program: Vec<u8> = vec![MVI_A, 0xaa, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1660,7 +1661,7 @@ fn daa_ff() {
     let program: Vec<u8> = vec![MVI_A, 0xff, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1679,7 +1680,7 @@ fn daa_33() {
     let program: Vec<u8> = vec![MVI_A, 0x33, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1699,7 +1700,7 @@ fn daa_00_ac() {
     let program: Vec<u8> = vec![MVI_A, 0x00, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1719,7 +1720,7 @@ fn daa_05_ac() {
     let program: Vec<u8> = vec![MVI_A, 0x05, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1739,7 +1740,7 @@ fn daa_0a_ac() {
     let program: Vec<u8> = vec![MVI_A, 0x0A, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1759,7 +1760,7 @@ fn daa_0f_ac() {
     let program: Vec<u8> = vec![MVI_A, 0x0f, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1779,7 +1780,7 @@ fn daa_50_ac() {
     let program: Vec<u8> = vec![MVI_A, 0x50, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1799,7 +1800,7 @@ fn daa_a0_ac() {
     let program: Vec<u8> = vec![MVI_A, 0xa0, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1819,7 +1820,7 @@ fn daa_f0_ac() {
     let program: Vec<u8> = vec![MVI_A, 0xf0, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1839,7 +1840,7 @@ fn daa_55_ac() {
     let program: Vec<u8> = vec![MVI_A, 0x55, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1859,7 +1860,7 @@ fn daa_aa_ac() {
     let program: Vec<u8> = vec![MVI_A, 0xaa, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1868,6 +1869,26 @@ fn daa_aa_ac() {
     assert_eq!(cpu.a, 0x10u8);
     assert_eq!(cpu.status.value, 0x13u8);
 }
+#[test]
+fn daa_0a_bcd() {
+    let mut cpu = Cpu::new();
+    cpu.status.clear_flags();
+    let program: Vec<u8> = vec![MVI_A, 0x0a, ADI, 0x90, DAA, ACI, 0x40, DAA, HLT];
+    cpu.load_program(&program, 0x0200);
+    loop {
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
+        cpu.step();
+        if opcode == HLT {
+            break;
+        }
+    }
+    assert_eq!(cpu.a, 0x41u8);
+    assert_eq!(cpu.status.value, 0x06u8);
+}
+///
+/// Test DAA
+///
+
 #[test]
 ///
 /// Tests DAA
@@ -1879,7 +1900,7 @@ fn daa_ff_ac() {
     let program: Vec<u8> = vec![MVI_A, 0xff, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1899,7 +1920,7 @@ fn daa_33_ac() {
     let program: Vec<u8> = vec![MVI_A, 0x33, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1919,7 +1940,7 @@ fn daa_00_c() {
     let program: Vec<u8> = vec![MVI_A, 0x00, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1939,7 +1960,7 @@ fn daa_05_c() {
     let program: Vec<u8> = vec![MVI_A, 0x05, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1959,7 +1980,7 @@ fn daa_0a_c() {
     let program: Vec<u8> = vec![MVI_A, 0x0A, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1979,7 +2000,7 @@ fn daa_0f_c() {
     let program: Vec<u8> = vec![MVI_A, 0x0f, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -1999,7 +2020,7 @@ fn daa_50_c() {
     let program: Vec<u8> = vec![MVI_A, 0x50, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2019,7 +2040,7 @@ fn daa_a0_c() {
     let program: Vec<u8> = vec![MVI_A, 0xa0, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2039,7 +2060,7 @@ fn daa_f0_c() {
     let program: Vec<u8> = vec![MVI_A, 0xf0, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2059,7 +2080,7 @@ fn daa_55_c() {
     let program: Vec<u8> = vec![MVI_A, 0x55, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2079,7 +2100,7 @@ fn daa_aa_c() {
     let program: Vec<u8> = vec![MVI_A, 0xaa, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2099,7 +2120,7 @@ fn daa_ff_c() {
     let program: Vec<u8> = vec![MVI_A, 0xff, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2120,7 +2141,7 @@ fn daa_00_ac_c() {
     let program: Vec<u8> = vec![MVI_A, 0x00, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2141,7 +2162,7 @@ fn daa_05_ac_c() {
     let program: Vec<u8> = vec![MVI_A, 0x05, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2162,7 +2183,7 @@ fn daa_0a_ac_c() {
     let program: Vec<u8> = vec![MVI_A, 0x0A, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2183,7 +2204,7 @@ fn daa_0f_ac_c() {
     let program: Vec<u8> = vec![MVI_A, 0x0f, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2204,7 +2225,7 @@ fn daa_50_ac_c() {
     let program: Vec<u8> = vec![MVI_A, 0x50, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2225,7 +2246,7 @@ fn daa_a0_ac_c() {
     let program: Vec<u8> = vec![MVI_A, 0xa0, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2246,7 +2267,7 @@ fn daa_f0_ac_c() {
     let program: Vec<u8> = vec![MVI_A, 0xf0, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2267,7 +2288,7 @@ fn daa_55_ac_c() {
     let program: Vec<u8> = vec![MVI_A, 0x55, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2288,7 +2309,7 @@ fn daa_aa_ac_c() {
     let program: Vec<u8> = vec![MVI_A, 0xaa, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2309,7 +2330,7 @@ fn daa_ff_ac_c() {
     let program: Vec<u8> = vec![MVI_A, 0xff, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2330,7 +2351,7 @@ fn daa_33_ac_c() {
     let program: Vec<u8> = vec![MVI_A, 0x33, DAA, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2353,7 +2374,7 @@ fn dad_b_1() {
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2377,7 +2398,7 @@ fn dad_b_2() {
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2401,7 +2422,7 @@ fn dad_b_3() {
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2425,7 +2446,7 @@ fn dad_b_4() {
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2450,7 +2471,7 @@ fn dad_b_5() {
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2474,7 +2495,7 @@ fn dad_d_1() {
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2498,7 +2519,7 @@ fn dad_d_2() {
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2522,7 +2543,7 @@ fn dad_d_3() {
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2546,7 +2567,7 @@ fn dad_d_4() {
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2571,7 +2592,7 @@ fn dad_d_5() {
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2593,7 +2614,7 @@ fn dad_h_1() {
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2615,7 +2636,7 @@ fn dad_h_2() {
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2637,7 +2658,7 @@ fn dad_h_3() {
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2659,7 +2680,7 @@ fn dad_h_4() {
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2682,7 +2703,7 @@ fn dad_h_5() {
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2705,7 +2726,7 @@ fn dad_sp_1() {
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_SP, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2728,7 +2749,7 @@ fn dad_sp_2() {
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_SP, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2751,7 +2772,7 @@ fn dad_sp_3() {
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_SP, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2774,7 +2795,7 @@ fn dad_sp_4() {
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_SP, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2798,7 +2819,7 @@ fn dad_sp_5() {
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, DAD_SP, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2818,7 +2839,7 @@ fn dcr_b() {
     let program: Vec<u8> = vec![MVI_B, 0x01, DCR_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2837,7 +2858,7 @@ fn dcr_c() {
     let program: Vec<u8> = vec![MVI_C, 0x10, DCR_C, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2856,7 +2877,7 @@ fn dcr_d() {
     let program: Vec<u8> = vec![MVI_D, 0x00, DCR_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2875,7 +2896,7 @@ fn dcr_e() {
     let program: Vec<u8> = vec![MVI_E, 0xFF, DCR_E, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2894,7 +2915,7 @@ fn dcr_h() {
     let program: Vec<u8> = vec![MVI_H, 0x0F, DCR_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2913,7 +2934,7 @@ fn dcr_l() {
     let program: Vec<u8> = vec![MVI_L, 0x90, DCR_L, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2929,20 +2950,20 @@ fn dcr_l() {
 fn dcr_m() {
     let addr = 0x210;
     let mut cpu = Cpu::new();
-    cpu.memory.write_byte(0x0210, 0xff);
+    cpu.memory.borrow_mut().write_byte(0x0210, 0xff);
     cpu.status.clear_flags();
     cpu.h = 0x02;
     cpu.l = 0x10;
     let program: Vec<u8> = vec![DCR_M, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
         }
     }
-    let result = cpu.memory.read_byte(addr);
+    let result = cpu.memory.borrow_mut().read_byte(addr);
     assert_eq!(result, 0xfeu8);
     assert_eq!(cpu.status.value, 0x92u8);
 }
@@ -2956,7 +2977,7 @@ fn dcr_a() {
     let program: Vec<u8> = vec![MVI_A, 0xfe, DCR_A, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2977,7 +2998,7 @@ fn dcx_b_1() {
     let program: Vec<u8> = vec![DCX_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -2999,7 +3020,7 @@ fn dcx_b_2() {
     let program: Vec<u8> = vec![DCX_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3021,7 +3042,7 @@ fn dcx_d_1() {
     let program: Vec<u8> = vec![DCX_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3043,7 +3064,7 @@ fn dcx_d_2() {
     let program: Vec<u8> = vec![DCX_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3065,7 +3086,7 @@ fn dcx_h_1() {
     let program: Vec<u8> = vec![DCX_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3087,7 +3108,7 @@ fn dcx_h_2() {
     let program: Vec<u8> = vec![DCX_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3108,7 +3129,7 @@ fn dcx_sp_1() {
     let program: Vec<u8> = vec![DCX_SP, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3128,7 +3149,7 @@ fn dcx_sp_2() {
     let program: Vec<u8> = vec![DCX_SP, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3148,7 +3169,7 @@ fn di() {
     let program: Vec<u8> = vec![DI, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3168,7 +3189,7 @@ fn ei() {
     let program: Vec<u8> = vec![EI, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3188,7 +3209,7 @@ fn inp() {
     let program: Vec<u8> = vec![IN, 0x0f, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3207,7 +3228,7 @@ fn inr_b() {
     let program: Vec<u8> = vec![MVI_B, 0x0f, INR_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3226,7 +3247,7 @@ fn inr_c() {
     let program: Vec<u8> = vec![MVI_C, 0xef, INR_C, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3245,7 +3266,7 @@ fn inr_d() {
     let program: Vec<u8> = vec![MVI_D, 0x1f, INR_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3264,7 +3285,7 @@ fn inr_e() {
     let program: Vec<u8> = vec![MVI_E, 0xf0, INR_E, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3283,7 +3304,7 @@ fn inr_h() {
     let program: Vec<u8> = vec![MVI_H, 0xff, INR_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3302,7 +3323,7 @@ fn inr_l() {
     let program: Vec<u8> = vec![MVI_L, 0xef, INR_L, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3318,20 +3339,20 @@ fn inr_l() {
 fn inr_m() {
     let addr = 0x210;
     let mut cpu = Cpu::new();
-    cpu.memory.write_byte(0x0210, 0xff);
+    cpu.memory.borrow_mut().write_byte(0x0210, 0xff);
     cpu.status.clear_flags();
     cpu.h = 0x02;
     cpu.l = 0x10;
     let program: Vec<u8> = vec![INR_M, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
         }
     }
-    let result = cpu.memory.read_byte(addr);
+    let result = cpu.memory.borrow_mut().read_byte(addr);
     assert_eq!(result, 0x00u8);
     assert_eq!(cpu.status.value, 0x56u8);
 }
@@ -3345,7 +3366,7 @@ fn inr_a() {
     let program: Vec<u8> = vec![MVI_A, 0xff, INR_A, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3367,7 +3388,7 @@ fn inx_b_1() {
     let program: Vec<u8> = vec![INX_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3389,7 +3410,7 @@ fn inx_b_2() {
     let program: Vec<u8> = vec![INX_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3411,7 +3432,7 @@ fn inx_d_1() {
     let program: Vec<u8> = vec![INX_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3433,7 +3454,7 @@ fn inx_d_2() {
     let program: Vec<u8> = vec![INX_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3455,7 +3476,7 @@ fn inx_h_1() {
     let program: Vec<u8> = vec![INX_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3477,7 +3498,7 @@ fn inx_h_2() {
     let program: Vec<u8> = vec![INX_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3498,7 +3519,7 @@ fn inx_sp_1() {
     let program: Vec<u8> = vec![INX_SP, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3518,7 +3539,7 @@ fn inx_sp_2() {
     let program: Vec<u8> = vec![INX_SP, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3538,7 +3559,7 @@ fn jnz_1() {
     let program: Vec<u8> = vec![MVI_A, 0x0f, ANA_A, JNZ, 0x07, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3558,7 +3579,7 @@ fn jnz_2() {
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, JNZ, 0x07, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3578,7 +3599,7 @@ fn jz_1() {
     let program: Vec<u8> = vec![MVI_A, 0x0f, ANA_A, JZ, 0x07, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3598,7 +3619,7 @@ fn jz_2() {
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, JZ, 0x07, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3619,7 +3640,7 @@ fn jnc_1() {
     let program: Vec<u8> = vec![MVI_A, 0x0f, JNC, 0x06, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3640,7 +3661,7 @@ fn jnc_2() {
     let program: Vec<u8> = vec![MVI_A, 0x0f, JNC, 0x06, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3661,7 +3682,7 @@ fn jc_1() {
     let program: Vec<u8> = vec![MVI_A, 0x0f, JC, 0x06, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3682,7 +3703,7 @@ fn jc_2() {
     let program: Vec<u8> = vec![MVI_A, 0x0f, JC, 0x06, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3703,7 +3724,7 @@ fn jpo_1() {
     let program: Vec<u8> = vec![MVI_A, 0x00, JPO, 0x06, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3723,7 +3744,7 @@ fn jpo_2() {
     let program: Vec<u8> = vec![MVI_A, 0x00, ANA_A, JPO, 0x07, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3744,7 +3765,7 @@ fn jpe_1() {
     let program: Vec<u8> = vec![MVI_A, 0x00, JPE, 0x06, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3765,7 +3786,7 @@ fn jpe_2() {
     let program: Vec<u8> = vec![MVI_A, 0x00, JPE, 0x06, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3785,7 +3806,7 @@ fn jp_1() {
     let program: Vec<u8> = vec![MVI_A, 0x0F, ANA_A, JP, 0x07, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3805,7 +3826,7 @@ fn jp_2() {
     let program: Vec<u8> = vec![MVI_A, 0xFF, ANA_A, JP, 0x07, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3825,7 +3846,7 @@ fn jm_1() {
     let program: Vec<u8> = vec![MVI_A, 0x0F, ANA_A, JM, 0x07, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3845,7 +3866,7 @@ fn jm_2() {
     let program: Vec<u8> = vec![MVI_A, 0xFF, ANA_A, JM, 0x07, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3865,7 +3886,7 @@ fn jmp() {
     let program: Vec<u8> = vec![JMP, 0x04, 0x02, HLT, 00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3882,11 +3903,11 @@ fn lda() {
     let mut cpu = Cpu::new();
     cpu.status.clear_flags();
     cpu.sp = 0xffffu16;
-    cpu.memory.write_byte(0x220, 0x55);
+    cpu.memory.borrow_mut().write_byte(0x220, 0x55);
     let program: Vec<u8> = vec![LDA, 0x20, 0x02, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3905,11 +3926,11 @@ fn ldax_b() {
     cpu.sp = 0xffffu16;
     cpu.b = 0x12;
     cpu.c = 0x34;
-    cpu.memory.write_byte(0x1234, 0x55);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0x55);
     let program: Vec<u8> = vec![LDAX_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3928,11 +3949,11 @@ fn ldax_d() {
     cpu.sp = 0xffffu16;
     cpu.d = 0x12;
     cpu.e = 0x34;
-    cpu.memory.write_byte(0x1234, 0xaa);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0xaa);
     let program: Vec<u8> = vec![LDAX_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3951,12 +3972,12 @@ fn lhld() {
     cpu.sp = 0xffffu16;
     cpu.d = 0x12;
     cpu.e = 0x34;
-    cpu.memory.write_byte(0x1234, 0x55);
-    cpu.memory.write_byte(0x1235, 0xaa);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0x55);
+    cpu.memory.borrow_mut().write_byte(0x1235, 0xaa);
     let program: Vec<u8> = vec![LHLD, 0x34, 0x12, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3977,7 +3998,7 @@ fn lxi_b() {
     let program: Vec<u8> = vec![LXI_B, 0x34, 0x12, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -3998,7 +4019,7 @@ fn lxi_d() {
     let program: Vec<u8> = vec![LXI_D, 0x34, 0x12, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4019,7 +4040,7 @@ fn lxi_h() {
     let program: Vec<u8> = vec![LXI_H, 0x34, 0x12, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4040,7 +4061,7 @@ fn lxi_sp() {
     let program: Vec<u8> = vec![LXI_SP, 0x34, 0x12, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4060,7 +4081,7 @@ fn mvi_b() {
     let program: Vec<u8> = vec![MVI_B, 0x12, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4080,7 +4101,7 @@ fn mvi_c() {
     let program: Vec<u8> = vec![MVI_C, 0x34, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4100,7 +4121,7 @@ fn mvi_d() {
     let program: Vec<u8> = vec![MVI_D, 0x55, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4120,7 +4141,7 @@ fn mvi_e() {
     let program: Vec<u8> = vec![MVI_E, 0xaa, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4140,7 +4161,7 @@ fn mvi_h() {
     let program: Vec<u8> = vec![MVI_H, 0x12, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4160,7 +4181,7 @@ fn mvi_l() {
     let program: Vec<u8> = vec![MVI_L, 0x34, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4182,13 +4203,13 @@ fn mvi_m() {
     let program: Vec<u8> = vec![MVI_M, 0x55, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
         }
     }
-    let val = cpu.memory.read_byte(0x1234);
+    let val = cpu.memory.borrow_mut().read_byte(0x1234);
     assert_eq!(val, 0x55u8);
     assert_eq!(cpu.status.value, 0x02u8);
 }
@@ -4203,7 +4224,7 @@ fn mvi_a() {
     let program: Vec<u8> = vec![MVI_A, 0xaa, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4223,7 +4244,7 @@ fn mov_a_b() {
     let program: Vec<u8> = vec![MVI_B, 0xaa, MOV_A_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4243,7 +4264,7 @@ fn mov_a_c() {
     let program: Vec<u8> = vec![MVI_C, 0x55, MOV_A_C, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4263,7 +4284,7 @@ fn mov_a_d() {
     let program: Vec<u8> = vec![MVI_D, 0xaa, MOV_A_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4283,7 +4304,7 @@ fn mov_a_e() {
     let program: Vec<u8> = vec![MVI_E, 0xaa, MOV_A_E, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4303,7 +4324,7 @@ fn mov_a_h() {
     let program: Vec<u8> = vec![MVI_H, 0xaa, MOV_A_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4323,7 +4344,7 @@ fn mov_a_l() {
     let program: Vec<u8> = vec![MVI_L, 0xaa, MOV_A_L, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4342,11 +4363,11 @@ fn mov_a_m() {
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
-    cpu.memory.write_byte(0x1234, 0xaa);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0xaa);
     let program: Vec<u8> = vec![MOV_A_M, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4366,7 +4387,7 @@ fn mov_a_a() {
     let program: Vec<u8> = vec![MVI_A, 0xaa, MOV_A_A, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4386,7 +4407,7 @@ fn mov_b_b() {
     let program: Vec<u8> = vec![MVI_B, 0xaa, MOV_B_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4406,7 +4427,7 @@ fn mov_b_c() {
     let program: Vec<u8> = vec![MVI_C, 0x55, MOV_B_C, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4426,7 +4447,7 @@ fn mov_b_d() {
     let program: Vec<u8> = vec![MVI_D, 0xaa, MOV_B_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4446,7 +4467,7 @@ fn mov_b_e() {
     let program: Vec<u8> = vec![MVI_E, 0xaa, MOV_B_E, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4466,7 +4487,7 @@ fn mov_b_h() {
     let program: Vec<u8> = vec![MVI_H, 0xaa, MOV_B_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4486,7 +4507,7 @@ fn mov_b_l() {
     let program: Vec<u8> = vec![MVI_L, 0xaa, MOV_B_L, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4505,11 +4526,11 @@ fn mov_b_m() {
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
-    cpu.memory.write_byte(0x1234, 0xaa);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0xaa);
     let program: Vec<u8> = vec![MOV_B_M, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4529,7 +4550,7 @@ fn mov_b_a() {
     let program: Vec<u8> = vec![MVI_A, 0xaa, MOV_B_A, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4549,7 +4570,7 @@ fn mov_c_b() {
     let program: Vec<u8> = vec![MVI_B, 0xaa, MOV_C_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4569,7 +4590,7 @@ fn mov_c_c() {
     let program: Vec<u8> = vec![MVI_C, 0x55, MOV_C_C, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4589,7 +4610,7 @@ fn mov_c_d() {
     let program: Vec<u8> = vec![MVI_D, 0xaa, MOV_C_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4609,7 +4630,7 @@ fn mov_c_e() {
     let program: Vec<u8> = vec![MVI_E, 0xaa, MOV_C_E, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4629,7 +4650,7 @@ fn mov_c_h() {
     let program: Vec<u8> = vec![MVI_H, 0xaa, MOV_C_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4649,7 +4670,7 @@ fn mov_c_l() {
     let program: Vec<u8> = vec![MVI_L, 0xaa, MOV_C_L, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4668,11 +4689,11 @@ fn mov_c_m() {
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
-    cpu.memory.write_byte(0x1234, 0xaa);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0xaa);
     let program: Vec<u8> = vec![MOV_C_M, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4692,7 +4713,7 @@ fn mov_c_a() {
     let program: Vec<u8> = vec![MVI_A, 0xaa, MOV_C_A, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4712,7 +4733,7 @@ fn mov_d_b() {
     let program: Vec<u8> = vec![MVI_B, 0xaa, MOV_D_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4732,7 +4753,7 @@ fn mov_d_c() {
     let program: Vec<u8> = vec![MVI_C, 0x55, MOV_D_C, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4752,7 +4773,7 @@ fn mov_d_d() {
     let program: Vec<u8> = vec![MVI_D, 0xaa, MOV_D_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4772,7 +4793,7 @@ fn mov_d_e() {
     let program: Vec<u8> = vec![MVI_E, 0xaa, MOV_D_E, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4792,7 +4813,7 @@ fn mov_d_h() {
     let program: Vec<u8> = vec![MVI_H, 0xaa, MOV_D_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4812,7 +4833,7 @@ fn mov_d_l() {
     let program: Vec<u8> = vec![MVI_L, 0xaa, MOV_D_L, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4831,11 +4852,11 @@ fn mov_d_m() {
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
-    cpu.memory.write_byte(0x1234, 0xaa);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0xaa);
     let program: Vec<u8> = vec![MOV_D_M, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4855,7 +4876,7 @@ fn mov_d_a() {
     let program: Vec<u8> = vec![MVI_A, 0xaa, MOV_D_A, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4875,7 +4896,7 @@ fn mov_e_b() {
     let program: Vec<u8> = vec![MVI_B, 0xaa, MOV_E_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4895,7 +4916,7 @@ fn mov_e_c() {
     let program: Vec<u8> = vec![MVI_C, 0x55, MOV_E_C, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4915,7 +4936,7 @@ fn mov_e_d() {
     let program: Vec<u8> = vec![MVI_D, 0xaa, MOV_E_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4935,7 +4956,7 @@ fn mov_e_e() {
     let program: Vec<u8> = vec![MVI_E, 0xaa, MOV_E_E, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4955,7 +4976,7 @@ fn mov_e_h() {
     let program: Vec<u8> = vec![MVI_H, 0xaa, MOV_E_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4975,7 +4996,7 @@ fn mov_e_l() {
     let program: Vec<u8> = vec![MVI_L, 0xaa, MOV_E_L, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -4994,11 +5015,11 @@ fn mov_e_m() {
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
-    cpu.memory.write_byte(0x1234, 0xaa);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0xaa);
     let program: Vec<u8> = vec![MOV_E_M, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5018,7 +5039,7 @@ fn mov_e_a() {
     let program: Vec<u8> = vec![MVI_A, 0xaa, MOV_E_A, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5038,7 +5059,7 @@ fn mov_h_b() {
     let program: Vec<u8> = vec![MVI_B, 0xaa, MOV_H_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5058,7 +5079,7 @@ fn mov_h_c() {
     let program: Vec<u8> = vec![MVI_C, 0x55, MOV_H_C, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5078,7 +5099,7 @@ fn mov_h_d() {
     let program: Vec<u8> = vec![MVI_D, 0xaa, MOV_H_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5098,7 +5119,7 @@ fn mov_h_e() {
     let program: Vec<u8> = vec![MVI_E, 0xaa, MOV_H_E, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5118,7 +5139,7 @@ fn mov_h_h() {
     let program: Vec<u8> = vec![MVI_H, 0xaa, MOV_H_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5138,7 +5159,7 @@ fn mov_h_l() {
     let program: Vec<u8> = vec![MVI_L, 0xaa, MOV_H_L, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5157,11 +5178,11 @@ fn mov_h_m() {
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
-    cpu.memory.write_byte(0x1234, 0xaa);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0xaa);
     let program: Vec<u8> = vec![MOV_H_M, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5181,7 +5202,7 @@ fn mov_h_a() {
     let program: Vec<u8> = vec![MVI_A, 0xaa, MOV_H_A, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5202,7 +5223,7 @@ fn mov_l_b() {
     let program: Vec<u8> = vec![MVI_B, 0xaa, MOV_L_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5222,7 +5243,7 @@ fn mov_l_c() {
     let program: Vec<u8> = vec![MVI_C, 0x55, MOV_L_C, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5242,7 +5263,7 @@ fn mov_l_d() {
     let program: Vec<u8> = vec![MVI_D, 0xaa, MOV_L_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5262,7 +5283,7 @@ fn mov_l_e() {
     let program: Vec<u8> = vec![MVI_E, 0xaa, MOV_L_E, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5282,7 +5303,7 @@ fn mov_l_h() {
     let program: Vec<u8> = vec![MVI_H, 0xaa, MOV_L_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5302,7 +5323,7 @@ fn mov_l_l() {
     let program: Vec<u8> = vec![MVI_L, 0xaa, MOV_L_L, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5321,11 +5342,11 @@ fn mov_l_m() {
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
-    cpu.memory.write_byte(0x1234, 0xaa);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0xaa);
     let program: Vec<u8> = vec![MOV_L_M, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5345,7 +5366,7 @@ fn mov_l_a() {
     let program: Vec<u8> = vec![MVI_A, 0xaa, MOV_L_A, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5367,13 +5388,13 @@ fn mov_m_b() {
     let program: Vec<u8> = vec![MVI_B, 0xaa, MOV_M_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
         }
     }
-    let value = cpu.memory.read_byte(0x1234);
+    let value = cpu.memory.borrow_mut().read_byte(0x1234);
     assert_eq!(value, 0xaau8);
     assert_eq!(cpu.status.value, 0x02u8);
 }
@@ -5390,13 +5411,13 @@ fn mov_m_c() {
     let program: Vec<u8> = vec![MVI_C, 0xaa, MOV_M_C, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
         }
     }
-    let value = cpu.memory.read_byte(0x1234);
+    let value = cpu.memory.borrow_mut().read_byte(0x1234);
     assert_eq!(value, 0xaau8);
     assert_eq!(cpu.status.value, 0x02u8);
 }
@@ -5413,13 +5434,13 @@ fn mov_m_d() {
     let program: Vec<u8> = vec![MVI_D, 0xaa, MOV_M_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
         }
     }
-    let value = cpu.memory.read_byte(0x1234);
+    let value = cpu.memory.borrow_mut().read_byte(0x1234);
     assert_eq!(value, 0xaau8);
     assert_eq!(cpu.status.value, 0x02u8);
 }
@@ -5436,13 +5457,13 @@ fn mov_m_e() {
     let program: Vec<u8> = vec![MVI_E, 0xaa, MOV_M_E, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
         }
     }
-    let value = cpu.memory.read_byte(0x1234);
+    let value = cpu.memory.borrow_mut().read_byte(0x1234);
     assert_eq!(value, 0xaau8);
     assert_eq!(cpu.status.value, 0x02u8);
 }
@@ -5459,13 +5480,13 @@ fn mov_m_h() {
     let program: Vec<u8> = vec![MOV_M_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
         }
     }
-    let value = cpu.memory.read_byte(0x1234);
+    let value = cpu.memory.borrow_mut().read_byte(0x1234);
     assert_eq!(value, 0x12u8);
     assert_eq!(cpu.status.value, 0x02u8);
 }
@@ -5482,13 +5503,13 @@ fn mov_m_l() {
     let program: Vec<u8> = vec![MOV_M_L, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
         }
     }
-    let value = cpu.memory.read_byte(0x1234);
+    let value = cpu.memory.borrow_mut().read_byte(0x1234);
     assert_eq!(value, 0x34u8);
     assert_eq!(cpu.status.value, 0x02u8);
 }
@@ -5505,13 +5526,13 @@ fn mov_m_a() {
     let program: Vec<u8> = vec![MVI_A, 0xaa, MOV_M_A, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
         }
     }
-    let value = cpu.memory.read_byte(0x1234);
+    let value = cpu.memory.borrow_mut().read_byte(0x1234);
     assert_eq!(value, 0xaau8);
     assert_eq!(cpu.status.value, 0x02u8);
 }
@@ -5528,7 +5549,7 @@ fn ora_b() {
     let program: Vec<u8> = vec![MVI_A, 0xaa, MVI_B, 0x55, ORA_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5550,7 +5571,7 @@ fn ora_c() {
     let program: Vec<u8> = vec![MVI_A, 0x55, MVI_C, 0xaa, ORA_C, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5572,7 +5593,7 @@ fn ora_d() {
     let program: Vec<u8> = vec![MVI_A, 0x55, MVI_D, 0x55, ORA_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5594,7 +5615,7 @@ fn ora_e() {
     let program: Vec<u8> = vec![MVI_A, 0xaa, MVI_E, 0xaa, ORA_E, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5616,7 +5637,7 @@ fn ora_h() {
     let program: Vec<u8> = vec![MVI_A, 0x00, MVI_H, 0x00, ORA_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5638,7 +5659,7 @@ fn ora_l() {
     let program: Vec<u8> = vec![MVI_A, 0xf0, MVI_L, 0x0f, ORA_L, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5657,11 +5678,11 @@ fn ora_m() {
     cpu.sp = 0xffffu16;
     cpu.h = 0x12;
     cpu.l = 0x34;
-    cpu.memory.write_byte(0x1234, 0xf0);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0xf0);
     let program: Vec<u8> = vec![MVI_A, 0x0f, ORA_M, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5683,7 +5704,7 @@ fn ora_a() {
     let program: Vec<u8> = vec![MVI_A, 0x55, MVI_L, ORA_A, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5705,7 +5726,7 @@ fn ori() {
     let program: Vec<u8> = vec![MVI_A, 0x55, ORI, 0xaa, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5727,7 +5748,7 @@ fn pchl() {
     let program: Vec<u8> = vec![MVI_A, 0x55, LXI_H, 0x07, 0x02, PCHL, HLT, MVI_A, 0xaa, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5744,12 +5765,12 @@ fn pop_b() {
     let mut cpu = Cpu::new();
     cpu.status.clear_flags();
     cpu.sp = 0x1234u16;
-    cpu.memory.write_byte(0x1234, 0x55);
-    cpu.memory.write_byte(0x1235, 0xaa);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0x55);
+    cpu.memory.borrow_mut().write_byte(0x1235, 0xaa);
     let program: Vec<u8> = vec![POP_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5768,12 +5789,12 @@ fn pop_d() {
     let mut cpu = Cpu::new();
     cpu.status.clear_flags();
     cpu.sp = 0x1234u16;
-    cpu.memory.write_byte(0x1234, 0x12);
-    cpu.memory.write_byte(0x1235, 0x34);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0x12);
+    cpu.memory.borrow_mut().write_byte(0x1235, 0x34);
     let program: Vec<u8> = vec![POP_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5792,12 +5813,12 @@ fn pop_h() {
     let mut cpu = Cpu::new();
     cpu.status.clear_flags();
     cpu.sp = 0x1234u16;
-    cpu.memory.write_byte(0x1234, 0xaa);
-    cpu.memory.write_byte(0x1235, 0x55);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0xaa);
+    cpu.memory.borrow_mut().write_byte(0x1235, 0x55);
     let program: Vec<u8> = vec![POP_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5816,12 +5837,12 @@ fn pop_psw() {
     let mut cpu = Cpu::new();
     cpu.status.clear_flags();
     cpu.sp = 0x1234u16;
-    cpu.memory.write_byte(0x1234, 0x56);
-    cpu.memory.write_byte(0x1235, 0xaa);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0x56);
+    cpu.memory.borrow_mut().write_byte(0x1235, 0xaa);
     let program: Vec<u8> = vec![POP_PSW, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5842,15 +5863,15 @@ fn push_b() {
     let program: Vec<u8> = vec![LXI_B, 0x12, 0x34, PUSH_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
         }
     }
-    let mut val = cpu.memory.read_byte(0x1232);
+    let mut val = cpu.memory.borrow_mut().read_byte(0x1232);
     assert_eq!(val, 0x12u8);
-    val = cpu.memory.read_byte(0x1233);
+    val = cpu.memory.borrow_mut().read_byte(0x1233);
     assert_eq!(val, 0x34u8);
     assert_eq!(cpu.sp, 0x1232);
 }
@@ -5865,15 +5886,15 @@ fn push_d() {
     let program: Vec<u8> = vec![LXI_D, 0x55, 0xaa, PUSH_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
         }
     }
-    let mut val = cpu.memory.read_byte(0x1232);
+    let mut val = cpu.memory.borrow_mut().read_byte(0x1232);
     assert_eq!(val, 0x55u8);
-    val = cpu.memory.read_byte(0x1233);
+    val = cpu.memory.borrow_mut().read_byte(0x1233);
     assert_eq!(val, 0xaau8);
     assert_eq!(cpu.sp, 0x1232);
 }
@@ -5888,15 +5909,15 @@ fn push_h() {
     let program: Vec<u8> = vec![LXI_H, 0x34, 0x12, PUSH_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
         }
     }
-    let mut val = cpu.memory.read_byte(0x1232);
+    let mut val = cpu.memory.borrow_mut().read_byte(0x1232);
     assert_eq!(val, 0x34u8);
-    val = cpu.memory.read_byte(0x1233);
+    val = cpu.memory.borrow_mut().read_byte(0x1233);
     assert_eq!(val, 0x12u8);
     assert_eq!(cpu.sp, 0x1232);
 }
@@ -5911,15 +5932,15 @@ fn push_psw() {
     let program: Vec<u8> = vec![MVI_A, 0x55, PUSH_PSW, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
         }
     }
-    let mut val = cpu.memory.read_byte(0x1232);
+    let mut val = cpu.memory.borrow_mut().read_byte(0x1232);
     assert_eq!(val, 0x02u8);
-    val = cpu.memory.read_byte(0x1233);
+    val = cpu.memory.borrow_mut().read_byte(0x1233);
     assert_eq!(val, 0x55u8);
     assert_eq!(cpu.sp, 0x1232);
 }
@@ -5934,7 +5955,7 @@ fn ral_1() {
     let program: Vec<u8> = vec![MVI_A, 0x55, RAL, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5955,7 +5976,7 @@ fn ral_2() {
     let program: Vec<u8> = vec![MVI_A, 0x55, RAL, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5976,7 +5997,7 @@ fn ral_3() {
     let program: Vec<u8> = vec![MVI_A, 0xaa, RAL, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -5996,7 +6017,7 @@ fn rar_1() {
     let program: Vec<u8> = vec![MVI_A, 0xaa, RAR, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6017,7 +6038,7 @@ fn rar_2() {
     let program: Vec<u8> = vec![MVI_A, 0xab, RAR, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6038,7 +6059,7 @@ fn rlc_1() {
     let program: Vec<u8> = vec![MVI_A, 0xaa, RLC, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6059,7 +6080,7 @@ fn rlc_2() {
     let program: Vec<u8> = vec![MVI_A, 0x55, RLC, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6080,7 +6101,7 @@ fn rrc_1() {
     let program: Vec<u8> = vec![MVI_A, 0xaa, RRC, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6101,7 +6122,7 @@ fn rrc_2() {
     let program: Vec<u8> = vec![MVI_A, 0xab, RRC, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6122,7 +6143,7 @@ fn ret() {
     ];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6131,7 +6152,7 @@ fn ret() {
     assert_eq!(cpu.a, 0xa5u8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0205);
 }
 #[test]
@@ -6146,7 +6167,7 @@ fn rnz_1() {
     ];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6155,7 +6176,7 @@ fn rnz_1() {
     assert_eq!(cpu.a, 0xa5u8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0205);
 }
 #[test]
@@ -6170,7 +6191,7 @@ fn rnz_2() {
     ];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6179,7 +6200,7 @@ fn rnz_2() {
     assert_eq!(cpu.a, 0x00u8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0205);
 }
 #[test]
@@ -6194,7 +6215,7 @@ fn rz_1() {
     ];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6203,7 +6224,7 @@ fn rz_1() {
     assert_eq!(cpu.a, 0x05u8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0205);
 }
 #[test]
@@ -6218,7 +6239,7 @@ fn rz_2() {
     ];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6227,7 +6248,7 @@ fn rz_2() {
     assert_eq!(cpu.a, 0x00u8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0205);
 }
 #[test]
@@ -6242,7 +6263,7 @@ fn rnc_1() {
     ];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6251,7 +6272,7 @@ fn rnc_1() {
     assert_eq!(cpu.a, 0x00u8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0205);
 }
 #[test]
@@ -6266,7 +6287,7 @@ fn rnc_2() {
     ];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6275,7 +6296,7 @@ fn rnc_2() {
     assert_eq!(cpu.a, 0x00u8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0205);
 }
 #[test]
@@ -6290,7 +6311,7 @@ fn rc_1() {
     ];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6299,7 +6320,7 @@ fn rc_1() {
     assert_eq!(cpu.a, 0x0au8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0205);
 }
 #[test]
@@ -6314,7 +6335,7 @@ fn rc_2() {
     ];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6323,7 +6344,7 @@ fn rc_2() {
     assert_eq!(cpu.a, 0x00u8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0205);
 }
 #[test]
@@ -6338,7 +6359,7 @@ fn rpo_1() {
     ];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6347,7 +6368,7 @@ fn rpo_1() {
     assert_eq!(cpu.a, 0x00u8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0205);
 }
 #[test]
@@ -6362,7 +6383,7 @@ fn rpo_2() {
     ];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6371,7 +6392,7 @@ fn rpo_2() {
     assert_eq!(cpu.a, 0x01u8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0205);
 }
 #[test]
@@ -6386,7 +6407,7 @@ fn rpe_1() {
     ];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6395,7 +6416,7 @@ fn rpe_1() {
     assert_eq!(cpu.a, 0x05u8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0205);
 }
 #[test]
@@ -6410,7 +6431,7 @@ fn rpe_2() {
     ];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6419,7 +6440,7 @@ fn rpe_2() {
     assert_eq!(cpu.a, 0xafu8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0205);
 }
 #[test]
@@ -6434,7 +6455,7 @@ fn rp_1() {
     ];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6443,7 +6464,7 @@ fn rp_1() {
     assert_eq!(cpu.a, 0x2au8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0205);
 }
 #[test]
@@ -6458,7 +6479,7 @@ fn rp_2() {
     ];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6467,7 +6488,7 @@ fn rp_2() {
     assert_eq!(cpu.a, 0xaau8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0205);
 }
 #[test]
@@ -6482,7 +6503,7 @@ fn rm_1() {
     ];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6491,7 +6512,7 @@ fn rm_1() {
     assert_eq!(cpu.a, 0x8au8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0205);
 }
 #[test]
@@ -6506,7 +6527,7 @@ fn rm_2() {
     ];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6515,7 +6536,7 @@ fn rm_2() {
     assert_eq!(cpu.a, 0xaau8);
     assert_eq!(cpu.sp, 0xffff);
     let addr = 0xfffd;
-    let val = cpu.memory.read_word(addr);
+    let val = cpu.memory.borrow_mut().read_word(addr);
     assert_eq!(val, 0x0205);
 }
 #[test]
@@ -6530,7 +6551,7 @@ fn rst_0() {
     cpu.load_program(&rst, 0x0000);
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6550,7 +6571,7 @@ fn rst_1() {
     cpu.load_program(&rst, 0x0008);
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6570,7 +6591,7 @@ fn rst_2() {
     cpu.load_program(&rst, 0x0010);
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6590,7 +6611,7 @@ fn rst_3() {
     cpu.load_program(&rst, 0x018);
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6610,7 +6631,7 @@ fn rst_4() {
     cpu.load_program(&rst, 0x0020);
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6630,7 +6651,7 @@ fn rst_5() {
     cpu.load_program(&rst, 0x0028);
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6650,7 +6671,7 @@ fn rst_6() {
     cpu.load_program(&rst, 0x0030);
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6670,7 +6691,7 @@ fn rst_7() {
     cpu.load_program(&rst, 0x0038);
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6689,7 +6710,7 @@ fn sbb_b_1() {
     let program: Vec<u8> = vec![MVI_A, 0x0f, MVI_B, 0x0f, SBB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6709,7 +6730,7 @@ fn sbb_b_2() {
     let program: Vec<u8> = vec![MVI_A, 0x0f, MVI_B, 0x0f, SBB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6729,7 +6750,7 @@ fn sbb_b_3() {
     let program: Vec<u8> = vec![MVI_A, 0x00, MVI_B, 0x0f, SBB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6749,7 +6770,7 @@ fn sbb_b_4() {
     let program: Vec<u8> = vec![MVI_A, 0x00, MVI_B, 0x0f, SBB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6769,7 +6790,7 @@ fn sbb_b_5() {
     let program: Vec<u8> = vec![MVI_A, 0x0f, MVI_B, 0x00, SBB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6789,7 +6810,7 @@ fn sbb_b_6() {
     let program: Vec<u8> = vec![MVI_A, 0x0f, MVI_B, 0x00, SBB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6809,7 +6830,7 @@ fn sbb_b_7() {
     let program: Vec<u8> = vec![MVI_A, 0x00, MVI_B, 0xff, SBB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6829,7 +6850,7 @@ fn sbb_b_8() {
     let program: Vec<u8> = vec![MVI_A, 0x00, MVI_B, 0xff, SBB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6849,7 +6870,7 @@ fn sbb_b_9() {
     let program: Vec<u8> = vec![MVI_A, 0x20, MVI_B, 0x10, SBB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6869,7 +6890,7 @@ fn sbb_c_1() {
     let program: Vec<u8> = vec![MVI_A, 0x0f, MVI_C, 0x0ff, SBB_C, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6889,7 +6910,7 @@ fn sbb_c_2() {
     let program: Vec<u8> = vec![MVI_A, 0x0f, MVI_C, 0x0ff, SBB_C, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6909,7 +6930,7 @@ fn sbb_d_1() {
     let program: Vec<u8> = vec![MVI_A, 0x0ff, MVI_D, 0x0f, SBB_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6929,7 +6950,7 @@ fn sbb_d_2() {
     let program: Vec<u8> = vec![MVI_A, 0x0ff, MVI_D, 0x0f, SBB_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6949,7 +6970,7 @@ fn sbb_e_1() {
     let program: Vec<u8> = vec![MVI_A, 0x04, MVI_E, 0x02, SBB_E, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6969,7 +6990,7 @@ fn sbb_e_2() {
     let program: Vec<u8> = vec![MVI_A, 0x04, MVI_E, 0x02, SBB_E, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -6989,7 +7010,7 @@ fn sbb_h_1() {
     let program: Vec<u8> = vec![MVI_A, 0x02, MVI_H, 0x04, SBB_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7009,7 +7030,7 @@ fn sbb_h_2() {
     let program: Vec<u8> = vec![MVI_A, 0x02, MVI_H, 0x04, SBB_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7029,7 +7050,7 @@ fn sbb_l_1() {
     let program: Vec<u8> = vec![MVI_A, 0x55, MVI_L, 0xaa, SBB_L, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7049,7 +7070,7 @@ fn sbb_l_2() {
     let program: Vec<u8> = vec![MVI_A, 0x55, MVI_L, 0xaa, SBB_L, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7068,11 +7089,11 @@ fn sbb_m_1() {
     cpu.status.set_carry(false);
     cpu.h = 0x12;
     cpu.l = 0x34;
-    cpu.memory.write_byte(0x1234, 0x55);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0x55);
     let program: Vec<u8> = vec![MVI_A, 0xaa, SBB_M, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7091,11 +7112,11 @@ fn sbb_m_2() {
     cpu.status.set_carry(true);
     cpu.h = 0x12;
     cpu.l = 0x34;
-    cpu.memory.write_byte(0x1234, 0x55);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0x55);
     let program: Vec<u8> = vec![MVI_A, 0xaa, SBB_M, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7115,7 +7136,7 @@ fn sbb_a_1() {
     let program: Vec<u8> = vec![MVI_A, 0x00, SBB_A, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7135,7 +7156,7 @@ fn sbb_a_2() {
     let program: Vec<u8> = vec![MVI_A, 0x00, SBB_A, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7155,7 +7176,7 @@ fn sbi_1() {
     let program: Vec<u8> = vec![MVI_A, 0x04, SBI, 0x02, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7175,7 +7196,7 @@ fn sbi_2() {
     let program: Vec<u8> = vec![MVI_A, 0x04, SBI, 0x02, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7195,7 +7216,7 @@ fn sbi_3() {
     let program: Vec<u8> = vec![MVI_A, 0x00, SBI, 0x00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7215,7 +7236,7 @@ fn sbi_4() {
     let program: Vec<u8> = vec![MVI_A, 0x00, SBI, 0x00, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7235,7 +7256,7 @@ fn sub_b_1() {
     let program: Vec<u8> = vec![MVI_A, 0x0f, MVI_B, 0x0f, SUB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7255,7 +7276,7 @@ fn sub_b_3() {
     let program: Vec<u8> = vec![MVI_A, 0x00, MVI_B, 0x0f, SUB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7275,7 +7296,7 @@ fn sub_b_5() {
     let program: Vec<u8> = vec![MVI_A, 0x0f, MVI_B, 0x00, SUB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7295,7 +7316,7 @@ fn sub_b_7() {
     let program: Vec<u8> = vec![MVI_A, 0x00, MVI_B, 0xff, SUB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7315,7 +7336,7 @@ fn sub_b_9() {
     let program: Vec<u8> = vec![MVI_A, 0x20, MVI_B, 0x10, SUB_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7335,7 +7356,7 @@ fn sub_c_1() {
     let program: Vec<u8> = vec![MVI_A, 0x0f, MVI_C, 0x0ff, SUB_C, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7355,7 +7376,7 @@ fn sub_d_1() {
     let program: Vec<u8> = vec![MVI_A, 0x0ff, MVI_D, 0x0f, SUB_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7375,7 +7396,7 @@ fn sub_e_1() {
     let program: Vec<u8> = vec![MVI_A, 0x04, MVI_E, 0x02, SUB_E, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7395,7 +7416,7 @@ fn sub_h_1() {
     let program: Vec<u8> = vec![MVI_A, 0x02, MVI_H, 0x04, SUB_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7415,7 +7436,7 @@ fn sub_l_1() {
     let program: Vec<u8> = vec![MVI_A, 0x55, MVI_L, 0xaa, SUB_L, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7434,11 +7455,11 @@ fn sub_m_1() {
     cpu.status.set_carry(false);
     cpu.h = 0x12;
     cpu.l = 0x34;
-    cpu.memory.write_byte(0x1234, 0x55);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0x55);
     let program: Vec<u8> = vec![MVI_A, 0xaa, SUB_M, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7458,7 +7479,7 @@ fn sub_a_1() {
     let program: Vec<u8> = vec![MVI_A, 0x00, SUB_A, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7478,7 +7499,7 @@ fn sui_1() {
     let program: Vec<u8> = vec![MVI_A, 0x04, SUI, 0x02, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7498,15 +7519,15 @@ fn shld_1() {
     let program: Vec<u8> = vec![MVI_H, 0x12, MVI_L, 0x34, SHLD, 0x10, 0x02, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
         }
     }
     let addr = 0x0210;
-    assert_eq!(cpu.memory.read_byte(addr), 0x34);
-    assert_eq!(cpu.memory.read_byte(addr + 1), 0x12);
+    assert_eq!(cpu.memory.borrow_mut().read_byte(addr), 0x34);
+    assert_eq!(cpu.memory.borrow_mut().read_byte(addr + 1), 0x12);
 }
 #[test]
 ///
@@ -7519,15 +7540,15 @@ fn shld_2() {
     let program: Vec<u8> = vec![MVI_H, 0x12, MVI_L, 0x34, SHLD, 0xff, 0xff, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
         }
     }
     let addr = 0xffff;
-    assert_eq!(cpu.memory.read_byte(addr), 0x34);
-    assert_eq!(cpu.memory.read_byte(0), 0x12);
+    assert_eq!(cpu.memory.borrow_mut().read_byte(addr), 0x34);
+    assert_eq!(cpu.memory.borrow_mut().read_byte(0), 0x12);
 }
 #[test]
 ///
@@ -7540,14 +7561,14 @@ fn sta() {
     let program: Vec<u8> = vec![MVI_A, 0x55, STA, 0x10, 0x02, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
         }
     }
     let addr = 0x0210;
-    assert_eq!(cpu.memory.read_byte(addr), 0x55);
+    assert_eq!(cpu.memory.borrow_mut().read_byte(addr), 0x55);
 }
 #[test]
 ///
@@ -7560,14 +7581,14 @@ fn stax_b() {
     let program: Vec<u8> = vec![MVI_B, 0x02, MVI_C, 0x10, MVI_A, 0x55, STAX_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
         }
     }
     let addr = 0x0210;
-    assert_eq!(cpu.memory.read_byte(addr), 0x55);
+    assert_eq!(cpu.memory.borrow_mut().read_byte(addr), 0x55);
 }
 #[test]
 ///
@@ -7580,14 +7601,14 @@ fn stax_d() {
     let program: Vec<u8> = vec![MVI_D, 0x02, MVI_E, 0x10, MVI_A, 0xaa, STAX_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
         }
     }
     let addr = 0x0210;
-    assert_eq!(cpu.memory.read_byte(addr), 0xaa);
+    assert_eq!(cpu.memory.borrow_mut().read_byte(addr), 0xaa);
 }
 #[test]
 ///
@@ -7600,7 +7621,7 @@ fn sphl() {
     let program: Vec<u8> = vec![MVI_H, 0x02, MVI_L, 0x10, SPHL, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7621,7 +7642,7 @@ fn xchg() {
     ];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7643,7 +7664,7 @@ fn xra_b() {
     let program: Vec<u8> = vec![MVI_A, 0x55, MVI_B, 0xaa, XRA_B, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7663,7 +7684,7 @@ fn xra_c() {
     let program: Vec<u8> = vec![MVI_A, 0x00, MVI_C, 0x00, XRA_C, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7683,7 +7704,7 @@ fn xra_d() {
     let program: Vec<u8> = vec![MVI_A, 0x0f, MVI_D, 0xf0, XRA_D, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7703,7 +7724,7 @@ fn xra_e() {
     let program: Vec<u8> = vec![MVI_A, 0x12, MVI_E, 0x34, XRA_E, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7723,7 +7744,7 @@ fn xra_h() {
     let program: Vec<u8> = vec![MVI_A, 0x34, MVI_H, 0x12, XRA_H, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7743,7 +7764,7 @@ fn xra_l() {
     let program: Vec<u8> = vec![MVI_A, 0x80, MVI_L, 0x08, XRA_L, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7760,11 +7781,11 @@ fn xra_m() {
     let mut cpu = Cpu::new();
     cpu.sp = 0xffff;
     cpu.status.set_carry(false);
-    cpu.memory.write_byte(0x1234, 0x08);
+    cpu.memory.borrow_mut().write_byte(0x1234, 0x08);
     let program: Vec<u8> = vec![MVI_A, 0x80, MVI_H, 0x12, MVI_L, 0x34, XRA_M, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7784,7 +7805,7 @@ fn xra_a() {
     let program: Vec<u8> = vec![MVI_A, 0x0F, XRA_A, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7804,7 +7825,7 @@ fn xri() {
     let program: Vec<u8> = vec![MVI_A, 0x0f, XRI, 0x0f, HLT];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
@@ -7827,15 +7848,15 @@ fn xthl() {
     ];
     cpu.load_program(&program, 0x0200);
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == HLT {
             break;
         }
     }
     let addr = 0x020c;
-    assert_eq!(cpu.memory.read_byte(addr), 0x34);
-    assert_eq!(cpu.memory.read_byte(addr + 1), 0x12);
-    assert_eq!(cpu.memory.read_byte(addr + 2), 0x78);
-    assert_eq!(cpu.memory.read_byte(addr + 3), 0x56);
+    assert_eq!(cpu.memory.borrow_mut().read_byte(addr), 0x34);
+    assert_eq!(cpu.memory.borrow_mut().read_byte(addr + 1), 0x12);
+    assert_eq!(cpu.memory.borrow_mut().read_byte(addr + 2), 0x78);
+    assert_eq!(cpu.memory.borrow_mut().read_byte(addr + 3), 0x56);
 }

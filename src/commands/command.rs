@@ -3,6 +3,7 @@
 
 use crate::commands::breakpoints::Breakpoint;
 use crate::commands::cpu::Cpu;
+use crate::commands::dev::Dev;
 use crate::commands::directory::Directory;
 use crate::commands::disasm::Disasm;
 use crate::commands::help::Help;
@@ -11,7 +12,6 @@ use crate::commands::memory::Memory;
 use crate::commands::opcodes::Opcodes;
 use crate::commands::registers::Registers;
 use crate::commands::serial::Serial;
-use crate::commands::dev::Dev;
 use crate::commands::{MIN_COMMAND_HISTORY_LENGTH, MIN_OUTPUT_HISTORY_LENGTH};
 use crate::help;
 use crate::ui::app::{App, AppState};

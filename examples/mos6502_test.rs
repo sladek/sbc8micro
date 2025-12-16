@@ -9,9 +9,15 @@ fn main() {
     let start_addr = 0x0200;
     let size = cpu
         .memory
+        .borrow_mut()
         .load_data_from_acme_file("examples/test_6502.o")
         .unwrap();
-    let disassembly = disassemble(&mut cpu.memory, start_addr, start_addr + size.end, &opcodes);
+    let disassembly = disassemble(
+        &mut cpu.memory.borrow_mut(),
+        start_addr,
+        start_addr + size.end,
+        &opcodes,
+    );
     println!("---------------------------");
     println!("Main programm.");
     println!("---------------------------");
@@ -23,7 +29,7 @@ fn main() {
     println!("---------------------------");
     cpu.pc = start_addr;
     loop {
-        let opcode = cpu.memory.read_byte(cpu.pc);
+        let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
         cpu.step();
         if opcode == 0xff {
             println!("---------------------------");
@@ -35,11 +41,12 @@ fn main() {
     println!("Registers");
     print!("{}", cpu.get_registers());
     println!("Test zero page");
-    cpu.memory.print_hex_dump(0x55, 0x55 + 31);
+    let mut memory = cpu.memory.borrow_mut();
+    memory.print_hex_dump(0x55, 0x55 + 31);
     println!("Test area");
-    cpu.memory.print_hex_dump(0x04D0, 0x04D0 + 31);
+    memory.print_hex_dump(0x04D0, 0x04D0 + 31);
     println!("Upper stack:");
-    cpu.memory.print_hex_dump(0x018f - 0x5f, 0x018f);
+    memory.print_hex_dump(0x018f - 0x5f, 0x018f);
     //    log::set_max_level(log::LevelFilter::Debug);
     log::info!("Hahaha {:02X}", 0x34);
     log::debug!("I am here!");

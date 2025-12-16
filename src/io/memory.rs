@@ -6,12 +6,13 @@
 //!
 //! ```
 //! use sbc8micro::io::memory::{DummyIo, IoMemory};
+//! use sbc8micro::memory::MemCell::Memory;
 //!
 //! let address = 0x40;
 //! let value = 0x55;
 //! let mut memory = IoMemory::new();
 //! memory.map_port(Box::new(DummyIo::new()));
-//! memory.write(address, value);
+//! memory.write(&mut[Memory(0x00)],address, value);
 //! let result = memory.read(address);
 //! assert_eq!(value, result)
 //! ```
@@ -67,11 +68,11 @@ impl IoMemory {
     ///
     /// Writes data to specific io address. As in real system, it doesn't indicate success or failure
     /// and it is on the user to make sure that periferal exist on that address.
-    pub fn write(&mut self, address: u8, data: u8) {
+    pub fn write(&mut self, cpu_memory: &mut [MemCell], address: u8, data: u8) {
         if let Some(base_address) = self.port_map[address as usize]
             && let Some(port) = self.ports.get_mut(&base_address)
         {
-            port.write_to_address(address, data);
+            port.write_to_address(cpu_memory, address, data);  // Memory not used so it is just a dummy MemCell
         };
     }
     /// Removes ports mapped to base address
@@ -179,7 +180,7 @@ impl IoPort for DummyIo {
         }
         None
     }
-    fn write_to_address(&mut self, address: u8, data: u8) {
+    fn write_to_address(&mut self, _memory: &mut [MemCell], address: u8, data: u8) {
         let offset_data = self.ports_offset[0];
         let offset_control = self.ports_offset[1];
         if address == self.base_address + offset_data {
@@ -197,7 +198,7 @@ impl IoPort for DummyIo {
             );
         }
     }
-    fn write_to_memory_address(&mut self, address: u16, data: u8) {
+    fn write_to_memory_address(&mut self, _memory: &mut [MemCell], address: u16, data: u8) {
         let offset_data = self.ports_offset[0];
         let offset_control = self.ports_offset[1];
         if address == self.memory_base_addres + offset_data as u16 {
@@ -231,7 +232,7 @@ impl IoPort for DummyIo {
 
 #[cfg(test)]
 mod tests {
-    use crate::io::memory::{DummyIo, IoMemory};
+    use crate::{io::memory::{DummyIo, IoMemory}, memory::MemCell};
 
     #[test]
     /// Test of dummy interface
@@ -242,8 +243,9 @@ mod tests {
         let control: u8 = 0xaa;
         let mut memory = IoMemory::new();
         let _ = memory.map_port(Box::new(DummyIo::new()));
-        memory.write(address_data, data);
-        memory.write(address_control, control);
+        let cpu_memory = &mut [MemCell::Memory(0x00)];
+        memory.write(cpu_memory, address_data, data);
+        memory.write(cpu_memory, address_control, control);
         let mut result = memory.read(address_data);
         assert_eq!(data, result);
         result = memory.read(address_control);
@@ -258,8 +260,9 @@ mod tests {
         let control: u8 = 0xaa;
         let mut memory = IoMemory::new();
         let _ = memory.map_port(Box::new(DummyIo::new()));
-        memory.write(address_data, data);
-        memory.write(address_control, control);
+        let cpu_memory = &mut[MemCell::Memory(0x00)]; // Empty memory as it is not used in this interface
+        memory.write(cpu_memory, address_data, data);
+        memory.write(cpu_memory, address_control, control);
         let mut result = memory.read(address_data);
         assert_eq!(data, result);
         result = memory.read(address_control);
@@ -273,8 +276,9 @@ mod tests {
         let control: u8 = 0xaa;
         let mut memory = IoMemory::new();
         let _ = memory.map_port(Box::new(DummyIo::new())).unwrap();
-        memory.write(address_data, data);
-        memory.write(address_control, control);
+        let cpu_memory = &mut [MemCell::Memory(0x00)]; // Empty memory as it is not used in this interface
+        memory.write(cpu_memory, address_data, data);
+        memory.write(cpu_memory, address_control, control);
         let mut result = memory.read(address_data);
         assert_eq!(data, result);
         result = memory.read(address_control);

@@ -2,6 +2,7 @@ pub mod commands;
 pub mod cpu;
 pub mod debugger;
 pub mod disassembler;
+pub mod disk;
 pub mod help;
 pub mod io;
 pub mod memory;

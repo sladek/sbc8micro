@@ -17,9 +17,9 @@
 //!     0xA2, 0xFF, // LDX #0xFF => sets N flag
 //!     0x00,       // BRK
 //! ];
-//! cpu.memory.load_program(&program, 0x0600);
+//! cpu.load_program(&program, 0x0600);
 //! loop {
-//!     let opcode = cpu.memory.read_byte(cpu.pc);
+//!     let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
 //!     cpu.step();
 //!     if opcode == 0x00 {
 //!         break;
@@ -58,7 +58,7 @@ pub struct Cpu {
     /// Status register
     pub p: mos6502::Status,
     /// Memory assigned to CPU
-    pub memory: Memory,
+    pub memory: Box<Rc<RefCell<Memory>>>,
     pub io_memory: Option<memory::IoMemory>,
     /// Breakpoints
     pub breakpoints: Breakpoints,
@@ -80,7 +80,7 @@ impl Cpu {
             s: 0xFF,
             pc: 0,
             p: mos6502::Status::default(),
-            memory: Memory::new(),
+            memory: Box::new(Rc::new(RefCell::new(Memory::new()))),
             io_memory: None,
             breakpoints: Breakpoints::new(),
             debug: true,
@@ -141,7 +141,7 @@ impl Cpu {
 
     /// Loads program to the memory and set PC to start address of the programm
     pub fn load_program(&mut self, program: &[u8], start_addr: u16) {
-        let _ = self.memory.load_data(program, start_addr);
+        let _ = self.memory.borrow_mut().load_data(program, start_addr);
         self.pc = start_addr;
     }
     ///
@@ -194,20 +194,20 @@ impl Cpu {
         // Set Interrupt Disable flag
         self.p.set_interrupt_disable(true);
         // Load IRQ vector
-        let pc = self.memory.read_word(0xFFFE);
+        let pc = self.memory.borrow_mut().read_word(0xFFFE);
         self.pc = pc;
     }
     /// Pushes a byte to stack
     fn push(&mut self, value: u8) {
         let addr = 0x0100u16 + self.s as u16;
-        self.memory.write_byte(addr, value);
+        self.memory.borrow_mut().write_byte(addr, value);
         self.s = self.s.wrapping_sub(1);
     }
     /// Pops a byte from stack
     fn pop(&mut self) -> u8 {
         self.s = self.s.wrapping_add(1);
         let addr = 0x0100u16 + self.s as u16;
-        self.memory.read_byte(addr)
+        self.memory.borrow_mut().read_byte(addr)
     }
     /// Pushes a word into stack
     fn push_word(&mut self, val: u16) {
@@ -222,13 +222,13 @@ impl Cpu {
     }
     /// Reads immediate byte from memory
     fn read_immediate_byte(&mut self) -> u8 {
-        let value = self.memory.read_byte(self.pc);
+        let value = self.memory.borrow_mut().read_byte(self.pc);
         self.pc += 1;
         value
     }
     /// Reads immediate word from memory
     fn read_immediate_word(&mut self) -> u16 {
-        let value = self.memory.read_word(self.pc);
+        let value = self.memory.borrow_mut().read_word(self.pc);
         self.pc += 2;
         value
     }
@@ -236,31 +236,34 @@ impl Cpu {
     ///
     /// Reads the content of zero page addressed by immediate byte
     fn read_zero_page(&mut self) -> u8 {
-        let addr = self.memory.read_byte(self.pc) as u16;
+        let addr = self.memory.borrow_mut().read_byte(self.pc) as u16;
         self.pc += 1;
-        self.memory.read_byte(addr)
+        self.memory.borrow_mut().read_byte(addr)
     }
     /// Reads a byte addressed by address in immediate word
     fn read_absolute(&mut self) -> u8 {
-        let addr = self.memory.read_word(self.pc);
+        let addr = self.memory.borrow_mut().read_word(self.pc);
         self.pc += 2;
-        self.memory.read_byte(addr)
+        self.memory.borrow_mut().read_byte(addr)
     }
     /// Gets zero page address
     ///
     /// Gets address in zero page as immediate byte
     fn get_zero_page_address(&mut self) -> u8 {
-        self.memory.read_byte(self.pc)
+        self.memory.borrow_mut().read_byte(self.pc)
     }
     ///  Gets zero page X
     ///
     /// Gets address in zero page increased by the offset from X register
     fn get_zero_page_address_x(&mut self) -> u8 {
-        self.memory.read_byte(self.pc).wrapping_add(self.x)
+        self.memory
+            .borrow_mut()
+            .read_byte(self.pc)
+            .wrapping_add(self.x)
     }
     /// Gets absolute immediate address
     fn get_absolute_address(&mut self) -> u16 {
-        self.memory.read_word(self.pc)
+        self.memory.borrow_mut().read_word(self.pc)
     }
     /// Gets indirect address X - (indirect,X)
     ///
@@ -268,7 +271,9 @@ impl Cpu {
     /// then it reads a byte from zero page
     fn get_indirect_address_x(&mut self) -> u16 {
         let get_zero_page_address_x = self.get_zero_page_address_x();
-        self.memory.read_word_zero_page(get_zero_page_address_x)
+        self.memory
+            .borrow_mut()
+            .read_word_zero_page(get_zero_page_address_x)
     }
     /// Gets indirect address Y - (indirect),Y
     ///
@@ -277,6 +282,7 @@ impl Cpu {
     fn get_indirect_address_y(&mut self) -> u16 {
         let get_zero_page_address = self.get_zero_page_address();
         self.memory
+            .borrow_mut()
             .read_word_zero_page(get_zero_page_address)
             .wrapping_add(self.y as u16)
     }
@@ -284,74 +290,84 @@ impl Cpu {
     ///
     /// Reads immediate address and increases it by the content of X register
     fn get_absolute_address_x(&mut self) -> u16 {
-        self.memory.read_word(self.pc).wrapping_add(self.x as u16)
+        self.memory
+            .borrow_mut()
+            .read_word(self.pc)
+            .wrapping_add(self.x as u16)
     }
     /// Reads an absolut address Y
     ///
     /// Reads immediate address and increases it by the content of Y register
     fn get_absolute_address_y(&mut self) -> u16 {
-        self.memory.read_word(self.pc).wrapping_add(self.y as u16)
+        self.memory
+            .borrow_mut()
+            .read_word(self.pc)
+            .wrapping_add(self.y as u16)
     }
     /// Reads zero page X
     ///
     /// Reads an immediate zero page address, increases it by the content of X register
     /// and then returns byte from this new zero page address
     fn read_zero_page_x(&mut self) -> u8 {
-        let base = self.memory.read_byte(self.pc);
+        let base = self.memory.borrow_mut().read_byte(self.pc);
         self.pc += 1;
         let addr = base.wrapping_add(self.x) as u16;
-        self.memory.read_byte(addr)
+        self.memory.borrow_mut().read_byte(addr)
     }
     /// Reads zero page Y
     ///
     /// Reads an immediate zero page address, increases it by the content of Y register
     /// and then returns byte from this new zero page address
     fn read_zero_page_y(&mut self) -> u8 {
-        let base = self.memory.read_byte(self.pc);
+        let base = self.memory.borrow_mut().read_byte(self.pc);
         self.pc += 1;
         let addr = base.wrapping_add(self.y) as u16;
-        self.memory.read_byte(addr)
+        self.memory.borrow_mut().read_byte(addr)
     }
     /// Reads absolute X
     ///
     /// Reads an immediate address (16 bit), increases it by the content of X register and
     /// returns byte from this new address
     fn read_absolute_x(&mut self) -> u8 {
-        let base = self.memory.read_word(self.pc);
+        let base = self.memory.borrow_mut().read_word(self.pc);
         self.pc += 2;
         let addr = base.wrapping_add(self.x as u16);
-        self.memory.read_byte(addr)
+        self.memory.borrow_mut().read_byte(addr)
     }
     /// Reads absolute Y
     ///
     /// Reads an immediate address (16 bit), increases it by the content of Y register and
     /// returns byte from this new address
     fn read_absolute_y(&mut self) -> u8 {
-        let base = self.memory.read_word(self.pc);
+        let base = self.memory.borrow_mut().read_word(self.pc);
         self.pc += 2;
         let addr = base.wrapping_add(self.y as u16);
-        self.memory.read_byte(addr)
+        self.memory.borrow_mut().read_byte(addr)
     }
     /// Reads byte indexed indirect - ($addr, X)
     ///
     /// Reads immediate byte increased by the content of X register and uses that value
     /// for reading the new aabsolute (16 bit) address from zero page then returns a byte from this new address
     fn read_indexed_indirect(&mut self) -> u8 {
-        let base = self.memory.read_byte(self.pc).wrapping_add(self.x);
+        let base = self
+            .memory
+            .borrow_mut()
+            .read_byte(self.pc)
+            .wrapping_add(self.x);
         self.pc += 1;
-        let addr = self.memory.read_word_zero_page(base);
-        self.memory.read_byte(addr)
+        let addr = self.memory.borrow_mut().read_word_zero_page(base);
+        self.memory.borrow_mut().read_byte(addr)
     }
     /// Reads byte indirect indexed -  ($addr), Y
     ///
     /// Reads immediate byte as zero page address, then reads a word from this zero page address,
     /// increases it by the content of Y register and returns a byte from this new absolute address
     fn read_indirect_indexed(&mut self) -> u8 {
-        let zp_addr = self.memory.read_byte(self.pc);
+        let zp_addr = self.memory.borrow_mut().read_byte(self.pc);
         self.pc += 1;
-        let base = self.memory.read_word_zero_page(zp_addr);
+        let base = self.memory.borrow_mut().read_word_zero_page(zp_addr);
         let addr = base.wrapping_add(self.y as u16);
-        self.memory.read_byte(addr)
+        self.memory.borrow_mut().read_byte(addr)
     }
     /// ASL
     fn asl(&mut self, value: u8) -> u8 {
@@ -517,7 +533,7 @@ impl Cpu {
         let mut result = String::new();
         result.push_str(format!("{:04X}  ", addr).as_str());
         while neg_offset != 0 {
-            result.push_str(format!("{:02X} ", self.memory.read_byte(addr)).as_str());
+            result.push_str(format!("{:02X} ", self.memory.borrow_mut().read_byte(addr)).as_str());
             neg_offset -= 1;
             addr += 1;
         }
@@ -531,7 +547,7 @@ impl Cpu {
         //        macro_rules! dbg { ($($x:tt)*) => { if self.debug { println!($($x)*); } } }
         macro_rules! dbg { ($($x:tt)*) => { if self.debug { format!($($x)*)} else { "".to_string() }}}
 
-        let opcode = self.memory.read_byte(self.pc);
+        let opcode = self.memory.borrow_mut().read_byte(self.pc);
         self.pc += 1;
         let disasm: String;
         match opcode {
@@ -548,7 +564,7 @@ impl Cpu {
                 disasm = dbg!(
                     "{}ADC ${:02X}",
                     self.code_to_str(2),
-                    self.memory.read_byte(self.pc.wrapping_sub(1))
+                    self.memory.borrow_mut().read_byte(self.pc.wrapping_sub(1))
                 );
             }
             // ADC oper ;zero page,X
@@ -558,7 +574,7 @@ impl Cpu {
                 disasm = dbg!(
                     "{}ADC ${:02X},X",
                     self.code_to_str(2),
-                    self.memory.read_byte(self.pc.wrapping_sub(1))
+                    self.memory.borrow_mut().read_byte(self.pc.wrapping_sub(1))
                 );
             }
             // ADC oper ;absolute
@@ -661,7 +677,7 @@ impl Cpu {
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 let result = self.asl(value);
-                self.memory.write_byte_zero_page(addr, result);
+                self.memory.borrow_mut().write_byte_zero_page(addr, result);
                 disasm = dbg!("{}ASL ${:02X}", self.code_to_str(2), addr);
             }
             // ASL Zero Page,X
@@ -670,7 +686,7 @@ impl Cpu {
                 let addr = self.get_zero_page_address_x();
                 let value = self.read_zero_page_x();
                 let result = self.asl(value);
-                self.memory.write_byte(addr as u16, result);
+                self.memory.borrow_mut().write_byte(addr as u16, result);
                 disasm = dbg!("{}ASL ${:02X},X", self.code_to_str(2), addr_zp);
             }
             // ASL Absolute
@@ -678,7 +694,7 @@ impl Cpu {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 let result = self.asl(value);
-                self.memory.write_byte(addr, result);
+                self.memory.borrow_mut().write_byte(addr, result);
                 disasm = dbg!("{}ASL ${:04X}", self.code_to_str(3), addr);
             }
             // ASL Absolute,X
@@ -688,7 +704,7 @@ impl Cpu {
                 let addr = addr_zp.wrapping_add(self.x as u16);
                 let value = self.read_absolute_x();
                 let result = self.asl(value);
-                self.memory.write_byte(addr, result);
+                self.memory.borrow_mut().write_byte(addr, result);
                 disasm = dbg!("{}ASL ${:04X},X", self.code_to_str(3), addr_zp);
             }
             // BCC
@@ -732,7 +748,7 @@ impl Cpu {
             // BIT Absolute
             BIT_ABS => {
                 let addr = self.read_immediate_word();
-                let value = self.memory.read_byte(addr);
+                let value = self.memory.borrow_mut().read_byte(addr);
                 self.bit(value);
                 disasm = dbg!("{}BIT ${:04X}", self.code_to_str(3), addr);
             }
@@ -913,7 +929,7 @@ impl Cpu {
                 let addr = self.get_zero_page_address();
                 let val = self.read_zero_page();
                 let result = self.dec(val);
-                self.memory.write_byte(addr as u16, result);
+                self.memory.borrow_mut().write_byte(addr as u16, result);
                 disasm = dbg!("{}DEC ${:02X}", self.code_to_str(2), addr);
             }
             // DEC Zero Page,X
@@ -922,7 +938,7 @@ impl Cpu {
                 let addr = self.get_zero_page_address_x();
                 let val = self.read_zero_page_x();
                 let result = self.dec(val);
-                self.memory.write_byte(addr as u16, result);
+                self.memory.borrow_mut().write_byte(addr as u16, result);
                 disasm = dbg!("{}DEC ${:02X},X", self.code_to_str(2), addr_zp);
             }
             // DEC Absolute
@@ -930,7 +946,7 @@ impl Cpu {
                 let addr = self.get_absolute_address();
                 let val = self.read_absolute();
                 let result = self.dec(val);
-                self.memory.write_byte(addr, result);
+                self.memory.borrow_mut().write_byte(addr, result);
                 disasm = dbg!("{}DEC ${:04X}", self.code_to_str(3), addr);
             }
             DEC_ABS_X => {
@@ -939,7 +955,7 @@ impl Cpu {
                 let addr = addr_abs.wrapping_add(self.x as u16);
                 let val = self.read_absolute_x();
                 let result = self.dec(val);
-                self.memory.write_byte(addr, result);
+                self.memory.borrow_mut().write_byte(addr, result);
                 disasm = dbg!("{}DEC ${:04X},X", self.code_to_str(3), addr_abs);
             }
             // DEX
@@ -1012,7 +1028,7 @@ impl Cpu {
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 let result = self.inc(value);
-                self.memory.write_byte_zero_page(addr, result);
+                self.memory.borrow_mut().write_byte_zero_page(addr, result);
                 disasm = dbg!("{}INC ${:02X}", self.code_to_str(2), addr);
             }
             // INC Zero Page,X
@@ -1020,7 +1036,7 @@ impl Cpu {
                 let addr = self.get_zero_page_address_x();
                 let value = self.read_zero_page_x();
                 let result = self.inc(value);
-                self.memory.write_byte_zero_page(addr, result);
+                self.memory.borrow_mut().write_byte_zero_page(addr, result);
                 disasm = dbg!(
                     "{}INC ${:02X},X",
                     self.code_to_str(2),
@@ -1032,7 +1048,7 @@ impl Cpu {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 let result = self.inc(value);
-                self.memory.write_byte(addr, result);
+                self.memory.borrow_mut().write_byte(addr, result);
                 disasm = dbg!("{}INC ${:04X}", self.code_to_str(3), addr);
             }
             // INC Absolute,X
@@ -1040,7 +1056,7 @@ impl Cpu {
                 let addr = self.get_absolute_address_x();
                 let value = self.read_absolute_x();
                 let result = self.inc(value);
-                self.memory.write_byte(addr, result);
+                self.memory.borrow_mut().write_byte(addr, result);
                 disasm = dbg!(
                     "{}INC ${:04X},X",
                     self.code_to_str(3),
@@ -1061,7 +1077,7 @@ impl Cpu {
             }
             // JMP absolute
             JMP => {
-                let addr = self.memory.read_word(self.pc);
+                let addr = self.memory.borrow_mut().read_word(self.pc);
                 self.pc += 2;
                 disasm = dbg!("{}JMP ${:04X}\n----", self.code_to_str(3), addr);
                 self.pc = addr;
@@ -1069,13 +1085,15 @@ impl Cpu {
             // JMP indirect
             JMP_IND => {
                 let addr = self.get_absolute_address();
-                let addr_lo = self.memory.read_byte(self.pc);
-                let addr_hi = self.memory.read_byte(self.pc.wrapping_add(1));
+                let addr_lo = self.memory.borrow_mut().read_byte(self.pc);
+                let addr_hi = self.memory.borrow_mut().read_byte(self.pc.wrapping_add(1));
                 let jmp_addr_lo = self
                     .memory
+                    .borrow_mut()
                     .read_byte((addr_hi as u16) << 0x8 | addr_lo as u16);
                 let jmp_addr_hi = self
                     .memory
+                    .borrow_mut()
                     .read_byte((addr_hi as u16) << 0x8 | addr_lo.wrapping_add(1) as u16);
                 self.pc += 2;
                 disasm = dbg!("{}JMP (${:04X})\n----", self.code_to_str(3), addr);
@@ -1222,7 +1240,7 @@ impl Cpu {
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 let result = self.lsr(value);
-                self.memory.write_byte(addr as u16, result);
+                self.memory.borrow_mut().write_byte(addr as u16, result);
                 disasm = dbg!("{}LSR ${:02X}", self.code_to_str(2), addr);
             }
             // LSR zp,X
@@ -1230,7 +1248,7 @@ impl Cpu {
                 let addr = self.get_zero_page_address_x();
                 let value = self.read_zero_page_x();
                 let result = self.lsr(value);
-                self.memory.write_byte(addr as u16, result);
+                self.memory.borrow_mut().write_byte(addr as u16, result);
                 disasm = dbg!(
                     "{}LSR ${:02X},X",
                     self.code_to_str(2),
@@ -1242,7 +1260,7 @@ impl Cpu {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 let result = self.lsr(value);
-                self.memory.write_byte(addr, result);
+                self.memory.borrow_mut().write_byte(addr, result);
                 disasm = dbg!("{}LSR ${:04X}", self.code_to_str(3), addr);
             }
             // LSR abs,X
@@ -1250,7 +1268,7 @@ impl Cpu {
                 let addr = self.get_absolute_address_x();
                 let value = self.read_absolute_x();
                 let result = self.lsr(value);
-                self.memory.write_byte(addr, result);
+                self.memory.borrow_mut().write_byte(addr, result);
                 disasm = dbg!(
                     "{}LSR ${:04X},X",
                     self.code_to_str(3),
@@ -1346,7 +1364,7 @@ impl Cpu {
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 let result = self.rol(value);
-                self.memory.write_byte(addr as u16, result);
+                self.memory.borrow_mut().write_byte(addr as u16, result);
                 disasm = dbg!("{}ROL ${:02X}", self.code_to_str(2), addr);
             }
             // ROL zp,X
@@ -1354,7 +1372,7 @@ impl Cpu {
                 let addr = self.get_zero_page_address_x();
                 let value = self.read_zero_page_x();
                 let result = self.rol(value);
-                self.memory.write_byte(addr as u16, result);
+                self.memory.borrow_mut().write_byte(addr as u16, result);
                 disasm = dbg!(
                     "{}ROL ${:02X},X",
                     self.code_to_str(2),
@@ -1366,7 +1384,7 @@ impl Cpu {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 let result = self.rol(value);
-                self.memory.write_byte(addr, result);
+                self.memory.borrow_mut().write_byte(addr, result);
                 disasm = dbg!("{}ROL ${:04X}", self.code_to_str(3), addr);
             }
             // ROL abs,X
@@ -1374,7 +1392,7 @@ impl Cpu {
                 let addr = self.get_absolute_address_x();
                 let value = self.read_absolute_x();
                 let result = self.rol(value);
-                self.memory.write_byte(addr, result);
+                self.memory.borrow_mut().write_byte(addr, result);
                 disasm = dbg!(
                     "{}ROL ${:04X},X",
                     self.code_to_str(3),
@@ -1391,7 +1409,7 @@ impl Cpu {
                 let addr = self.get_zero_page_address();
                 let value = self.read_zero_page();
                 let result = self.ror(value);
-                self.memory.write_byte(addr as u16, result);
+                self.memory.borrow_mut().write_byte(addr as u16, result);
                 disasm = dbg!("{}ROR ${:02X}", self.code_to_str(2), addr);
             }
             // ROR zp,X
@@ -1399,7 +1417,7 @@ impl Cpu {
                 let addr = self.get_zero_page_address_x();
                 let value = self.read_zero_page_x();
                 let result = self.ror(value);
-                self.memory.write_byte(addr as u16, result);
+                self.memory.borrow_mut().write_byte(addr as u16, result);
                 disasm = dbg!(
                     "{}ROR ${:02X},X",
                     self.code_to_str(2),
@@ -1411,7 +1429,7 @@ impl Cpu {
                 let addr = self.get_absolute_address();
                 let value = self.read_absolute();
                 let result = self.ror(value);
-                self.memory.write_byte(addr, result);
+                self.memory.borrow_mut().write_byte(addr, result);
                 disasm = dbg!("{}ROR ${:04X}", self.code_to_str(3), addr);
             }
             // ROR abs,X
@@ -1419,7 +1437,7 @@ impl Cpu {
                 let addr = self.get_absolute_address_x();
                 let value = self.read_absolute_x();
                 let result = self.ror(value);
-                self.memory.write_byte(addr, result);
+                self.memory.borrow_mut().write_byte(addr, result);
                 disasm = dbg!(
                     "{}ROR ${:04X},X",
                     self.code_to_str(3),
@@ -1512,14 +1530,14 @@ impl Cpu {
             STA_ZP => {
                 let addr = self.get_zero_page_address();
                 self.pc += 1;
-                self.memory.write_byte_zero_page(addr, self.a);
+                self.memory.borrow_mut().write_byte_zero_page(addr, self.a);
                 disasm = dbg!("{}STA ${:02X}", self.code_to_str(2), addr);
             }
             // STA zp,X
             STA_ZP_X => {
                 let addr = self.get_zero_page_address_x();
                 self.pc += 1;
-                self.memory.write_byte_zero_page(addr, self.a);
+                self.memory.borrow_mut().write_byte_zero_page(addr, self.a);
                 disasm = dbg!(
                     "{}STA ${:02X},X",
                     self.code_to_str(2),
@@ -1530,21 +1548,21 @@ impl Cpu {
             STA_ABS => {
                 let addr = self.get_absolute_address();
                 self.pc += 2;
-                self.memory.write_byte(addr, self.a);
+                self.memory.borrow_mut().write_byte(addr, self.a);
                 disasm = dbg!("{}STA ${:04X}", self.code_to_str(3), addr);
             }
             // STA $nnnn,X
             STA_ABS_X => {
                 let addr = self.get_absolute_address_x();
                 self.pc += 2;
-                self.memory.write_byte(addr, self.a);
+                self.memory.borrow_mut().write_byte(addr, self.a);
                 disasm = dbg!("{}STA ${:04X},X", self.code_to_str(3), addr);
             }
             // STA $nnnn,Y
             STA_ABS_Y => {
                 let addr = self.get_absolute_address_y();
                 self.pc += 2;
-                self.memory.write_byte(addr, self.a);
+                self.memory.borrow_mut().write_byte(addr, self.a);
                 disasm = dbg!("{}STA ${:04X},Y", self.code_to_str(3), addr);
             }
             // STA (indirect,X)
@@ -1552,7 +1570,7 @@ impl Cpu {
                 let addr_zp = self.get_zero_page_address();
                 let addr = self.get_indirect_address_x();
                 self.pc += 1;
-                self.memory.write_byte(addr, self.a);
+                self.memory.borrow_mut().write_byte(addr, self.a);
                 disasm = dbg!("{}STA (${:02X},X)", self.code_to_str(2), addr_zp);
             }
             // STA (indirect),Y
@@ -1560,45 +1578,47 @@ impl Cpu {
                 let addr_zp = self.get_zero_page_address();
                 let addr = self.get_indirect_address_y();
                 self.pc += 1;
-                self.memory.write_byte(addr, self.a);
+                self.memory.borrow_mut().write_byte(addr, self.a);
                 disasm = dbg!("{}STA (${:02X}),Y", self.code_to_str(2), addr_zp);
             }
             // STX zp
             STX_ZP => {
                 let addr = self.read_immediate_byte();
-                self.memory.write_byte_zero_page(addr, self.x);
+                self.memory.borrow_mut().write_byte_zero_page(addr, self.x);
                 disasm = dbg!("{}STX ${:02X}", self.code_to_str(2), addr);
             }
             // STX zp,Y
             STX_ZP_Y => {
                 let addr = self.read_immediate_byte();
                 self.memory
+                    .borrow_mut()
                     .write_byte_zero_page(addr.wrapping_add(self.y), self.x);
                 disasm = dbg!("{}STX ${:02X},Y", self.code_to_str(2), addr);
             }
             // STX abs
             STX_ABS => {
                 let addr = self.read_immediate_word();
-                self.memory.write_byte(addr, self.x);
+                self.memory.borrow_mut().write_byte(addr, self.x);
                 disasm = dbg!("{}STX ${:02X}", self.code_to_str(2), addr);
             }
             // STY zp
             STY_ZP => {
                 let addr = self.read_immediate_byte();
-                self.memory.write_byte_zero_page(addr, self.y);
+                self.memory.borrow_mut().write_byte_zero_page(addr, self.y);
                 disasm = dbg!("{}STY ${:02X}", self.code_to_str(2), addr);
             }
             // STY zp,X
             STY_ZP_X => {
                 let addr = self.read_immediate_byte();
                 self.memory
+                    .borrow_mut()
                     .write_byte_zero_page(addr.wrapping_add(self.x), self.y);
                 disasm = dbg!("{}STY ${:02X},X", self.code_to_str(2), addr);
             }
             // STY abs
             STY_ABS => {
                 let addr = self.read_immediate_word();
-                self.memory.write_byte(addr, self.y);
+                self.memory.borrow_mut().write_byte(addr, self.y);
                 disasm = dbg!("{}STY ${:04X}", self.code_to_str(3), addr);
             }
             // TAX
@@ -1648,20 +1668,34 @@ impl Cpu {
     }
 }
 
+use crate::cpu::RefMut;
 use crate::disassembler::mos6502::disassemble;
 use crate::disassembler::mos6502::load_opcodes_table;
+use std::cell::RefCell;
+use std::rc::Rc;
+
 impl CpuUi for Cpu {
     fn memory_dump(&mut self, start: u16, end: u16) -> Vec<String> {
-        self.memory.hex_dump(start, end)
+        self.memory.borrow_mut().hex_dump(start, end)
     }
-    fn get_memory(&mut self) -> &mut Memory {
-        &mut self.memory
+    /*
+        fn get_memory(&mut self) -> &mut Memory {
+            &mut self.memory
+        }
+    */
+    fn get_memory(&mut self) -> RefMut<'_, Memory> {
+        self.memory.borrow_mut()
     }
     fn get_io_memory(&mut self) -> Option<&mut crate::io::memory::IoMemory> {
         None
     }
     fn disasm(&mut self, start: u16, end: u16) -> Vec<String> {
-        disassemble(&mut self.memory, start, end, &load_opcodes_table())
+        disassemble(
+            &mut self.memory.borrow_mut(),
+            start,
+            end,
+            &load_opcodes_table(),
+        )
     }
     fn show_registers(&mut self) -> Vec<String> {
         self.get_registers().lines().map(String::from).collect()
