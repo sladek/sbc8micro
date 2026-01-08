@@ -6,7 +6,8 @@ use crate::io::serial::Serial;
 use crate::io::serial::{Error, ErrorKind};
 use serialport::{DataBits, Parity, SerialPortInfo};
 use std::collections::VecDeque;
-use crate::memory::MemCell;
+use crate::memory::{MemCell, dma::Dma};
+use crate::io::ErrorIndicators;
 
 pub struct Async8251 {
     data: Data,
@@ -525,27 +526,29 @@ impl Async8251 {
     }
 }
 impl IoPort for Async8251 {
-    fn write_to_address(&mut self, _memory: &mut [MemCell], address: u8, data: u8) {
+    fn write_to_address(&mut self, memory: &mut [MemCell], address: u8, data: u8) -> Result<Option<Dma>, ErrorIndicators> {
         if let Some(base_address) = self.base_address {
             if address == base_address {
                 self.write_tx_data(data);
-                return;
+                return Ok(None);
             };
             if address == base_address + 1 {
-                self.write_to_control(data)
+                self.write_to_control(data);
             }
         }
+        return Ok(None)
     }
-    fn write_to_memory_address(&mut self, _memory: &mut [MemCell], address: u16, data: u8) {
+    fn write_to_memory_address(&mut self, _memory: &mut [MemCell], address: u16, data: u8) -> Result<Option<Dma>, ErrorIndicators> {
         if let Some(base_address) = self.memory_base_address {
             if address == base_address {
                 self.write_tx_data(data);
-                return;
+                return Ok(None);
             }
             if address == base_address + 1 {
                 self.write_to_control(data);
             }
         }
+        return Ok(None)
     }
     fn read_from_address(&mut self, address: u8) -> Option<u8> {
         if let Some(base_address) = self.base_address {

@@ -1,5 +1,5 @@
 //! Generic memory implementation
-
+pub mod dma;
 use crate::io::IoPort;
 use crate::ui::app::AppState;
 use intelhex::IntelHexFile;
@@ -7,6 +7,8 @@ use intelhex::file::RecordType;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{Error, Read};
+use crate::memory::dma::Dma;
+use crate::disk::sssd8fd::ErrorIndicators;
 
 pub const CAPACITY: usize = 0x10000;
 
@@ -128,7 +130,13 @@ impl Memory {
             }
             MemCell::Io(addr) => {
                 if let Some(port) = self.ports.get_mut(&addr) {
-                    port.write_to_memory_address(&mut self.data, address, value);
+                    let dma = port.write_to_memory_address(&mut self.data, address, value);
+                    match dma {
+                        Ok(dma) => {
+                            let _ = self.process_dma(dma);
+                        }
+                        _ => {}
+                    }
                 }
             }
         }
@@ -141,8 +149,8 @@ impl Memory {
     }
     /// Write a word to specific address
     pub fn write_word(&mut self, addr: u16, value: u16) {
-        self.write_byte(addr, (value & 0xFF) as u8);
-        self.write_byte(addr.wrapping_add(1), (value >> 8) as u8);
+        let _ = self.write_byte(addr, (value & 0xFF) as u8);
+        let _ = self.write_byte(addr.wrapping_add(1), (value >> 8) as u8);
     }
     /// Reads a byte from zero_page [0, 0xff]
     ///
@@ -157,7 +165,7 @@ impl Memory {
     /// This is used by the CPU like mos6502
     pub fn write_byte_zero_page(&mut self, addr: u8, value: u8) {
         self.write_byte(addr as u16, value);
-    }
+   }
     /// Reads a word from zero_page [0, 0xff]
     ///
     /// Address is only 8bit long so it can read a data from address range of 0x00 .. 0xff.
@@ -182,7 +190,7 @@ impl Memory {
         let mut end_addr = start_addr;
         for (i, &byte) in data.iter().enumerate() {
             end_addr = start_addr.saturating_add(i as u16);
-            self.write_byte(end_addr, byte);
+            let _ = self.write_byte(end_addr, byte);
             if end_addr == 0xffffu16 {
                 // End of memory reached
                 return Ok(Region {
@@ -266,7 +274,7 @@ impl Memory {
         }
         for (i, chunk) in input_data.chunks(16).enumerate() {
             let mut line = String::new();
-            line += &format!("{:08X}: ", (i * 16) + start_addr as usize);
+            line += &format!("{:04X}: ", (i * 16) + start_addr as usize);
             // Print hex values
             for cell in chunk {
                 let (addr, c) = *cell;
@@ -302,6 +310,22 @@ impl Memory {
         }
         hex_dump
     }
+    /// Process Dma requests
+    /// 
+    /// Tak as a parameter a Dma and if there are DmaRequests process them. (Puts them unto CPU's RAM)
+    pub fn process_dma(&mut self, dma: Option<Dma>) -> Result<(), String> {
+        if let Some(dma) = dma  {
+            for data in dma.get_requests() {
+                let mut address = data.get_address();
+                let data = data.get_data();
+                for value in data {
+                    let _ = self.write_byte(address, value);
+                    address += 1;
+                }
+            }
+        }
+        Ok(())
+    }
 }
 
 pub enum Reg {
@@ -320,7 +344,7 @@ mod tests {
         let mut memory = Memory::new();
         let addr = 0x0100u16;
         let value = 0x55u8;
-        memory.write_byte(addr, value);
+        let _ = memory.write_byte(addr, value);
         let result = memory.read_byte(addr);
         assert_eq! {result, value};
     }
@@ -361,8 +385,8 @@ mod tests {
         let addr = 0x0100u16;
         let value0 = 0x55u16;
         let value1 = 0xAAu16;
-        memory.write_byte(addr, value0 as u8);
-        memory.write_byte(addr.wrapping_add(1), value1 as u8);
+        let _ = memory.write_byte(addr, value0 as u8);
+        let _ = memory.write_byte(addr.wrapping_add(1), value1 as u8);
         let result = memory.read_word(addr);
         let value = value1 << 8 | value0;
         assert_eq!(result, value);
@@ -390,7 +414,7 @@ mod tests {
         let mut memory = Memory::new();
         let addr = 0x0010u16;
         let value = 0x55u8;
-        memory.write_byte(addr, value);
+        let _ = memory.write_byte(addr, value);
         let result = memory.read_byte_zero_page(addr as u8);
         assert_eq!(result, value);
     }
@@ -416,8 +440,8 @@ mod tests {
         let mut memory = Memory::new();
         let addr = 0xFFu8;
         let value = 0x55AAu16;
-        memory.write_byte(addr as u16, (value & 0x00ff) as u8);
-        memory.write_byte(0x0000u16, ((value & 0xff00) >> 8) as u8);
+        let _ = memory.write_byte(addr as u16, (value & 0x00ff) as u8);
+        let _ = memory.write_byte(0x0000u16, ((value & 0xff00) >> 8) as u8);
         let result = memory.read_word_zero_page(addr);
         assert_eq!(result, value);
     }

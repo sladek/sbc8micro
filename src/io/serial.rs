@@ -193,33 +193,3 @@ impl Serial {
         }
     }
 }
-
-#[derive(Default, Clone)]
-struct FiFo<T> {
-    buf: VecDeque<T>,
-    capacity: usize,
-}
-impl<T> FiFo<T> {
-    pub fn new(capacity: usize) -> Self {
-        Self {
-            buf: VecDeque::with_capacity(capacity),
-            capacity,
-        }
-    }
-    fn push(&mut self, item: T) -> Result<(), Error> {
-        if self.is_full() {
-            return Err(Error::new(ErrorKind::BufferOverflow, "Buffer overflow"));
-        }
-        self.buf.push_back(item);
-        Ok(())
-    }
-    fn pop(&mut self) -> Option<T> {
-        if self.buf.is_empty() {
-            return None;
-        }
-        self.buf.pop_front()
-    }
-    fn is_full(&self) -> bool {
-        self.buf.len() == self.capacity
-    }
-}

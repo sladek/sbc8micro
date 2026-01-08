@@ -1599,7 +1599,7 @@ impl Cpu {
             STX_ABS => {
                 let addr = self.read_immediate_word();
                 self.memory.borrow_mut().write_byte(addr, self.x);
-                disasm = dbg!("{}STX ${:02X}", self.code_to_str(2), addr);
+               disasm = dbg!("{}STX ${:02X}", self.code_to_str(2), addr);
             }
             // STY zp
             STY_ZP => {

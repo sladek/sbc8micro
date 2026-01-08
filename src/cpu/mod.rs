@@ -1,8 +1,6 @@
 //! Provides a code for specific CPU
-
 use crate::io::memory;
 use crate::memory::Memory;
-
 use std::cell::RefMut;
 
 pub mod i8080;

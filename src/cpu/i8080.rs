@@ -30,7 +30,7 @@ use crate::debugger::Breakpoints;
 use crate::disassembler::i8080::disassemble;
 use crate::disassembler::i8080_opcode_consts::*;
 use crate::io;
-use crate::memory::{Memory};
+use crate::memory::{Memory, MemCell};
 use crate::status::i8080::*;
 use std::cell::{RefCell, RefMut};
 use std::rc::Rc;
@@ -192,8 +192,9 @@ impl Cpu {
         self.io_memory.read(address)
     }
     fn out(&mut self, address: u8) {
-        let mut memory = self.memory.borrow_mut().get_data();
-        self.io_memory.write(&mut memory, address, self.a);
+        let memory = &mut self.memory.clone().borrow_mut().get_data();
+        let dma = self.io_memory.write(memory, address, self.a);
+        let _ = self.memory.borrow_mut().process_dma(dma);
     }
     fn read_immediate_byte(&mut self) -> u8 {
         let value = self.memory.borrow_mut().read_byte(self.pc);
@@ -1730,10 +1731,8 @@ impl Cpu {
             SHLD => {
                 let addr = self.read_immediate_word();
                 self.memory.borrow_mut().write_byte(addr, self.l);
-                self.memory
-                    .borrow_mut()
-                    .write_byte(addr.wrapping_add(1), self.h);
-                disasm = dbg!("{}SHLD {:04X}H", self.code_to_str(3), addr);
+                self.memory.borrow_mut().write_byte(addr.wrapping_add(1), self.h);
+               disasm = dbg!("{}SHLD {:04X}H", self.code_to_str(3), addr);
             }
             STA => {
                 let addr = self.read_immediate_word();

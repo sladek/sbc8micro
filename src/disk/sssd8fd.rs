@@ -229,6 +229,21 @@ impl Floppy {
             Err(_) => Err(ErrorIndicators::WriteError),
         }
     }
+    /// Seek track
+    /// 
+    /// Moves to the beginning of track specified by track_number
+    pub fn seek(&mut self, track_number: u8) -> Result<()> {
+        Self::check_ranges(track_number, 1)?;
+        let offset = Floppy::seek_offset(track_number, 1);
+        if self
+            .disk
+            .seek(std::io::SeekFrom::Start(offset as u64))
+            .is_err()
+        {
+            return Err(ErrorIndicators::SeekError);
+        }
+        Ok(())
+    }
     /// Write one sector to disk
     ///
     /// Writes one sector to specific file on the harddrive.

@@ -1,10 +1,9 @@
 use crate::disk::sssd8fd::{ErrorIndicators, Floppy};
-use crate::memory::{self, MemCell, Memory};
+use crate::memory::{self, MemCell};
 use crate::io::IoPort;
 use crate::disk::sssd8fd::Result;
-use std::cell::RefCell;
-use std::rc::Rc;
-
+use crate::memory::dma::DmaRequest;
+use memory::dma::Dma;
 enum Opcode {
     NoOperation = 0b000,
     Seek = 0b001,
@@ -78,7 +77,7 @@ enum Dstat {
     InterruptPending = 0b0100, // Interrupt flip-flop status
     ControllerPresent = 0b1000, // Controller presence indicator
 }
-pub struct Sssd8fdc {
+pub struct Isbc201 {
     dstat: u8,
     dstat_address: u8,
     dstat_memory_address: u16,
@@ -104,9 +103,9 @@ pub struct Sssd8fdc {
 
 const BASE: u8 = 0x78;
 const MEMORY_BASE: u16 = 0x1000;
-impl Default for Sssd8fdc {
+impl Default for Isbc201 {
     fn default() -> Self {
-        Sssd8fdc {
+        Isbc201 {
             dstat: 0,
             dstat_address: BASE,
             dstat_memory_address: MEMORY_BASE,
@@ -132,9 +131,9 @@ impl Default for Sssd8fdc {
     }
 }
 
-impl Sssd8fdc {
+impl Isbc201 {
     pub fn new() -> Self {
-        Sssd8fdc {
+        Isbc201 {
             dstat: Dstat::ControllerPresent as u8,
             ..Default::default()
         }
@@ -266,26 +265,75 @@ impl Sssd8fdc {
     /// Processes I/O parameter block. Reference to mutable CPU memory is also a parameter as it is needed for DMA access from fdc.
     /// It cannot be simply borrowed muttably as it is already borrowed muttably during processing of the instruction itself so we rather pass the mutable reference 
     /// to memory array to make it available if needed for example to read IOPB or write sector data back to memory.
-    fn process_iopb(&mut self, memory: &mut [MemCell], iopb: &Iopb) -> Result<()> {
-        let di = DisketteInstruction::new(iopb.diskette_instruction);
-        let opcode = di.get_opcode();
-        let unit = di.get_unit_select();
+    fn process_iopb(&mut self, memory: &mut [MemCell], iopb: &Iopb) -> Result<Option<Dma>> {
+        let discette_instruction = DisketteInstruction::new(iopb.diskette_instruction);
+        let opcode = discette_instruction.get_opcode();
+        let unit = discette_instruction.get_unit_select();
         self.set_active_floppy(unit);
         match opcode {
+            opcode if opcode == Opcode::NoOperation as u8 => {
+                return Ok(None);
+            }
+            opcode if opcode == Opcode::Seek as u8 => {
+                let track = iopb.track_address;
+                match &mut self.floppy[self.active_floppy as usize] {
+                    Some(floppy) => {
+                        floppy.seek(track)?
+                    }
+                    None => {
+                        return Err(ErrorIndicators::SeekError)
+                    }
+                }
+                self.set_interrupt_pending();
+                return Ok(None);
+            }
+            opcode if opcode == Opcode::FormatTrack as u8 => {
+                let track = iopb.track_address;
+                match &mut self.floppy[self.active_floppy as usize] {
+                    Some(floppy) => {
+                        floppy.format_track(track)?
+                    }
+                    None => {
+                        return Err(ErrorIndicators::SeekError)
+                    }
+                }
+                self.set_interrupt_pending();
+                return Ok(None);
+            }
+            opcode if opcode == Opcode::Recalibrate as u8 => {
+                match &mut self.floppy[self.active_floppy as usize] {
+                    Some(floppy) => {
+                        floppy.seek(0)?
+                    }
+                    None => {
+                        return Err(ErrorIndicators::SeekError)
+                    }
+                }
+                self.set_interrupt_pending();
+                return Ok(None);
+            }
             opcode if opcode == Opcode::ReadData as u8 => {
                 let data = self.read_data(iopb)?;
                 let address: u16 = (iopb.buffer_address_high as u16) << 8 | iopb.buffer_address_low as u16;
+                let dma = DmaRequest::new(address, data);
+
+/*
                 for i in 0 .. data.len() {
                     memory[address as usize + i] = memory::MemCell::Memory(data[i]);
                 }
+*/
                 self.set_interrupt_pending();
-
+                return Ok(Some(Dma::new(dma)));
+            }
+            opcode if opcode == Opcode::VerifyCrc as u8 => {
+                let _data = self.read_data(iopb)?; // Just read data. But dont transfer ot to CPU's memory.
+                self.set_interrupt_pending();
             }
             _ => {
                 // Do nothing, for now.
             }
         }
-        Ok(())
+        Ok(None)
     }
     /// Read data from floppy disk
     /// 
@@ -324,7 +372,7 @@ impl Sssd8fdc {
     }
 }
 
-impl IoPort for Sssd8fdc {
+impl IoPort for Isbc201 {
     fn get_base_address(&self) -> Option<u8> {
         self.base_address
     }
@@ -361,42 +409,56 @@ impl IoPort for Sssd8fdc {
         }
         None
     }
-    fn write_to_address(&mut self, memory: &mut [MemCell], address: u8, data: u8) {
+    fn write_to_address(&mut self, memory: &mut [MemCell], address: u8, data: u8) -> std::result::Result<Option<Dma>, ErrorIndicators>{
         if address == self.ilow_address {
             // Write mamory address lower
             self.iopb_address = data as u16;
-            return;
+            return Ok(None);
         }
         if address == self.ihigh_address {
             // Write memory address upper and start disk operation
             self.iopb_address |= (data as u16) << 8;
             let iopb = self.get_iopb(memory);
-            let _ = self.process_iopb(memory, &iopb);
-            return;
+            match self.process_iopb(memory, &iopb) {
+                Ok(dma) => {
+                    return Ok(dma)
+                }
+                Err(err) => {
+                    return Err(err)
+                }
+            }
         }
         if address == self.reset_address {
             // Write memory address upper and start disk operation
             self.reset();
         }
+        Ok(None)
     }
-    fn write_to_memory_address(&mut self, memory: &mut [MemCell], address: u16, data: u8) {
+    fn write_to_memory_address(&mut self, memory: &mut [MemCell], address: u16, data: u8) -> std::result::Result<Option<Dma>, ErrorIndicators> {
         if address == self.ilow_memory_address {
             // Write memory address lower
             self.iopb_address = data as u16;
-            return;
+            return Ok(None);
         }
         if address == self.ihigh_memory_address {
             // Write memory address upper and start disk operation
             self.iopb_address |= (data as u16) << 8;
 
             let iopb = self.get_iopb(memory);
-            let _ = self.process_iopb(memory, &iopb);
-            return;
+            match self.process_iopb(memory, &iopb) {
+                Ok(dma) => {
+                    return Ok(dma)
+                }
+                Err(err) => {
+                    return Err(err)
+                }
+            }
         }
         if address == self.reset_memory_address {
             // Write memory address upper and start disk operation
             self.reset();
         }
+        Ok(None)
     }
 }
 #[derive(Default, Debug)]
@@ -414,13 +476,14 @@ struct Iopb {
 }
 #[cfg(test)]
 mod tests {
-    use crate::cpu::CpuUi;
+    use crate::cpu::{CpuUi, mos6502};
     use crate::cpu::i8080::{self};
     use crate::disassembler::i8080_opcode_consts::*;
+    use crate::disassembler::mos6502_opcode_consts::{BRK, LDA_ABS, LDA_IMM, STA_ABS};
     use crate::disk::sssd8fd::Floppy;
     use crate::disk::sssd8fd::Sector;
     use crate::io::memory::IoMemory;
-    use crate::io::{IoPort, sssd8fdc::Sssd8fdc};
+    use crate::io::{IoPort, isbc201::Isbc201};
     use std::fs;
     use std::rc::Rc;
 
@@ -436,8 +499,8 @@ mod tests {
     fn test_io_mapped() {
         let cpu = i8080::Cpu::new();
         let memory = Rc::clone(&cpu.memory);
-        memory.borrow_mut().write_byte(0x55aa, 0x55);
-        let mut fdc = Sssd8fdc::new();
+        let _ = memory.borrow_mut().write_byte(0x55aa, 0x55);
+        let mut fdc = Isbc201::new();
         fdc.set_base_address(0x78);
         println!("Name: {:?}", fdc.get_name());
         println!("{}", fdc.get_io_port_info());
@@ -449,8 +512,8 @@ mod tests {
     fn test_memory_mapped() {
         let cpu = i8080::Cpu::new();
         let memory = Rc::clone(&cpu.memory);
-        memory.borrow_mut().write_byte(0x55aa, 0x55);
-        let mut fdc = Sssd8fdc::new();
+        let _ = memory.borrow_mut().write_byte(0x55aa, 0x55);
+        let mut fdc = Isbc201::new();
         fdc.set_memory_base_address(0x1000);
         println!("Name: {:?}", fdc.get_name());
         println!("{}", fdc.get_io_port_info());
@@ -459,7 +522,7 @@ mod tests {
     }
     #[test]
     fn test_iopb_read_sector() {
-        let file_name = "iopb_test.dsk";
+        let file_name = "iopb_test_read_sector.dsk";
         init_disk(file_name);
         // let's use that freshly created disk image and write some data
         let mut floppy = Floppy::new(file_name, false).unwrap();
@@ -475,19 +538,88 @@ mod tests {
         let program_address = 0x1000;
         let ilow = 0x79u8;
         let ihigh = 0x7au8;
-        let mut fdc = Box::new(Sssd8fdc::new()); // Base address 0x78
+        let mut fdc = Box::new(Isbc201::new()); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
         fdc.set_floppy(floppy, 0);
         fdc.set_base_address(0x78);
         let io_memory = cpu.get_io_memory().unwrap();
         let res = io_memory.map_port(fdc);
         assert_eq!(Ok(()), res);
-        cpu.set_debug_flag(true);
+        cpu.set_debug_flag(false);
 
         let iopb: &[u8] = &[
             // Iopb starts at 0x2000
             0x80, // Cannel word 
             0b0000_0100, // Diskette operation (read data)
+            0x01, // Number of records  
+            0x00, // Track address
+            0x01, // Sector address 
+            0x00, // buffer address Lower. 0x3000 buffer address for read data from fdc
+            0x30, // buffer address Upper.
+        ];
+        let program: &[u8] = &[
+            MVI_A, (iopb_address & 0x0ff) as u8,
+            OUT, ilow,
+            MVI_A, (iopb_address >> 8) as u8,
+            OUT, ihigh,
+            IN, 0x78, // Read dstat
+            HLT,
+        ];
+        let _ = cpu.get_memory().load_data(program, program_address);
+        let _ = cpu.get_memory().load_data(iopb, iopb_address);
+        let _ = cpu.set_pc(program_address);
+        loop {
+            let pc = cpu.pc;
+            let opcode = cpu.get_memory().read_byte(pc);
+            cpu.one_step();
+            if opcode == HLT {
+                break;
+            }
+        }
+        // Lets verify some data read from floppy to memory
+        assert_eq!(cpu.get_memory().read_byte(0x3000), 0x00);
+        assert_eq!(cpu.get_memory().read_byte(0x3010), 0x10);
+        assert_eq!(cpu.get_memory().read_byte(0x3020), 0x20);
+        assert_eq!(cpu.get_memory().read_byte(0x3030), 0x30);
+        assert_eq!(cpu.get_memory().read_byte(0x3040), 0x40);
+        assert_eq!(cpu.get_memory().read_byte(0x3050), 0x50);
+        assert_eq!(cpu.get_memory().read_byte(0x3060), 0x60);
+        assert_eq!(cpu.get_memory().read_byte(0x3070), 0x70);
+        remove_disk(file_name);
+        let acc= cpu.a;
+        assert_eq!(0x0d, acc);
+    }
+    #[test]
+    fn test_iopb_verify_crc() {
+        let file_name = "iopb_test_verify.dsk";
+        init_disk(file_name);
+        // let's use that freshly created disk image and write some data
+        let mut floppy = Floppy::new(file_name, false).unwrap();
+        let mut data = [0; 128];
+        for i in 0..data.len() {
+            data[i] = i as u8;
+        };
+        // Let's write one sector
+        let sector = Sector::new(0, 1, &data);
+        _ = floppy.seek_write_sector(sector);
+        let mut cpu = i8080::Cpu::new();
+        let iopb_address = 0x2000;
+        let program_address = 0x1000;
+        let ilow = 0x79u8;
+        let ihigh = 0x7au8;
+        let mut fdc = Box::new(Isbc201::new()); // Base address 0x78
+        // Let's assign the floppy as floppy[0] to the controller
+        fdc.set_floppy(floppy, 0);
+        fdc.set_base_address(0x78);
+        let io_memory = cpu.get_io_memory().unwrap();
+        let res = io_memory.map_port(fdc);
+        assert_eq!(Ok(()), res);
+        cpu.set_debug_flag(false);
+
+        let iopb: &[u8] = &[
+            // Iopb starts at 0x2000
+            0x80, // Cannel word 
+            0b0000_0101, // Diskette operation (verify crc)
             0x01, // Number of records  
             0x00, // Track address
             0x01, // Sector address 
@@ -518,8 +650,194 @@ mod tests {
         assert_eq!(0x0d, acc);
     }
     #[test]
+    fn test_iopb_seek() {
+        let file_name = "iopb_test_seek.dsk";
+        init_disk(file_name);
+        // let's use that freshly created disk image and write some data
+        let mut floppy = Floppy::new(file_name, false).unwrap();
+        let mut data = [0; 128];
+        for i in 0..data.len() {
+            data[i] = i as u8;
+        };
+        // Let's write one sector
+        let sector = Sector::new(0, 1, &data);
+        _ = floppy.seek_write_sector(sector);
+        let mut cpu = i8080::Cpu::new();
+        let iopb_address = 0x2000;
+        let program_address = 0x1000;
+        let ilow = 0x79u8;
+        let ihigh = 0x7au8;
+        let mut fdc = Box::new(Isbc201::new()); // Base address 0x78
+        // Let's assign the floppy as floppy[0] to the controller
+        fdc.set_floppy(floppy, 0);
+        fdc.set_base_address(0x78);
+        let io_memory = cpu.get_io_memory().unwrap();
+        let res = io_memory.map_port(fdc);
+        assert_eq!(Ok(()), res);
+        cpu.set_debug_flag(false); // Set to true if you want to see ASM cod which is executed
+
+        let iopb: &[u8] = &[
+            // Iopb starts at 0x2000
+            0x80, // Cannel word 
+            0b0000_0001, // Diskette operation (seek)
+            0x01, // Number of records  
+            0x00, // Track address
+            0x01, // Sector address 
+            0x00, // buffer address Lower. 0x4000 buffer address for read dtata from fdc
+            0x30, // buffer address Upper.
+        ];
+        let program: &[u8] = &[
+            MVI_A, (iopb_address & 0x0ff) as u8,
+            OUT, ilow,
+            MVI_A, (iopb_address >> 8) as u8,
+            OUT, ihigh,
+            IN, 0x78, // Read dstat
+            HLT,
+        ];
+        let _ = cpu.get_memory().load_data(program, program_address);
+        let _ = cpu.get_memory().load_data(iopb, iopb_address);
+        let _ = cpu.set_pc(program_address);
+        loop {
+            let pc = cpu.pc;
+            let opcode = cpu.get_memory().read_byte(pc);
+            if let Some(disasm) = cpu.one_step() {
+                println!("{disasm}");
+            };
+            if opcode == HLT {
+                break;
+            }
+        }
+        remove_disk(file_name);
+        let acc= cpu.a;
+        assert_eq!(0x0d, acc);
+    }
+    #[test]
+    fn test_iopb_recalibrate() {
+        let file_name = "iopb_test.dsk";
+        init_disk(file_name);
+        // let's use that freshly created disk image and write some data
+        let mut floppy = Floppy::new(file_name, false).unwrap();
+        let mut data = [0; 128];
+        for i in 0..data.len() {
+            data[i] = i as u8;
+        };
+        // Let's write one sector
+        let sector = Sector::new(0, 1, &data);
+        _ = floppy.seek_write_sector(sector);
+        let mut cpu = i8080::Cpu::new();
+        let iopb_address = 0x2000;
+        let program_address = 0x1000;
+        let ilow = 0x79u8;
+        let ihigh = 0x7au8;
+        let mut fdc = Box::new(Isbc201::new()); // Base address 0x78
+        // Let's assign the floppy as floppy[0] to the controller
+        fdc.set_floppy(floppy, 0);
+        fdc.set_base_address(0x78);
+        let io_memory = cpu.get_io_memory().unwrap();
+        let res = io_memory.map_port(fdc);
+        assert_eq!(Ok(()), res);
+        cpu.set_debug_flag(false); // Set to true if you want to see ASM cod which is executed
+
+        let iopb: &[u8] = &[
+            // Iopb starts at 0x2000
+            0x80, // Cannel word 
+            0b0000_0011, // Diskette operation (recalibrate)
+            0x01, // Number of records  
+            0x00, // Track address
+            0x01, // Sector address 
+            0x00, // buffer address Lower. 0x4000 buffer address for read dtata from fdc
+            0x30, // buffer address Upper.
+        ];
+        let program: &[u8] = &[
+            MVI_A, (iopb_address & 0x0ff) as u8,
+            OUT, ilow,
+            MVI_A, (iopb_address >> 8) as u8,
+            OUT, ihigh,
+            IN, 0x78, // Read dstat
+            HLT,
+        ];
+        let _ = cpu.get_memory().load_data(program, program_address);
+        let _ = cpu.get_memory().load_data(iopb, iopb_address);
+        let _ = cpu.set_pc(program_address);
+        loop {
+            let pc = cpu.pc;
+            let opcode = cpu.get_memory().read_byte(pc);
+            if let Some(disasm) = cpu.one_step() {
+                println!("{disasm}");
+            };
+            if opcode == HLT {
+                break;
+            }
+        }
+        remove_disk(file_name);
+        let acc= cpu.a;
+        assert_eq!(0x0d, acc); // Check the status of operation
+    }
+    #[test]
+    fn test_iopb_format_track() {
+        let file_name = "iopb_test.dsk";
+        init_disk(file_name);
+        // let's use that freshly created disk image and write some data
+        let mut floppy = Floppy::new(file_name, false).unwrap();
+        let mut data = [0; 128];
+        for i in 0..data.len() {
+            data[i] = i as u8;
+        };
+        // Let's write one sector
+        let sector = Sector::new(0, 1, &data);
+        _ = floppy.seek_write_sector(sector);
+        let mut cpu = i8080::Cpu::new();
+        let iopb_address = 0x2000;
+        let program_address = 0x1000;
+        let ilow = 0x79u8;
+        let ihigh = 0x7au8;
+        let mut fdc = Box::new(Isbc201::new()); // Base address 0x78
+        // Let's assign the floppy as floppy[0] to the controller
+        fdc.set_floppy(floppy, 0);
+        fdc.set_base_address(0x78);
+        let io_memory = cpu.get_io_memory().unwrap();
+        let res = io_memory.map_port(fdc);
+        assert_eq!(Ok(()), res);
+        cpu.set_debug_flag(false); // Set to true to see ASM code which is executed
+
+        let iopb: &[u8] = &[
+            // Iopb starts at 0x2000
+            0x80, // Cannel word 
+            0b0000_0010, // Diskette operation (format track)
+            0x01, // Number of records  
+            0x02, // Track address
+            0x01, // Sector address 
+            0x00, // buffer address Lower. 0x4000 buffer address for read dtata from fdc
+            0x30, // buffer address Upper.
+        ];
+        let program: &[u8] = &[
+            MVI_A, (iopb_address & 0x0ff) as u8,
+            OUT, ilow,
+            MVI_A, (iopb_address >> 8) as u8,
+            OUT, ihigh,
+            IN, 0x78, // Read dstat
+            HLT,
+        ];
+        let _ = cpu.get_memory().load_data(program, program_address);
+        let _ = cpu.get_memory().load_data(iopb, iopb_address);
+        let _ = cpu.set_pc(program_address);
+        loop {
+            let pc = cpu.pc;
+            let opcode = cpu.get_memory().read_byte(pc);
+            if let Some(disasm) = cpu.one_step() {
+                println!("{disasm}");
+            };
+            if opcode == HLT {
+                break;
+            }
+        }
+        remove_disk(file_name);
+        let acc= cpu.a;
+        assert_eq!(0x0d, acc); // Check the status of fdc
+    }
+    #[test]
     fn test_iopb_read_sector_mem_mapped() {
-        let file_name = "iopb_test1.dsk";
+        let file_name = "iopb_test_read_sec_mem.dsk";
         init_disk(file_name);
         // let's use that freshly created disk image and write some data
         let mut floppy = Floppy::new(file_name, false).unwrap();
@@ -536,13 +854,13 @@ mod tests {
         let base_addr = 0x1000u16; // base address of fdc = 0x1000;
         let ilow = base_addr + 1 ; 
         let ihigh = base_addr + 2;
-        let mut fdc = Box::new(Sssd8fdc::new()); // Base address 0x78
+        let mut fdc = Box::new(Isbc201::new()); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
         fdc.set_floppy(floppy, 0);
         fdc.set_memory_base_address(base_addr);
         let res = cpu.get_memory().map_port(fdc); 
         assert_eq!(Ok(()), res);
-        cpu.set_debug_flag(true);
+        cpu.set_debug_flag(false); // Set to true if you want to generate ASM code
         let iopb: &[u8] = &[
             // Iopb starts at 0x2000
             0x80, // Channel word 
@@ -561,27 +879,103 @@ mod tests {
             LDA, (base_addr & 0xff) as u8, ((base_addr & 0xff00) >> 8) as u8, // Read dstat 
             HLT,
         ];
-        // Print source code
         let _ = cpu.get_memory().load_data(program, program_address);
         let _ = cpu.get_memory().load_data(iopb, iopb_address);
-        let _ = cpu.print_disasm(program_address, program_address + 0x0a);
-        println!("Let's print IOPB from memory");
-        let _ = cpu
-            .get_memory()
-            .print_hex_dump(iopb_address,  iopb_address + 0xf);
         let _ = cpu.set_pc(program_address);
         loop {
             let pc = cpu.pc;
             let opcode = cpu.get_memory().read_byte(pc);
-            cpu.one_step();
+            if let Some(disasm) = cpu.one_step() {
+                println!("{disasm}");
+            };
             if opcode == HLT {
                 break;
             }
         }
-        println!("Content of sector data that have just been read from floppy");
-        let _ = cpu
-            .get_memory()
-            .print_hex_dump(0x4000,  0x407f);
+        // Lets verify some data read from floppy to memory
+        assert_eq!(cpu.get_memory().read_byte(0x4000), 0x00);
+        assert_eq!(cpu.get_memory().read_byte(0x4010), 0x10);
+        assert_eq!(cpu.get_memory().read_byte(0x4020), 0x20);
+        assert_eq!(cpu.get_memory().read_byte(0x4030), 0x30);
+        assert_eq!(cpu.get_memory().read_byte(0x4040), 0x40);
+        assert_eq!(cpu.get_memory().read_byte(0x4050), 0x50);
+        assert_eq!(cpu.get_memory().read_byte(0x4060), 0x60);
+        assert_eq!(cpu.get_memory().read_byte(0x4070), 0x70);
+        let acc= cpu.a;
+        assert_eq!(0x0d, acc);
+        remove_disk(file_name);
+    }
+    #[test]
+    fn test_iopb_read_sector_mem_mapped_6502() {
+        let file_name = "iopb_test_read_sec_mem_6502.dsk";
+        init_disk(file_name);
+        // let's use that freshly created disk image and write some data
+        let mut floppy = Floppy::new(file_name, false).unwrap();
+        let mut data = [0; 128];
+        for i in 0..data.len() {
+            data[i] = i as u8;
+        };
+        // Let's write one sector
+        let sector = Sector::new(0, 1, &data);
+        _ = floppy.seek_write_sector(sector);
+        let mut cpu = mos6502::Cpu::new();
+        let iopb_address = 0x3000u16;
+        let program_address = 0x2000u16;
+        let base_addr = 0x1000u16; // base address of fdc = 0x1000;
+        let ilow = base_addr + 1 ; 
+        let ihigh = base_addr + 2;
+        let mut fdc = Box::new(Isbc201::new()); // Base address 0x78
+        // Let's assign the floppy as floppy[0] to the controller
+        fdc.set_floppy(floppy, 0);
+        fdc.set_memory_base_address(base_addr);
+        let res = cpu.get_memory().map_port(fdc); 
+        assert_eq!(Ok(()), res);
+        cpu.set_debug_flag(false); // Set to true if you want to generate ASM code
+        let iopb: &[u8] = &[
+            // Iopb starts at 0x2000
+            0x80, // Channel word 
+            0b0000_0100, // Diskette operation (read data)
+            0x01, // Number of records  
+            0x00, // Track address
+            0x01, // Sector address 
+            0x00, // buffer address Lower. 0x4000 buffer address for read dtata from fdc
+            0x40, // buffer address Upper.
+        ];
+        let program: &[u8] = &[
+            LDA_IMM, (iopb_address & 0x0ff) as u8,
+            STA_ABS, (ilow & 0xff) as u8, ((ilow & 0xff00) >> 8) as u8, 
+            LDA_IMM, (iopb_address >> 8) as u8,
+            STA_ABS, (ihigh & 0xff) as u8, ((ihigh & 0xff00) >> 8) as u8,
+            LDA_ABS, (base_addr & 0xff) as u8, ((base_addr & 0xff00) >> 8) as u8, // Read dstat 
+            BRK,
+        ];
+        let _ = cpu.get_memory().load_data(program, program_address);
+        let _ = cpu.get_memory().load_data(iopb, iopb_address);
+        let _ = cpu.set_pc(program_address);
+        loop {
+            let pc = cpu.pc;
+            let opcode = cpu.get_memory().read_byte(pc);
+            if let Some(disasm) = cpu.one_step() {
+                println!("{disasm}");
+            };
+            if opcode == BRK {
+                break;
+            }
+        }
+        let disassembly = cpu.disasm(0x2000, 0x200f);
+        for line in disassembly {
+            println!("{}", line);
+        }
+        cpu.get_memory().print_hex_dump(0x4000, 0x407f);
+        // Lets verify some data read from floppy to memory
+        assert_eq!(cpu.get_memory().read_byte(0x4000), 0x00);
+        assert_eq!(cpu.get_memory().read_byte(0x4010), 0x10);
+        assert_eq!(cpu.get_memory().read_byte(0x4020), 0x20);
+        assert_eq!(cpu.get_memory().read_byte(0x4030), 0x30);
+        assert_eq!(cpu.get_memory().read_byte(0x4040), 0x40);
+        assert_eq!(cpu.get_memory().read_byte(0x4050), 0x50);
+        assert_eq!(cpu.get_memory().read_byte(0x4060), 0x60);
+        assert_eq!(cpu.get_memory().read_byte(0x4070), 0x70);
         let acc= cpu.a;
         assert_eq!(0x0d, acc);
         remove_disk(file_name);

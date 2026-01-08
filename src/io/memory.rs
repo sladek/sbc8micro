@@ -17,7 +17,9 @@
 //! assert_eq!(value, result)
 //! ```
 use crate::{io::*, ui::app::AppState};
-use std::collections::HashMap;
+use std::result;
+use std::{cell::RefCell, collections::HashMap};
+use std::rc::Rc;
 
 const MEMORY_SIZE: usize = 256;
 pub struct IoMemory {
@@ -68,12 +70,18 @@ impl IoMemory {
     ///
     /// Writes data to specific io address. As in real system, it doesn't indicate success or failure
     /// and it is on the user to make sure that periferal exist on that address.
-    pub fn write(&mut self, cpu_memory: &mut [MemCell], address: u8, data: u8) {
+    pub fn write(&mut self, memory: &mut [MemCell], address: u8, data: u8) -> Option<Dma>{
         if let Some(base_address) = self.port_map[address as usize]
             && let Some(port) = self.ports.get_mut(&base_address)
         {
-            port.write_to_address(cpu_memory, address, data);  // Memory not used so it is just a dummy MemCell
-        };
+            match port.write_to_address( memory, address, data) {
+                Ok(dma) => {
+                    dma
+                }
+                Err(_) => {None}
+            }
+        }
+        else {None}
     }
     /// Removes ports mapped to base address
     pub fn remove(&mut self, base_address: u8) -> Result<AppState, String> {
@@ -180,7 +188,7 @@ impl IoPort for DummyIo {
         }
         None
     }
-    fn write_to_address(&mut self, _memory: &mut [MemCell], address: u8, data: u8) {
+    fn write_to_address(&mut self, _memory: &mut [MemCell], address: u8, data: u8) -> Result<Option<Dma>, ErrorIndicators> {
         let offset_data = self.ports_offset[0];
         let offset_control = self.ports_offset[1];
         if address == self.base_address + offset_data {
@@ -197,8 +205,9 @@ impl IoPort for DummyIo {
                 data, address
             );
         }
+        Ok(None)
     }
-    fn write_to_memory_address(&mut self, _memory: &mut [MemCell], address: u16, data: u8) {
+    fn write_to_memory_address(&mut self, _memory: &mut [MemCell], address: u16, data: u8) -> Result<Option<Dma>, ErrorIndicators> {
         let offset_data = self.ports_offset[0];
         let offset_control = self.ports_offset[1];
         if address == self.memory_base_addres + offset_data as u16 {
@@ -215,6 +224,7 @@ impl IoPort for DummyIo {
                 data, address
             );
         }
+        Ok(None)
     }
     fn get_ports_offset(&self) -> &[u8] {
         &self.ports_offset
@@ -232,6 +242,7 @@ impl IoPort for DummyIo {
 
 #[cfg(test)]
 mod tests {
+
     use crate::{io::memory::{DummyIo, IoMemory}, memory::MemCell};
 
     #[test]
