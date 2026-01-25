@@ -4,7 +4,6 @@ use serialport::DataBits;
 use serialport::Parity;
 use serialport::SerialPort;
 use serialport::StopBits;
-use std::collections::VecDeque;
 use std::sync::mpsc;
 use std::sync::mpsc::Receiver;
 use std::sync::mpsc::Sender;

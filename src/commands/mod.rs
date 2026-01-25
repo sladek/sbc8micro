@@ -13,6 +13,8 @@ pub mod memory;
 pub mod opcodes;
 pub mod registers;
 pub mod serial;
+pub mod fdc;
+pub mod script;
 
 pub const CPU_LIST: &str = "i8080 | 8080 | mos6502 | 6502";
 pub const MIN_MEMORY_RANGE: u16 = 16;

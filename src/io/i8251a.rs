@@ -526,7 +526,7 @@ impl Async8251 {
     }
 }
 impl IoPort for Async8251 {
-    fn write_to_address(&mut self, memory: &mut [MemCell], address: u8, data: u8) -> Result<Option<Dma>, ErrorIndicators> {
+    fn write_to_address(&mut self, _memory: &mut [MemCell], address: u8, data: u8) -> Result<Option<Dma>, ErrorIndicators> {
         if let Some(base_address) = self.base_address {
             if address == base_address {
                 self.write_tx_data(data);
@@ -536,7 +536,7 @@ impl IoPort for Async8251 {
                 self.write_to_control(data);
             }
         }
-        return Ok(None)
+        Ok(None)
     }
     fn write_to_memory_address(&mut self, _memory: &mut [MemCell], address: u16, data: u8) -> Result<Option<Dma>, ErrorIndicators> {
         if let Some(base_address) = self.memory_base_address {
@@ -548,7 +548,7 @@ impl IoPort for Async8251 {
                 self.write_to_control(data);
             }
         }
-        return Ok(None)
+        Ok(None)
     }
     fn read_from_address(&mut self, address: u8) -> Option<u8> {
         if let Some(base_address) = self.base_address {

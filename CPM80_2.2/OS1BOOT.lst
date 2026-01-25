@@ -1,0 +1,141 @@
+
+Assembly Listing                                 mds cold start loader at 3000h                                  Page: 1
+------------------------------------------------------------------------------------------------------------------------
+
+                            1 |     title   'mds cold start loader at 3000h'
+                            2 | ;
+                            3 | ;   MDS-800 Cold Start Loader for CP/M 2.0
+                            4 | ;
+                            5 | ;   Version 2.0 August, 1979
+                            6 | ;
+                            7 | false   equ 0
+                            8 | true    equ  !false
+                            9 | testing equ false   ;if true, then go to mon80 on errors
+                           10 | ;
+                           11 |     if  testing
+                           12 : bias    equ 03400h
+                           13 :     endif
+                           14 |     if  !testing
+                           15 | bias    equ 0000h
+                           16 |     endif
+                           17 | cpmb    equ bias        ;base of dos load
+                           18 | bdos    equ 806h+bias   ;entry to dos for calls
+                           19 | bdose   equ 1880h+bias  ;end of dos load
+                           20 | boot    equ 1600h+bias  ;cold start entry point
+                           21 | rboot   equ boot+3      ;warm start entry point
+                           22 | ;
+                           23 |     org 03000h  ;loaded down from hardware boot at 3000h
+                           24 | ;
+                           25 | bdosl   equ bdose-cpmb
+                           26 | ntrks   equ 2   ;number of tracks to read
+                           27 | bdoss   equ bdosl/128   ;number of sectors in dos
+                           28 | bdos0   equ 25  ;number of bdos sectors on track 0
+                           29 | bdos1   equ bdoss-bdos0 ;number of sectors on track 1
+                           30 | ;
+                           31 | mon80   equ 0f800h  ;intel monitor base
+                           32 | rmon80  equ 0ff0fh  ;restart location for mon80
+                           33 | base    equ 078h    ;'base' used by controller
+                           34 | rtype   equ base+1  ;result type
+                           35 | rbyte   equ base+3  ;result byte
+                           36 | reset   equ base+7  ;reset controller
+                           37 | ;
+                           38 | dstat   equ base    ;disk status port
+                           39 | ilow    equ base+1  ;low iopb address
+                           40 | ihigh   equ base+2  ;high iopb address
+                           41 | bsw equ 0ffh    ;boot switch
+                           42 | recal   equ 3h  ;recalibrate selected drive
+                           43 | readf   equ 4h  ;disk read function
+                           44 | stack   equ 100h    ;use end of boot for stack
+                           45 | ;
+                           46 | rstart:
+3000: 31 00 01             47 |     lxi sp,stack;in case of call to mon80
+                           48 | ;   clear disk status
+3003: DB 79                49 |     in  rtype
+3005: DB 7B                50 |     in  rbyte
+                           51 | ;   check if boot switch is off
+                           52 | coldstart:
+3007: DB FF                53 |     in  bsw
+3009: E6 02                54 |     ani 02h ;switch on?
+300B: C2 07 30             55 |     jnz coldstart
+                           56 | ;   clear the controller
+
+
+Assembly Listing                                 mds cold start loader at 3000h                                  Page: 2
+------------------------------------------------------------------------------------------------------------------------
+
+300E: D3 7F                57 |     out reset   ;logic cleared
+                           58 | ;
+                           59 | ;
+3010: 06 02                60 |     mvi b,ntrks ;number of tracks to read
+3012: 21 42 30             61 |     lxi h,iopb0
+                           62 | ;
+                           63 | start:
+                           64 | ;
+                           65 | ;   read first/next track into cpmb
+3015: 7D                   66 |     mov a,l
+3016: D3 79                67 |     out ilow
+3018: 7C                   68 |     mov a,h
+3019: D3 7A                69 |     out ihigh
+301B: DB 78                70 | wait0:  in  dstat
+301D: E6 04                71 |     ani 4
+301F: CA 1B 30             72 |     jz  wait0
+                           73 | ;
+                           74 | ;   check disk status
+3022: DB 79                75 |     in  rtype
+3024: E6 03                76 |     ani 11b
+3026: FE 02                77 |     cpi 2
+                           78 | ;
+                           79 |     if  testing
+                           80 :     cnc rmon80  ;go to monitor if 11 or 10
+                           81 :     endif
+                           82 |     if  !testing
+3028: D2 00 30             83 |     jnc rstart  ;retry the load
+                           84 |     endif
+                           85 | ;
+302B: DB 7B                86 |     in  rbyte   ;i/o complete, check status
+                           87 | ;   if not ready, then go to mon80
+302D: 17                   88 |     ral
+302E: DC 0F FF             89 |     cc  rmon80  ;not ready bit set
+3031: 1F                   90 |     rar     ;restore
+3032: E6 1E                91 |     ani 11110b  ;overrun/addr err/seek/crc/xxxx
+                           92 | ;
+                           93 |     if  testing
+                           94 :     cnz rmon80  ;go to monitor
+                           95 :     endif
+                           96 |     if  !testing
+3034: C2 00 30             97 |     jnz rstart  ;retry the load
+                           98 |     endif
+                           99 | ;
+                          100 | ;
+3037: 11 00 00            101 |     lxi d,iopbl ;length of iopb
+303A: 19                  102 |     dad d   ;addressing next iopb
+303B: 05                  103 |     dcr b   ;count down tracks
+303C: C2 15 30            104 |     jnz start
+                          105 | ;
+                          106 | ;
+                          107 | ;   jmp to boot to print initial message, and set up jmps
+303F: C3 00 16            108 |     jmp boot
+                          109 | ;
+                          110 | ;   parameter blocks
+3042: 80                  111 | iopb0:  db  80h ;iocw, no update
+3043: 04                  112 |     db  readf   ;read function
+
+
+Assembly Listing                                 mds cold start loader at 3000h                                  Page: 3
+------------------------------------------------------------------------------------------------------------------------
+
+3044: 19                  113 |     db  bdos0   ;# sectors to read on track 0
+3045: 00                  114 |     db  0   ;track 0
+3046: 02                  115 |     db  2   ;start with sector 2 on track 0
+3047: 00 00               116 |     dw  cpmb    ;start at base of bdos
+                          117 | iopbl   equ $-iopb0
+                          118 | ;
+3049: 80                  119 | iopb1:  db  80h
+304A: 04                  120 |     db  readf
+304B: 18                  121 |     db  bdos1   ;sectors to read on track 1
+304C: 01                  122 |     db  1   ;track 1
+304D: 01                  123 |     db  1   ;sector 1
+304E: 80 0C               124 |     dw  cpmb+bdos0*128  ;base of second read
+                          125 | ;
+                          126 |     end
+

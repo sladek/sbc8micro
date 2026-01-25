@@ -2,6 +2,8 @@
 use crate::io::memory;
 use crate::memory::Memory;
 use std::cell::RefMut;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 pub mod i8080;
 pub mod i8080_tests;
@@ -19,6 +21,7 @@ pub trait CpuUi {
     fn memory_dump(&mut self, start: u16, end: u16) -> Vec<String>;
     //    fn get_memory(&mut self) -> &mut Memory;
     fn get_memory(&mut self) -> RefMut<'_, Memory>;
+    fn get_memory_ref(&mut self) -> Rc<RefCell<Memory>>;
     fn get_io_memory(&mut self) -> Option<&mut memory::IoMemory>;
     fn get_pc(&mut self) -> u16;
     fn set_pc(&mut self, pc: u16);

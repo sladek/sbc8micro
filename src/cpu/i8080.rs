@@ -30,10 +30,11 @@ use crate::debugger::Breakpoints;
 use crate::disassembler::i8080::disassemble;
 use crate::disassembler::i8080_opcode_consts::*;
 use crate::io;
-use crate::memory::{Memory, MemCell};
+use crate::memory::Memory;
 use crate::status::i8080::*;
 use std::cell::{RefCell, RefMut};
 use std::rc::Rc;
+use crate::disassembler::i8080::load_opcodes_table;
 
 /// CPU registers, flags, counters and memory
 #[derive(Default)]
@@ -1828,14 +1829,15 @@ impl Cpu {
     }
 }
 
-use crate::disassembler::i8080::load_opcodes_table;
-
 impl CpuUi for Cpu {
     fn memory_dump(&mut self, start: u16, end: u16) -> Vec<String> {
         self.memory.borrow_mut().hex_dump(start, end)
     }
     fn get_memory(&mut self) -> RefMut<'_, Memory> {
         self.memory.borrow_mut()
+    }
+    fn get_memory_ref(&mut self) -> Rc<RefCell<Memory>> {
+        *self.memory.clone()
     }
     fn get_io_memory(&mut self) -> Option<&mut io::memory::IoMemory> {
         Some(&mut self.io_memory)

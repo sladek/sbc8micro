@@ -69,10 +69,22 @@ pub static HELP: &str = r#"
     "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    ch\\n    command_history_length\\n    ch 100\\n    ch 0ffh\\n    command_history_length 0x00ff\\n    command_history_length $00ff\\n Note: If only oh or command_history_length is used, then the command history length is displayed; otherwise, the length is set to the value provided as a parameter."
   },
   {
+    "command": "d | dump",
+    "description": "Displays an area of the RAM for a specific CPU.",
+    "usage": "dump or d or dump <start address> or d <start address> or dump <start address> <end address> or d <start address> <end address>",
+    "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    dump\\n    dump 0xff\\n    dump 0 127\\n    d 0h 0ffh\\n    d $0 $ff\\n    d 0x0 0xff\\n Note: When <start address> and <end address> are defined they are stored internally and next usage of dump command without address range will use these value.\\n       When only \"dump <start address>\" is defined then end address is calculated as <start + dump_range> where dump_range is by default 128 and can be changed by \"set dump_range <value>\" command."
+  },
+  {
     "command": "da | disasm",
     "description": "Shows a disassembled code of a specific memory region.",
     "usage": "da or disasm or da <start address> or disasm <start address> or da <start address> <end address> or disasm <start address> <end address>",
     "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    da\\n    disasm\\n    da 0ffh\\n    disasm $ff\\n    da 0 255\\n    disasm 0x0000 0x00ff\\n Note: When <start address> and <end address> are defined they are stored internally and next usage of disasm command without address range will use these value.\\n       When only \"disasm <start address>\" is defined then <end address> is calculated as <start address> + <disasm_range> where disasm_range is by default 16 and can be changed\\n       by disasm_range <value> command or dr <value>."
+  },
+  {
+    "command": "dev",
+    "description": "Shows devices (serial, floppy disk controllers, ...) currently attached to the CPU.",
+    "usage": "dev",
+    "examples": "dev"
   },
   {
     "command": "dr | disasm_range",
@@ -81,10 +93,10 @@ pub static HELP: &str = r#"
     "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    dr\\n    disasm_range\\n    dr 100\\n    dr 0ffh\\n    disasm_range 0x00ff\\n    disasm_range $00ff\\n Note: If only dr or disasm_range is used, then the disassembler range is displayed; otherwise, the range is set to the value provided as a parameter.\\n       End address of disassembler is calculated as start adrress + range."
   },
   {
-    "command": "d | dump",
-    "description": "Displays an area of the RAM for a specific CPU.",
-    "usage": "dump or d or dump <start address> or d <start address> or dump <start address> <end address> or d <start address> <end address>",
-    "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    dump\\n    dump 0xff\\n    dump 0 127\\n    d 0h 0ffh\\n    d $0 $ff\\n    d 0x0 0xff\\n Note: When <start address> and <end address> are defined they are stored internally and next usage of dump command without address range will use these value.\\n       When only \"dump <start address>\" is defined then end address is calculated as <start + dump_range> where dump_range is by default 128 and can be changed by \"set dump_range <value>\" command."
+    "command": "fdc | floppy",
+    "description": "Sets flppy controller port's address and disk names.",
+    "usage": "fdc <address> <disk 1> [disk 2] [disk 3] [disk 4]",
+    "examples": "\\n    fdc 0x78 cpm.dsk\\n    floppy 0x78 cpm.dsk[ro] asm.dsk\\n    fdc M0x1234 cpm.dsk\\n    floppy M0x1234 cpm.dsk[RO] plm.dsk data1.dsk data2.dsk\\n Note: Address can be defined as <address 8bit> if mapped to io memory or as M<address 16bit> if mapped to cpu's memory.\\n       File name can have a suffix [ro] or [RO] (not case sensitive) to indicate that the disk will be mounted as read only."
   },
   {
     "command": "g | go",
@@ -163,6 +175,12 @@ pub static HELP: &str = r#"
     "description": "Sets serial port's address, name, clock frequency and default parameters.",
     "usage": "ser <address> <port name> [clock] or serial <address> <port name> [clock]",
     "examples": "\\n    ser 0x40 COM3\\n    ser 0x40 /dev/tty4 2048000\\n    serial M0x1234 COM3\\n    serial M0x1234 /dev/tty4 20480000\\n Note: Address can be defined as <address 8bit> if mapped to io memory or as M<address 16bit> if mapped to cpu's memory.\\n Note: Default clock frequency is 416400, baud rate factor is 64x and other parameters are 8 bit, 1 stop bit, no parity."
+  },
+  {
+    "command": "scr | script",
+    "description": "Reads commands from script file and executes them one by one.",
+    "usage": "scr <script name>",
+    "examples": "\\n    scr cpm80.scr\\n    script scripts/plm80.scr"
   }
 ]
 "#;

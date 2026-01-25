@@ -246,7 +246,7 @@ impl App {
         self.character_index = self.clamp_cursor(cursor_moved_right);
     }
     /// Input a character to input widget of command line UI
-    fn enter_char(&mut self, new_char: char) {
+    pub fn enter_char(&mut self, new_char: char) {
         let index = self.byte_index();
         self.input.insert(index, new_char);
         self.move_cursor_right();
@@ -308,8 +308,8 @@ impl App {
             *history = history.drain(0..size).collect();
         }
     }
-    /// Submits a message from command line UI and renders a ersult
-    fn submit_message(&mut self) -> AppState {
+    /// Submits a message from command line UI and renders a result
+    pub fn submit_message(&mut self) -> AppState {
         self.history_push_command(self.input.clone());
         let comm = format!("$ {}", self.input.clone());
         self.messages.push(comm.clone());

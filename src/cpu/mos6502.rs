@@ -1686,6 +1686,9 @@ impl CpuUi for Cpu {
     fn get_memory(&mut self) -> RefMut<'_, Memory> {
         self.memory.borrow_mut()
     }
+    fn get_memory_ref(&mut self) -> Rc<RefCell<Memory>> {
+        *self.memory.clone()
+    }
     fn get_io_memory(&mut self) -> Option<&mut crate::io::memory::IoMemory> {
         None
     }

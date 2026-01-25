@@ -31,7 +31,7 @@ use sbc8micro::disk::sssd8fd::{Floppy, Sector};
         let program_address = 0x1000;
         let ilow = 0x79u8;
         let ihigh = 0x7au8;
-        let mut fdc = Box::new(Isbc201::new()); // Base address 0x78
+        let mut fdc = Box::new(Isbc201::new(Rc::clone(&cpu.memory))); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
         fdc.set_floppy(floppy, 0);
         fdc.set_base_address(0x78);

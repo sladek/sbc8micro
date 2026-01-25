@@ -1,0 +1,87 @@
+
+Assembly Listing                                                                                                 Page: 1
+------------------------------------------------------------------------------------------------------------------------
+
+                            1 | ;--------------------------------------------------------------------
+                            2 | ; 
+                            3 | ; GETSYS - reads system tracks into memory at 3380H
+                            4 | ;
+                            5 | ; based on getsys/putsys in D.R. manuals, configured for the
+                            6 | ; Digital Research Computers of Texas (Ferguson) Big-Board 
+                            7 | ;      Brian Kantor, 1983
+                            8 | ;--------------------------------------------------------------------
+                            9 | ; Boot loader   image starts at 3380H
+                           10 | ; CCP       image starts at 3400H
+                           11 | ; BDOS      image starts at 3C00H
+                           12 | ; BIOS      image starts at 4000H
+                           13 | ; (end of system track image is end of bios at 4FFFH
+                           14 | ;-------------------------------------------------------------------
+                           15 | 
+                           16 | msize   equ 60          ; size of cp/m in kbytes
+                           17 | 
+                           18 | bias    equ (msize-20)*1024
+                           19 | ccp equ 3400h+bias
+                           20 | bdos    equ ccp+800h
+                           21 | bios    equ ccp+1600h
+                           22 | 
+                           23 |     org 100h
+                           24 | getsys:
+0100: 0E 01                25 |     mvi c,1         ;select the b disk
+0102: CD 1B EA             26 |     call    bios+27         ;select
+0105: 21 80 33             27 |     lxi h,3380h         ;convenient place
+0108: 06 00                28 |     mvi b,0         ;start on track 0
+                           29 | rd_trk:
+010A: 0E 01                30 |     mvi c,1         ;sector 1
+                           31 | rd_sec:
+010C: CD 22 01             32 |     call    read_sec        ;get a sector
+010F: 11 80 00             33 |     lxi d,128           ;sector length
+0112: 19                   34 |     dad d           ;put pointer at end of sector
+0113: 0C                   35 |     inr c           ;bump count
+0114: 79                   36 |     mov a,c         ;check if we got 26 yet
+0115: FE 1B                37 |     cpi 27          ;26 on a track
+0117: C2 0C 01             38 |     jnz rd_sec
+                           39 | 
+                           40 | ; at end of track, get next one
+                           41 | 
+011A: 04                   42 |     inr b           ;bump track count
+011B: 78                   43 |     mov a,b         ;check count
+011C: FE 02                44 |     cpi 2           ;done 0 and 1 yet?
+011E: C2 0A 01             45 |     jnz rd_trk          ;no, do another
+                           46 | 
+                           47 | ; done, so boot system
+                           48 | 
+0121: C9                   49 |     ret             ;return to cp/m
+                           50 | ;
+                           51 | ; subroutine to read a sector (use the bios)
+                           52 | ;
+                           53 | 
+                           54 | read_sec:
+0122: E5                   55 |     push    h
+0123: C5                   56 |     push    b
+
+
+Assembly Listing                                                                                                 Page: 2
+------------------------------------------------------------------------------------------------------------------------
+
+0124: 44                   57 |     mov b,h         ; set dma address
+0125: 4D                   58 |     mov c,l
+0126: CD 24 EA             59 |     call    bios+36         ;setdma
+0129: C1                   60 |     pop b
+                           61 | 
+012A: C5                   62 |     push    b
+012B: 48                   63 |     mov c,b         ; set track number
+012C: 06 00                64 |     mvi b,0
+012E: CD 1E EA             65 |     call    bios+30
+0131: C1                   66 |     pop b
+                           67 | 
+0132: C5                   68 |     push    b
+0133: 06 00                69 |     mvi b,0
+0135: CD 21 EA             70 |     call    bios+33         ; set sector number
+0138: CD 27 EA             71 |     call    bios+39         ; sector read
+013B: C1                   72 |     pop b
+013C: E1                   73 |     pop h
+013D: C9                   74 |     ret
+                           75 | 
+                           76 |     end
+                           77 |     
+

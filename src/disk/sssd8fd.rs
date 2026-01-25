@@ -14,13 +14,18 @@ const SECTOR_SIZE: u16 = 195; // Number of bytes in one complete sector
 const FORMAT_PATTERN: u8 = 0x00;
 const FLOPPY_CAPACITY: usize = 388388; // Full capacitu of 8" floppy disk
 
+#[derive(Clone)]
+pub enum DataDeletedData {
+    Data = 0x0B,
+    DeletedData = 0x08,
+}
 //Define our own result
 pub type Result<T> = core::result::Result<T, ErrorIndicators>;
 
 /// Sector have the following format
 /// | 'ID' ADDRESS MARK (1 byte) | 'TRACK ADDRESS' (1 byte) | 0 | 'SECTOR ADDRESS' (1 byte) | 0 | CRC CHECK BITS | GAP (28 bytes) | 'DATA/DELETED DATA' ADDRESS MARK (1 byte) | DATA (128 bytes) | CRC CHECK BITS | GAP (28 bytes) |
 ///
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Sector {
     id: u8, // 'ID' address mark
     track_address: u8,
@@ -75,6 +80,14 @@ impl Sector {
     pub fn get_data(&self) -> [u8; DATA_SIZE] {
         self.data
     }
+    /// Sets data_deleted_data mark
+    pub fn set_data_deleted_data(&mut self, data_deleted_data: DataDeletedData) {
+        self.data_deleted_data = data_deleted_data as u8;
+    }
+    /// Sets data_deleted_data mark
+    pub fn get_data_deleted_data(&mut self) -> u8 {
+        self.data_deleted_data
+    }
 }
 // Default implementation for Sectoe
 impl Default for Sector {
@@ -84,7 +97,7 @@ impl Default for Sector {
             track_address: 0,
             sector_address: 0,
             crc_id: 0,
-            data_deleted_data: 0,
+            data_deleted_data: DataDeletedData::Data as u8,
             data: [0; DATA_SIZE],
             crc_data: 0,
         }
@@ -98,7 +111,16 @@ pub struct Floppy {
     disk: File,
 }
 
-#[derive(Debug, PartialEq)]
+impl Floppy {
+    pub fn get_name(&self) -> String {
+        self.name.clone()
+    }
+    pub fn is_read_only(&self) -> bool {
+        self.read_only
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
 pub enum ErrorIndicators {
     NotReady = 0x80,                           // Disk is not ready
     WriteError = 0x40,                         // Error occured during writing to the disk
@@ -288,7 +310,6 @@ impl Floppy {
         let disk = &self.disk;
         let res = disk.seek_read(&mut buf[..], offset as u64);
         if res.is_err() {
-            println!("Res: {:?}", res);
             return Err(ErrorIndicators::SeekError);
         };
         let sector = Sector {

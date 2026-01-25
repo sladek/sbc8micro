@@ -1,0 +1,2 @@
+cpu 8080
+serial 0x40 COM3

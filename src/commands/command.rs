@@ -6,11 +6,13 @@ use crate::commands::cpu::Cpu;
 use crate::commands::dev::Dev;
 use crate::commands::directory::Directory;
 use crate::commands::disasm::Disasm;
+use crate::commands::fdc::Fdc;
 use crate::commands::help::Help;
 use crate::commands::load::Load;
 use crate::commands::memory::Memory;
 use crate::commands::opcodes::Opcodes;
 use crate::commands::registers::Registers;
+use crate::commands::script::Script;
 use crate::commands::serial::Serial;
 use crate::commands::{MIN_COMMAND_HISTORY_LENGTH, MIN_OUTPUT_HISTORY_LENGTH};
 use crate::help;
@@ -41,6 +43,7 @@ impl Command {
             "da" | "disasm" => Disasm::disasm(app, command),
             "dev" => Dev::list_devices(app, command),
             "dr" | "disasm_range" => Disasm::disasm_range(app, command),
+            "fdc" | "floppy" => Fdc::fdc(app, command),
             "g" | "go" => Cpu::go(app, command),
             "h" | "help" | "?" => Help::help(app, command),
             "l" | "load" => Load::load_file(app, command),
@@ -54,6 +57,7 @@ impl Command {
             "pwd" => Directory::pwd(app, command),
             "r" | "reg" => Registers::set_get_reg(app, command),
             "s" | "step" => Cpu::step(app, command),
+            "scr" | "script" => Script::script(app, command),
             "ser" | "serial" => Serial::serial(app, command),
             "" => Ok(AppState::Home),
             _ => Self::get_usage(app),

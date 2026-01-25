@@ -8,7 +8,6 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::{Error, Read};
 use crate::memory::dma::Dma;
-use crate::disk::sssd8fd::ErrorIndicators;
 
 pub const CAPACITY: usize = 0x10000;
 
@@ -131,11 +130,8 @@ impl Memory {
             MemCell::Io(addr) => {
                 if let Some(port) = self.ports.get_mut(&addr) {
                     let dma = port.write_to_memory_address(&mut self.data, address, value);
-                    match dma {
-                        Ok(dma) => {
-                            let _ = self.process_dma(dma);
-                        }
-                        _ => {}
+                    if let Ok(dma) = dma {
+                        let _ = self.process_dma(dma);
                     }
                 }
             }
@@ -149,8 +145,8 @@ impl Memory {
     }
     /// Write a word to specific address
     pub fn write_word(&mut self, addr: u16, value: u16) {
-        let _ = self.write_byte(addr, (value & 0xFF) as u8);
-        let _ = self.write_byte(addr.wrapping_add(1), (value >> 8) as u8);
+        self.write_byte(addr, (value & 0xFF) as u8);
+        self.write_byte(addr.wrapping_add(1), (value >> 8) as u8);
     }
     /// Reads a byte from zero_page [0, 0xff]
     ///
@@ -190,7 +186,7 @@ impl Memory {
         let mut end_addr = start_addr;
         for (i, &byte) in data.iter().enumerate() {
             end_addr = start_addr.saturating_add(i as u16);
-            let _ = self.write_byte(end_addr, byte);
+            self.write_byte(end_addr, byte);
             if end_addr == 0xffffu16 {
                 // End of memory reached
                 return Ok(Region {
@@ -319,7 +315,7 @@ impl Memory {
                 let mut address = data.get_address();
                 let data = data.get_data();
                 for value in data {
-                    let _ = self.write_byte(address, value);
+                    self.write_byte(address, value);
                     address += 1;
                 }
             }

@@ -17,9 +17,7 @@
 //! assert_eq!(value, result)
 //! ```
 use crate::{io::*, ui::app::AppState};
-use std::result;
-use std::{cell::RefCell, collections::HashMap};
-use std::rc::Rc;
+use std::{collections::HashMap};
 
 const MEMORY_SIZE: usize = 256;
 pub struct IoMemory {
@@ -74,12 +72,7 @@ impl IoMemory {
         if let Some(base_address) = self.port_map[address as usize]
             && let Some(port) = self.ports.get_mut(&base_address)
         {
-            match port.write_to_address( memory, address, data) {
-                Ok(dma) => {
-                    dma
-                }
-                Err(_) => {None}
-            }
+            port.write_to_address( memory, address, data).unwrap_or_default()
         }
         else {None}
     }
