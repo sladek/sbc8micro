@@ -4,83 +4,87 @@ Assembly Listing                                                                
 
                             1 | ;--------------------------------------------------------------------
                             2 | ; 
-                            3 | ; PUTSYS - write system tracks from memory at 3380H
+                            3 | ; PUTSYS - WRITE SYSTEM TRACKS FROM MEMORY AT 3380H
                             4 | ;
-                            5 | ; based on getsys/putsys in D.R. manuals, configured for the
-                            6 | ; Digital Research Computers of Texas (Ferguson) Big-Board 
-                            7 | ;      Brian Kantor, 1983
+                            5 | ; BASED ON GETSYS/PUTSYS IN D.R. MANUALS, CONFIGURED FOR THE
+                            6 | ; DIGITAL RESEARCH COMPUTERS OF TEXAS (FERGUSON) BIG-BOARD 
+                            7 | ;      BRIAN KANTOR, 1983
                             8 | ;--------------------------------------------------------------------
-                            9 | ; Boot loader   image starts at 3380H
-                           10 | ; CCP       image starts at 3400H
-                           11 | ; BDOS      image starts at 3C00H
-                           12 | ; BIOS      image starts at 4000H
-                           13 | ; (end of system track image is end of bios at 4FFFH
+                            9 | ; BOOT LOADER   IMAGE STARTS AT E380H
+                           10 | ; CCP       IMAGE STARTS AT E400H
+                           11 | ; BDOS      IMAGE STARTS AT EC00H
+                           12 | ; BIOS      IMAGE STARTS AT FA00H
+                           13 | ; (END OF SYSTEM TRACK IMAGE IS END OF BIOS AT 4FFFH
                            14 | ;-------------------------------------------------------------------
                            15 | 
-                           16 | msize   equ 60          ; size of cp/m in kbytes
-                           17 | 
-                           18 | bias    equ (msize-20)*1024
-                           19 | ccp equ 3400h+bias
-                           20 | bdos    equ ccp+800h
-                           21 | bios    equ ccp+1600h
-                           22 | 
-                           23 |     org 100h
-                           24 | 
-                           25 | putsys:
-0100: 0E 01                26 |     mvi c,1         ;select the b disk
-0102: CD 1B EA             27 |     call    bios+27         ;select
-0105: 21 80 33             28 |     lxi h,3380h         ;convenient place
-0108: 06 00                29 |     mvi b,0         ;start on track 0
-                           30 | wr_trk:
-010A: 0E 01                31 |     mvi c,1         ;sector 1
-                           32 | wr_sec:
-010C: CD 24 01             33 |     call    write_sec       ;put a sector
-010F: 11 80 00             34 |     lxi d,128           ;sector length
-0112: 19                   35 |     dad d           ;put pointer at end of sector
-0113: 0C                   36 |     inr c           ;bump count
-0114: 79                   37 |     mov a,c         ;check if we got 26 yet
-0115: FE 1B                38 |     cpi 27          ;26 on a track
-0117: C2 0C 01             39 |     jnz wr_sec
-                           40 | 
-                           41 | ; at end of track, put next one
-                           42 | 
-011A: 04                   43 |     inr b           ;bump track count
-011B: 78                   44 |     mov a,b         ;check count
-011C: FE 02                45 |     cpi 2           ;done 0 and 1 yet?
-011E: C2 0A 01             46 |     jnz wr_trk          ;no, do another
-                           47 | 
-                           48 | ; done, so boot system
-                           49 | 
-0121: C3 00 00             50 |     jmp 0
-                           51 | 
-                           52 | ; subroutine to write a sector (use the bios)
-                           53 | 
-                           54 | write_sec:
-0124: E5                   55 |     push    h
-0125: C5                   56 |     push    b
+                           16 | 
+                           17 |     .INCLUDE    "MEMCONF.DEF"
+                            1 | MSIZE   EQU     64     ;SIZE OF CP/M SYSTEM IN KB
+                            2 | BIAS    EQU (MSIZE-20)*1024
+                            3 | CCP EQU 3400H+BIAS
+                            4 | BDOS    EQU CCP+0806H
+                            5 | BIOS    EQU CCP+1600H
+                           18 | 
+                           19 |     ORG     0
+0000: C3 00 00             20 | LOOP:   JMP LOOP            ; END LOOP USED FOR TESTING ONLY
+                           21 | 
+                           22 |     ORG 100H
+                           23 | 
+                           24 | PUTSYS:
+0100: 0E 01                25 |     MVI C,1         ;SELECT THE B DISK
+0102: CD 1B FA             26 |     CALL    BIOS+27         ;SELECT
+0105: 21 00 E4             27 |     LXI H,CCP           ;CONVENIENT PLACE
+0108: 06 00                28 |     MVI B,0         ;START ON TRACK 0
+                           29 | WR_TRK:
+010A: 0E 01                30 |     MVI C,1         ;SECTOR 1
+                           31 | WR_SEC:
+010C: CD 24 01             32 |     CALL    WRITE_SEC       ;PUT A SECTOR
+010F: 11 80 00             33 |     LXI D,128           ;SECTOR LENGTH
+0112: 19                   34 |     DAD D           ;PUT POINTER AT END OF SECTOR
+0113: 0C                   35 |     INR C           ;BUMP COUNT
+0114: 79                   36 |     MOV A,C         ;CHECK IF WE GOT 26 YET
+0115: FE 1B                37 |     CPI 27          ;26 ON A TRACK
+0117: C2 0C 01             38 |     JNZ WR_SEC
+                           39 | 
+                           40 | ; AT END OF TRACK, PUT NEXT ONE
+                           41 | 
+011A: 04                   42 |     INR B           ;BUMP TRACK COUNT
+011B: 78                   43 |     MOV A,B         ;CHECK COUNT
+011C: FE 02                44 |     CPI 2           ;DONE 0 AND 1 YET?
+011E: C2 0A 01             45 |     JNZ WR_TRK          ;NO, DO ANOTHER
+                           46 | 
+                           47 | ; DONE, SO BOOT SYSTEM
+                           48 | 
+0121: C3 00 00             49 |     JMP 0
+                           50 | 
+                           51 | ; SUBROUTINE TO WRITE A SECTOR (USE THE BIOS)
 
 
 Assembly Listing                                                                                                 Page: 2
 ------------------------------------------------------------------------------------------------------------------------
 
-0126: 44                   57 |     mov b,h         ; set dma address
-0127: 4D                   58 |     mov c,l
-0128: CD 24 EA             59 |     call    bios+36         ;setdma
-012B: C1                   60 |     pop b
-                           61 | 
-012C: C5                   62 |     push    b
-012D: 48                   63 |     mov c,b         ; set track number
-012E: 06 00                64 |     mvi b,0
-0130: CD 1E EA             65 |     call    bios+30
-0133: C1                   66 |     pop b
-                           67 | 
-0134: C5                   68 |     push    b
-0135: 06 00                69 |     mvi b,0
-0137: CD 21 EA             70 |     call    bios+33         ; set sector number
-013A: CD 2A EA             71 |     call    bios+42         ; sector write
-013D: C1                   72 |     pop b
-013E: E1                   73 |     pop h
-013F: C9                   74 |     ret
-                           75 | 
-                           76 |     end
+                           52 | 
+                           53 | WRITE_SEC:
+0124: E5                   54 |     PUSH    H
+0125: C5                   55 |     PUSH    B
+0126: 44                   56 |     MOV B,H         ; SET DMA ADDRESS
+0127: 4D                   57 |     MOV C,L
+0128: CD 24 FA             58 |     CALL    BIOS+36         ;SETDMA
+012B: C1                   59 |     POP B
+                           60 | 
+012C: C5                   61 |     PUSH    B
+012D: 48                   62 |     MOV C,B         ; SET TRACK NUMBER
+012E: 06 00                63 |     MVI B,0
+0130: CD 1E FA             64 |     CALL    BIOS+30
+0133: C1                   65 |     POP B
+                           66 | 
+0134: C5                   67 |     PUSH    B
+0135: 06 00                68 |     MVI B,0
+0137: CD 21 FA             69 |     CALL    BIOS+33         ; SET SECTOR NUMBER
+013A: CD 2A FA             70 |     CALL    BIOS+42         ; SECTOR WRITE
+013D: C1                   71 |     POP B
+013E: E1                   72 |     POP H
+013F: C9                   73 |     RET
+                           74 | 
+                           75 |     END
 

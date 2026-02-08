@@ -144,10 +144,12 @@ impl Floppy {
                 .read(true)
                 .open(name)
         };
+        let mut is_new = false;
         let floppy = match file {
             Ok(file) => file,
             Err(err) => {
                 if err.kind() == ErrorKind::NotFound {
+                    is_new = true;
                     // File doesn't exist, let's create the empty one.
                     match File::create(name) {
                         Ok(mut file) => {
@@ -165,11 +167,20 @@ impl Floppy {
                 }
             }
         };
-        Ok(Self {
+        let mut floppy = Self {
             name: name.to_string(),
             read_only,
             disk: floppy,
-        })
+        };
+        if is_new {
+            // File is new, let's try to format it
+            let format_result = floppy.format();
+            if format_result.is_err() {
+                return Err(format_result.err().unwrap());
+            }
+
+        };
+        Ok(floppy)
     }
     /// Format floppy disk.
     ///

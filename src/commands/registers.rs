@@ -31,7 +31,7 @@ impl Registers {
                 }
                 _ => {
                     app.messages.push(
-                            "Invalid number of parameters. Usage: \'reg <reg> [value]\' or \'r <reg> [value]\'"
+                            "ERROR - Invalid number of parameters. Usage: \'reg <reg> [value]\' or \'r <reg> [value]\'"
                                 .to_string(),
                         );
                     return Ok(AppState::Home);

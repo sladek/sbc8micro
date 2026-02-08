@@ -1,77 +1,78 @@
 ;--------------------------------------------------------------------
 ; 
-; GETSYS - reads system tracks into memory at 3380H
+; GETSYS - READS SYSTEM TRACKS INTO MEMORY AT E380H
 ;
-; based on getsys/putsys in D.R. manuals, configured for the
-; Digital Research Computers of Texas (Ferguson) Big-Board 
-;      Brian Kantor, 1983
+; BASED ON GETSYS/PUTSYS IN D.R. MANUALS, CONFIGURED FOR THE
+; DIGITAL RESEARCH COMPUTERS OF TEXAS (FERGUSON) BIG-BOARD 
+;      BRIAN KANTOR, 1983
 ;--------------------------------------------------------------------
-; Boot loader	image starts at 3380H
-; CCP		image starts at 3400H
-; BDOS		image starts at 3C00H
-; BIOS		image starts at 4000H
-; (end of system track image is end of bios at 4FFFH
+; BOOT LOADER	IMAGE STARTS AT E380H
+; CCP		IMAGE STARTS AT E400H
+; BDOS		IMAGE STARTS AT EC00H
+; BIOS		IMAGE STARTS AT FA00H
+; (END OF SYSTEM TRACK IMAGE IS END OF BIOS AT 4FFFH
 ;-------------------------------------------------------------------
 
-msize	equ	60			; size of cp/m in kbytes
+	.INCLUDE	"MEMCONF.DEF"
+	IFNDEF	MSIZE
+MSIZE:	EQU	20
+	ENDIF
 
-bias	equ	(msize-20)*1024
-ccp	equ	3400h+bias
-bdos	equ	ccp+800h
-bios	equ	ccp+1600h
+	ORG 	0
+LOOP:	JMP	LOOP
 
-	org	100h
-getsys:
-	mvi	c,1			;select the b disk
-	call	bios+27			;select
-	lxi	h,3380h			;convenient place
-	mvi	b,0			;start on track 0
-rd_trk:
-	mvi	c,1			;sector 1
-rd_sec:
-	call	read_sec		;get a sector
-	lxi	d,128			;sector length
-	dad	d			;put pointer at end of sector
-	inr	c			;bump count
-	mov	a,c			;check if we got 26 yet
-	cpi	27			;26 on a track
-	jnz	rd_sec
+	ORG	100H
+GETSYS:
+	MVI	C,0			;SELECT THE A DISK
+	CALL	BIOS+27			;SELDSK
+	LXI	H,CCP			;CONVENIENT PLACE
+	MVI	B,0			;START ON TRACK 0
+RD_TRK:
+	MVI	C,1			;SECTOR 1
+RD_SEC:
+	CALL	READ_SEC		;GET A SECTOR
+	LXI	D,128			;SECTOR LENGTH
+	DAD	D			;PUT POINTER AT END OF SECTOR
+	INR	C			;BUMP COUNT
+	MOV	A,C			;CHECK IF WE GOT 26 YET
+	CPI	27			;26 ON A TRACK
+	JNZ	RD_SEC
 
-; at end of track, get next one
+; AT END OF TRACK, GET NEXT ONE
 
-	inr	b			;bump track count
-	mov	a,b			;check count
-	cpi	2			;done 0 and 1 yet?
-	jnz	rd_trk			;no, do another
+	INR	B			;BUMP TRACK COUNT
+	MOV	A,B			;CHECK COUNT
+	CPI	2			;DONE 0 AND 1 YET?
+	JNZ	RD_TRK			;NO, DO ANOTHER
 
-; done, so boot system
+; DONE, SO BOOT SYSTEM
 
-	ret				;return to cp/m
+	JMP	0			;RETURN TO CP/M
 ;
-; subroutine to read a sector (use the bios)
+; SUBROUTINE TO READ A SECTOR (USE THE BIOS)
 ;
 
-read_sec:
-	push	h
-	push	b
-	mov	b,h			; set dma address
-	mov	c,l
-	call	bios+36			;setdma
-	pop	b
+READ_SEC:
+	PUSH	H
+	PUSH	B
+	MOV	B,H			; SET DMA ADDRESS
+	MOV	C,L
+	CALL	BIOS+36			; SETDMA
+	POP	B
 
-	push	b
-	mov	c,b			; set track number
-	mvi	b,0
-	call	bios+30
-	pop	b
+	PUSH	B
+	MOV	C,B			; SET TRACK NUMBER
+	MVI	B,0
+	CALL	BIOS+30 ; SETTRK
+	POP	B
 
-	push	b
-	mvi	b,0
-	call	bios+33			; set sector number
-	call	bios+39			; sector read
-	pop	b
-	pop	h
-	ret
+	PUSH	B
+	MVI	B,0
+	CALL	BIOS+33			; SET SECTOR NUMBER (SETSEC)
+	CALL	BIOS+39			; SECTOR READ
+	POP	B
+	POP	H
+	RET
 
-	end
+	END
 	

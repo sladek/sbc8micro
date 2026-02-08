@@ -1,0 +1,4 @@
+cpu 8080
+ser 0xf4 com3
+dev
+lh examples/serial_8080.hex

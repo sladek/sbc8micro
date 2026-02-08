@@ -7,6 +7,7 @@ use crate::memory::{MemCell};
 use crate::memory::dma::Dma;
 
 pub trait IoPort {
+    // memory: &mut [MemCell] is sometimes required if there is a need to access CPU memory via DMA 
     fn write_to_address(&mut self, memory: &mut [MemCell], address: u8, data: u8) -> Result<Option<Dma>, ErrorIndicators>;
     fn write_to_memory_address(&mut self, memory: &mut [MemCell], address: u16, data: u8) -> Result<Option<Dma>, ErrorIndicators>;
     fn read_from_address(&mut self, address: u8) -> Option<u8>;

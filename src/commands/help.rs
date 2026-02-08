@@ -19,7 +19,7 @@ impl Help {
         }
         if command.len() != 2 {
             app.messages
-                .push("Invalind number of parameters. Usage: help or help <command>".to_string());
+                .push("ERROR - Invalind number of parameters. Usage: help or help <command>".to_string());
             return Ok(AppState::Home);
         }
         let item = help.get_item(command[1]);
@@ -40,7 +40,7 @@ impl Help {
                 app.messages.append(&mut lines);
             }
             None => {
-                app.messages.push("Help for this command couldn't be found. Use \"help\" for list of available options.".to_string());
+                app.messages.push("ERROR - Help for this command couldn't be found. Use \"help\" for list of available options.".to_string());
             }
         }
         Ok(AppState::Home)

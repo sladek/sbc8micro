@@ -39,7 +39,7 @@ impl Memory {
                         start_addr = Self::from_hex_string(command[1].to_string())?;
                         end_addr = Self::from_hex_string(command[2].to_string())?;
                         if start_addr >= end_addr {
-                            return Err("Start address must be lower than end address.".to_string());
+                            return Err("ERROR - Start address must be lower than end address.".to_string());
                         }
                         app.dump.set_start_address(start_addr);
                         app.dump.set_end_address(end_addr);
@@ -47,7 +47,7 @@ impl Memory {
                     }
                     _ => {
                         return Err(
-                            "Wrong number of parameters. Usage: dump or dump <start_addr> <end_addr>"
+                            "ERROR - Wrong number of parameters. Usage: dump or dump <start_addr> <end_addr>"
                                 .to_string(),
                     );
                     }
@@ -99,21 +99,25 @@ impl Memory {
                     return Ok(num);
                 }
                 Err(err) => {
+                    let mut value_error = "ERROR: ".to_string();
                     value.push_str(" - ");
                     value.push_str(&err.to_string());
-                    value.push_str(". Expected type is u16 (0 - 65535).");
-                    return Err(value);
+                    value.push_str(". Expected type is u16 (0 - 65535, 0 - 0xFFFF).");
+                    value_error.push_str(&value);
+                    return Err(value_error);
                 }
             }
         }
+        let mut value_error = "ERROR: ".to_string();
         value.push_str(" - Invalid format of hexadecimal number.");
-        Err(value)
+        value_error.push_str(&value);
+        Err(value_error)
     }
     /// Translate hexadecimal string to u16
     fn from_hex_str_number(num: &str) -> Result<u16, String> {
         let input = num.to_uppercase();
         if input.len() > 4 {
-            return Err(format!("Hexadecimal number 0x{num} is too long").to_string());
+            return Err(format!("ERROR - Hexadecimal number 0x{num} is too long").to_string());
         }
         let mut result: u16 = 0;
         for c in input.as_bytes() {
@@ -156,7 +160,7 @@ impl Memory {
                 let mut range = Memory::from_hex_string(command[1].to_string())?;
                 if range < MIN_MEMORY_RANGE {
                     return Err(format!(
-                        "Error: Minimum allowed memory range is {MIN_MEMORY_RANGE}"
+                        "ERROR - Minimum allowed memory range is {MIN_MEMORY_RANGE}"
                     ));
                 }
                 range -= 1;
@@ -169,7 +173,7 @@ impl Memory {
             }
             _ => {
                 app.messages
-                    .push("Error: Wrong number of parameters.".to_string());
+                    .push("ERROR - Wrong number of parameters.".to_string());
                 app.messages.push("  Usage: set range <size>.".to_string());
             }
         }
@@ -182,7 +186,7 @@ impl Memory {
     pub fn set_memory(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
         app.is_cpu_set()?; // Check if cpu is defined
         if command.len() == 1 {
-            return Err("Error: Invalid number of parameters. Usage: m <address> <data> <data> <data> ... or mem <address> <data> <data> <data> ...".to_string());
+            return Err("ERROR - Invalid number of parameters. Usage: m <address> <data> <data> <data> ... or mem <address> <data> <data> <data> ...".to_string());
         }
         let mut addr = Memory::from_hex_string(command[1].to_string())?;
         let mut buffer: Vec<u8> = Vec::new();
@@ -198,7 +202,7 @@ impl Memory {
             let value = Memory::from_hex_string(data.to_string())?;
             if value > 0xff {
                 return Err(format!(
-                    "Error: Value {data} [{value}] is bigger than 255. It must fit to 8 bit data."
+                    "ERROR - Value {data} [{value}] is bigger than 255. It must fit to 8 bit data."
                 ));
             }
             buffer.push(value as u8);
@@ -226,7 +230,7 @@ impl Memory {
     fn parse_string(data: String, buffer: &mut Vec<u8>) -> Result<(), String> {
         if !data.ends_with("\"") {
             return Err(format!(
-                "Wrong format of string [{data}]. String has to start and end with \"."
+                "ERROR - Wrong format of string [{data}]. String has to start and end with \"."
             ));
         }
         let data_bytes = &data.as_bytes()[1..data.len() - 1];
@@ -243,16 +247,16 @@ impl Memory {
     fn parse_char(data: String, buffer: &mut Vec<u8>) -> Result<(), String> {
         if !data.ends_with("\'") {
             return Err(format!(
-                "Wrong format of the character [{data}]. Character has to start and end with \'."
+                "ERROR - Wrong format of the character [{data}]. Character has to start and end with \'."
             ));
         }
         if data.len() > 3 {
             return Err(format!(
-                "Wrong length of the character [{data}]. Length of the character cannot be longer than 1."
+                "ERROR - Wrong length of the character [{data}]. Length of the character cannot be longer than 1."
             ));
         }
         if !&data[1..data.len() - 1].is_ascii() {
-            return Err("Not ASCII charcter".to_string());
+            return Err("ERROR - Not ASCII charcter".to_string());
         }
         let data_bytes = &data.as_bytes()[1..data.len() - 1];
         for data in data_bytes {
@@ -302,7 +306,7 @@ mod tests {
         // string too long
         assert_eq!(
             result.err(),
-            Some("Hexadecimal number 0x55aabb is too long".to_string())
+            Some("ERROR - Hexadecimal number 0x55aabb is too long".to_string())
         );
     }
     #[test]
@@ -348,14 +352,14 @@ mod tests {
     #[test]
     fn from_hex_string_9() {
         let result = Memory::from_hex_string("655350".to_string());
-        assert_eq!(result.err(), Some("655350 - number too large to fit in target type. Expected type is u16 (0 - 65535).".to_string()));
+        assert_eq!(result.err(), Some("ERROR: 655350 - number too large to fit in target type. Expected type is u16 (0 - 65535, 0 - 0xFFFF).".to_string()));
     }
     #[test]
     fn from_hex_string_10() {
         let result = Memory::from_hex_string("123ef".to_string());
         assert_eq!(
             result.err(),
-            Some("123ef - Invalid format of hexadecimal number.".to_string())
+            Some("ERROR: 123ef - Invalid format of hexadecimal number.".to_string())
         );
     }
 }

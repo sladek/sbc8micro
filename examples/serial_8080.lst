@@ -2,21 +2,21 @@
 Assembly Listing                                                                                                 Page: 1
 ------------------------------------------------------------------------------------------------------------------------
 
-                            1 | DATA    EQU 40H
-                            2 | CONTROL EQU 41H
+                            1 | DATA    EQU 0F4H
+                            2 | CONTROL EQU 0F5H
                             3 | 
-                            4 |         ORG 1000H               ;See README for more info
+                            4 |         ORG 100H               ;See README for more info
                             5 | 
                             6 | ;Initialization and sign-on message
-1000: C3 30 10              7 | LOG:    JMP SETUP           ;See README for more info
+0100: C3 30 01              7 | LOG:    JMP SETUP           ;See README for more info
                             8 | SE1:    ;CALL CINNE
-1003: 21 79 10              9 | SE2:    LXI H, LOGMSG@
-1006: CD 43 10             10 |         CALL STROUT
-1009: 21 54 10             11 |         LXI H, MSG@
-100C: CD 43 10             12 |         CALL STROUT
-100F: CD 18 10             13 |         CALL CINNE
-1012: CD 22 10             14 |         CALL COUT
-1015: C3 03 10             15 |         JMP SE2
+0103: 21 79 01              9 | SE2:    LXI H, LOGMSG@
+0106: CD 43 01             10 |         CALL STROUT
+0109: 21 54 01             11 |         LXI H, MSG@
+010C: CD 43 01             12 |         CALL STROUT
+010F: CD 18 01             13 |         CALL CINNE
+0112: CD 22 01             14 |         CALL COUT
+0115: C3 03 01             15 |         JMP SE2
                            16 | 
                            17 | 
                            18 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -25,79 +25,80 @@ Assembly Listing                                                                
                            21 | ;pre: console device is initialized
                            22 | ;post: received char is in A register
                            23 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-1018: DB 41                24 | CINNE:  IN CONTROL
-101A: E6 02                25 |         ANI 02H
-101C: CA 18 10             26 |         JZ CINNE
-101F: DB 40                27 |         IN DATA
-1021: C9                   28 |         RET
+0118: DB F5                24 | CINNE:  IN CONTROL
+011A: E6 02                25 |         ANI 02H
+011C: CA 18 01             26 |         JZ CINNE
+011F: DB F4                27 |         IN DATA
+0121: C9                   28 |         RET
                            29 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                            30 | ;COUT -- Output a character to the console
                            31 | ;
                            32 | ;pre: A register contains char to be printed
                            33 | ;post: character is printed to the console
                            34 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-1022: C5                   35 | COUT:   PUSH B
-1023: 47                   36 |         MOV B, A
-1024: DB 41                37 | COUT1:  IN CONTROL
-1026: E6 01                38 |         ANI 01H
-1028: CA 24 10             39 |         JZ COUT1
-102B: 78                   40 |         MOV A, B
-102C: D3 40                41 |         OUT DATA
-102E: C1                   42 |         POP B
-102F: C9                   43 |         RET
-                           44 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-                           45 | ;SETUP -- Prepare the system for running the
-                           46 | ;   monitor
-                           47 | ;
-                           48 | ;pre: none
-                           49 | ;post: stack and console are initialized
-                           50 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-1030: 31 FF FF             51 | SETUP:  LXI SP, 0FFFFH
-1033: 21 4E 10             52 |         LXI H, INIUART@
-1036: 06 06                53 |         MVI B, 06H              ; length of ini string
-1038: 7E                   54 | INURT:  MOV A, M
-1039: D3 41                55 |         OUT CONTROL
-103B: 23                   56 |         INX H
+0122: C5                   35 | COUT:   PUSH B
+0123: 47                   36 |         MOV B, A
+                           37 | COUT1:  
+0124: DB F5                38 |         IN CONTROL
+0126: E6 01                39 |         ANI 01H
+0128: CA 24 01             40 |         JZ COUT1
+012B: 78                   41 |         MOV A, B
+012C: D3 F4                42 |         OUT DATA
+012E: C1                   43 |         POP B
+012F: C9                   44 |         RET
+                           45 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                           46 | ;SETUP -- Prepare the system for running the
+                           47 | ;   monitor
+                           48 | ;
+                           49 | ;pre: none
+                           50 | ;post: stack and console are initialized
+                           51 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+0130: 31 FF FF             52 | SETUP:  LXI SP, 0FFFFH
+0133: 21 4E 01             53 |         LXI H, INIUART@
+0136: 06 06                54 |         MVI B, 06H              ; length of ini string
+0138: 7E                   55 | INURT:  MOV A, M
+0139: D3 F5                56 |         OUT CONTROL
 
 
 Assembly Listing                                                                                                 Page: 2
 ------------------------------------------------------------------------------------------------------------------------
 
-103C: 05                   57 |         DCR B
-103D: C2 38 10             58 |         JNZ INURT
-1040: C3 03 10             59 |         JMP SE1
-                           60 | 
-                           61 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-                           62 | ;STROUT -- Print a null-terminated string
-                           63 | ;
-                           64 | ;pre: HL contains pointer to start of a null-
-                           65 | ;     terminated string
-                           66 | ;post: string at HL printed to console
-                           67 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-1043: 7E                   68 | STROUT: MOV A, M
-1044: FE 00                69 |         CPI 00
-1046: C8                   70 |         RZ
-1047: CD 22 10             71 |         CALL COUT
-104A: 23                   72 |         INX H
-104B: C3 43 10             73 |         JMP STROUT
-                           74 | 
+013B: 23                   57 |         INX H
+013C: 05                   58 |         DCR B
+013D: C2 38 01             59 |         JNZ INURT
+0140: C3 03 01             60 |         JMP SE1
+                           61 | 
+                           62 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                           63 | ;STROUT -- Print a null-terminated string
+                           64 | ;
+                           65 | ;pre: HL contains pointer to start of a null-
+                           66 | ;     terminated string
+                           67 | ;post: string at HL printed to console
+                           68 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+0143: 7E                   69 | STROUT: MOV A, M
+0144: FE 00                70 |         CPI 00
+0146: C8                   71 |         RZ
+0147: CD 22 01             72 |         CALL COUT
+014A: 23                   73 |         INX H
+014B: C3 43 01             74 |         JMP STROUT
                            75 | 
-                           76 | ;Init string for the 8251, x64 clock, 8N1
-104E: 00 00 00 40 4F 37    77 | INIUART@:  db 00H, 00H, 00H, 40H, 4FH, 37H
-                           78 | 
-                           79 | ;I/O Module description string
-1054: 0D 0A 42 75 69...    80 | MSG@:     db 13, 10, 'Built with Intel 8251 I/O module', 13, 10, 0
-                           81 | 
+                           76 | 
+                           77 | ;Init string for the 8251, x64 clock, 8N1
+014E: 00 00 00 40 4F 37    78 | INIUART@:  db 00H, 00H, 00H, 40H, 4FH, 37H
+                           79 | 
+                           80 | ;I/O Module description string
+0154: 0D 0A 42 75 69...    81 | MSG@:     db 13, 10, 'Built with Intel 8251 I/O module', 13, 10, 0
                            82 | 
-                           83 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-                           84 | ;Monitor Strings
-                           85 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-1079: 0D 0A 0A 47 57...    86 | LOGMSG@: db 13, 10, 10, 'GWMON-80 0.1.4 for 8080/8085/Z80 and Compatible', 13, 10
-10AD: 43 6F 70 79 72...    87 |          db 'Copyright (c) 2019 The Glitch Works', 0
-10D1: 0D 0A 0A 3E 00       88 | PROMPT@: db 13, 10, 10, '>', 0
-10D6: 43 48 45 43 4B...    89 | CSERR@:  db 'CHECKSUM '
-10DF: 45 52 52 4F 52 00    90 | ERR@:    db 'ERROR', 0
-10E5: 0D 0A 00             91 | CRLF@:   db 13, 10, 0
-                           92 | 
-                           93 |         END
+                           83 | 
+                           84 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                           85 | ;Monitor Strings
+                           86 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+0179: 0D 0A 0A 47 57...    87 | LOGMSG@: db 13, 10, 10, 'GWMON-80 0.1.4 for 8080/8085/Z80 and Compatible', 13, 10
+01AD: 43 6F 70 79 72...    88 |          db 'Copyright (c) 2019 The Glitch Works', 0
+01D1: 0D 0A 0A 3E 00       89 | PROMPT@: db 13, 10, 10, '>', 0
+01D6: 43 48 45 43 4B...    90 | CSERR@:  db 'CHECKSUM '
+01DF: 45 52 52 4F 52 00    91 | ERR@:    db 'ERROR', 0
+01E5: 0D 0A 00             92 | CRLF@:   db 13, 10, 0
+                           93 | 
+                           94 |         END
 

@@ -111,6 +111,12 @@ pub static HELP: &str = r#"
     "examples": "\\n    help pwd\\n    h ls\\n    ? disasm"
   },
   {
+    "command": "io",
+    "description": "Input from/ output to specific address on io bus",
+    "usage": "io <address> [data]",
+    "examples": "\\n    io 0x78\\n    io 0x79 0x55\\n Note: If data is not defined it reads data from io address.\\n       If data is defined it writes data to io address."
+  },
+  {
     "command": "l | load",
     "description": "Loads a content of specified binary file into memory.",
     "usage": "load <start address> <file name> or l <start address> <file name>",

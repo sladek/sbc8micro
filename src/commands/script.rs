@@ -8,7 +8,7 @@ impl Script {
     pub fn script(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
         if command.len() != 2 {
             app.messages.push(
-                "Invalid number of parameters. Usage: script <script name>"
+                "ERROR - Invalid number of parameters. Usage: script <script name>"
                     .to_string(),
             );
             return Ok(AppState::Home);
@@ -26,7 +26,7 @@ impl Script {
             }
             Err(err) => {
                 app.messages.push(
-                    format!("Cannot open script file: {path}. Error: {err}")
+                    format!("ERROR - Cannot open script file: {path}. ERROR - {err}")
                 );
 
             }

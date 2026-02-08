@@ -10,7 +10,7 @@
 ;This is the base monitor. Consult README for information
 ;on including the I/O module specific to your system.
 
-        ORG 1000H               ;See README for more info
+        ORG 100H               ;See README for more info
 
 ;Initialization and sign-on message
 LOG:    JMP SETUP           ;See README for more info
@@ -391,8 +391,8 @@ CRLF@:   db 13, 10, 0
 ;After including this module, you still need to
 ;set the ORG in the main monitor source.
 
-CTLPRT  equ 41H
-DATPRT  equ 40H
+DATPRT  equ 0F4H
+CTLPRT  equ 0F5H
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;SETUP -- Prepare the system for running the

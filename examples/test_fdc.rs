@@ -26,14 +26,13 @@ use sbc8micro::disk::sssd8fd::{Floppy, Sector};
         let sector = Sector::new(0, 1, &data);
         _ = floppy.seek_write_sector(sector);
         let mut cpu = i8080::Cpu::new();
-        let memory = Rc::clone(&cpu.memory);
         let iopb_address = 0x2000;
         let program_address = 0x1000;
         let ilow = 0x79u8;
         let ihigh = 0x7au8;
         let mut fdc = Box::new(Isbc201::new(Rc::clone(&cpu.memory))); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
-        fdc.set_floppy(floppy, 0);
+        let _ = fdc.set_floppy(floppy, 0);
         fdc.set_base_address(0x78);
         let io_memory = cpu.get_io_memory().unwrap();
         let res = io_memory.map_port(fdc);

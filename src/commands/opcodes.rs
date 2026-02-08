@@ -16,7 +16,7 @@ impl Opcodes {
     pub fn list_opcodes(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
         if command.len() > 2 {
             app.messages.push(format!(
-                "Error: more than 1 argument provided. Usage: \'opcodes\' or \'opcodes <{CPU_LIST}>\' or \'op\' or \'op <{CPU_LIST}>\'"
+                "ERROR - more than 1 argument provided. Usage: \'opcodes\' or \'opcodes <{CPU_LIST}>\' or \'op\' or \'op <{CPU_LIST}>\'"
             ));
             return Ok(AppState::Home);
         }
@@ -42,7 +42,7 @@ impl Opcodes {
             }
             _ => {
                 app.messages
-                    .push(format!("Unknown cpu. Use \'opcodes\' or \'opcodes <{CPU_LIST}>\' or \'op\' or \'op <{CPU_LIST}>\'"));
+                    .push(format!("ERROR - Unknown cpu. Use \'opcodes\' or \'opcodes <{CPU_LIST}>\' or \'op\' or \'op <{CPU_LIST}>\'"));
             }
         }
         Ok(AppState::Home)

@@ -16,7 +16,7 @@ impl Load {
         }
         if command.len() < 3 {
             app.messages.push(
-                "Invalid number of parameters. Usage: load <start address> <file name>".to_string(),
+                "ERROR - Invalid number of parameters. Usage: load <start address> <file name>".to_string(),
             );
             return Ok(AppState::Home);
         }
@@ -27,7 +27,7 @@ impl Load {
             Ok(metadata) => {
                 let file_size = metadata.len();
                 if file_size > 0xffff {
-                    app.messages.push("File length is too big. Maximum file length is 65535 bytes so it fits to the memory.".to_string());
+                    app.messages.push("ERROR - File length is too big. Maximum file length is 65535 bytes so it fits to the memory.".to_string());
                     return Ok(AppState::Home);
                 }
             }
@@ -77,7 +77,7 @@ impl Load {
         }
         if command.len() < 2 {
             app.messages
-                .push("Invalid number of parameters. Usage: loada <file name>".to_string());
+                .push("ERROR - Invalid number of parameters. Usage: loada <file name>".to_string());
             return Ok(AppState::Home);
         }
         let filename = Directory::concat(&command[1..]);
@@ -86,7 +86,7 @@ impl Load {
             Ok(metadata) => {
                 let file_size = metadata.len();
                 if file_size > 0xffff {
-                    app.messages.push("File length is too big. Maximum file length is 65535 bytes so it fits to the memory.".to_string());
+                    app.messages.push("ERROR - File length is too big. Maximum file length is 65535 bytes so it fits to the memory.".to_string());
                     return Ok(AppState::Home);
                 }
             }
@@ -124,7 +124,7 @@ impl Load {
         }
         if command.len() < 2 {
             app.messages
-                .push("Invalid number of parameters. Usage: loada <file name>".to_string());
+                .push("ERROR - Invalid number of parameters. Usage: loada <file name>".to_string());
             return Ok(AppState::Home);
         }
         let filename = Directory::concat(&command[1..]);

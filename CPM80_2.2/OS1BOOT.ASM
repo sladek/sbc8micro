@@ -1,126 +1,126 @@
-	title	'mds cold start loader at 3000h'
+	TITLE	'MDS COLD START LOADER AT 3000H'
 ;
-;	MDS-800 Cold Start Loader for CP/M 2.0
+;	MDS-800 COLD START LOADER FOR CP/M 2.0
 ;
-;	Version 2.0 August, 1979
+;	VERSION 2.0 AUGUST, 1979
 ;
-false	equ	0
-true	equ	 !false
-testing	equ	false	;if true, then go to mon80 on errors
+FALSE	EQU	0
+TRUE	EQU	 !FALSE
+TESTING	EQU	FALSE	;IF TRUE, THEN GO TO MON80 ON ERRORS
 ;
-	if	testing
-bias	equ	03400h
-	endif
-	if	!testing
-bias	equ	0000h
-	endif
-cpmb	equ	bias		;base of dos load
-bdos	equ	806h+bias	;entry to dos for calls
-bdose	equ	1880h+bias	;end of dos load
-boot	equ	1600h+bias	;cold start entry point
-rboot	equ	boot+3		;warm start entry point
+	IF	TESTING
+BIAS	EQU	03400H
+	ENDIF
+	IF	!TESTING
+BIAS	EQU	0000H
+	ENDIF
+CPMB	EQU	BIAS		;BASE OF DOS LOAD
+BDOS	EQU	806H+BIAS	;ENTRY TO DOS FOR CALLS
+BDOSE	EQU	1880H+BIAS	;END OF DOS LOAD
+BOOT	EQU	1600H+BIAS	;COLD START ENTRY POINT
+RBOOT	EQU	BOOT+3		;WARM START ENTRY POINT
 ;
-	org	03000h	;loaded down from hardware boot at 3000h
+	ORG	03000H	;LOADED DOWN FROM HARDWARE BOOT AT 3000H
 ;
-bdosl	equ	bdose-cpmb
-ntrks	equ	2	;number of tracks to read
-bdoss	equ	bdosl/128	;number of sectors in dos
-bdos0	equ	25	;number of bdos sectors on track 0
-bdos1	equ	bdoss-bdos0	;number of sectors on track 1
+BDOSL	EQU	BDOSE-CPMB
+NTRKS	EQU	2	;NUMBER OF TRACKS TO READ
+BDOSS	EQU	BDOSL/128	;NUMBER OF SECTORS IN DOS
+BDOS0	EQU	25	;NUMBER OF BDOS SECTORS ON TRACK 0
+BDOS1	EQU	BDOSS-BDOS0	;NUMBER OF SECTORS ON TRACK 1
 ;
-mon80	equ	0f800h	;intel monitor base
-rmon80	equ	0ff0fh	;restart location for mon80
-base	equ	078h	;'base' used by controller
-rtype	equ	base+1	;result type
-rbyte	equ	base+3	;result byte
-reset	equ	base+7	;reset controller
+MON80	EQU	0F800H	;INTEL MONITOR BASE
+RMON80	EQU	0FF0FH	;RESTART LOCATION FOR MON80
+BASE	EQU	078H	;'BASE' USED BY CONTROLLER
+RTYPE	EQU	BASE+1	;RESULT TYPE
+RBYTE	EQU	BASE+3	;RESULT BYTE
+RESET	EQU	BASE+7	;RESET CONTROLLER
 ;
-dstat	equ	base	;disk status port
-ilow	equ	base+1	;low iopb address
-ihigh	equ	base+2	;high iopb address
-bsw	equ	0ffh	;boot switch
-recal	equ	3h	;recalibrate selected drive
-readf	equ	4h	;disk read function
-stack	equ	100h	;use end of boot for stack
+DSTAT	EQU	BASE	;DISK STATUS PORT
+ILOW	EQU	BASE+1	;LOW IOPB ADDRESS
+IHIGH	EQU	BASE+2	;HIGH IOPB ADDRESS
+BSW	EQU	0FFH	;BOOT SWITCH
+RECAL	EQU	3H	;RECALIBRATE SELECTED DRIVE
+READF	EQU	4H	;DISK READ FUNCTION
+STACK	EQU	100H	;USE END OF BOOT FOR STACK
 ;
-rstart:
-	lxi	sp,stack;in case of call to mon80
-;	clear disk status
-	in	rtype
-	in	rbyte
-;	check if boot switch is off
-coldstart:
-	in	bsw
-	ani	02h	;switch on?
-	jnz	coldstart
-;	clear the controller
-	out	reset	;logic cleared
-;
-;
-	mvi	b,ntrks	;number of tracks to read
-	lxi	h,iopb0
-;
-start:
-;
-;	read first/next track into cpmb
-	mov	a,l
-	out	ilow
-	mov	a,h
-	out	ihigh
-wait0:	in	dstat
-	ani	4
-	jz	wait0
-;
-;	check disk status
-	in	rtype
-	ani	11b
-	cpi	2
-;
-	if	testing
-	cnc	rmon80	;go to monitor if 11 or 10
-	endif
-	if	!testing
-	jnc	rstart	;retry the load
-	endif
-;
-	in	rbyte	;i/o complete, check status
-;	if not ready, then go to mon80
-	ral
-	cc	rmon80	;not ready bit set
-	rar		;restore
-	ani	11110b	;overrun/addr err/seek/crc/xxxx
-;
-	if	testing
-	cnz	rmon80	;go to monitor
-	endif
-	if	!testing
-	jnz	rstart	;retry the load
-	endif
+RSTART:
+	LXI	SP,STACK;IN CASE OF CALL TO MON80
+;	CLEAR DISK STATUS
+	IN	RTYPE
+	IN	RBYTE
+;	CHECK IF BOOT SWITCH IS OFF
+COLDSTART:
+	IN	BSW
+	ANI	02H	;SWITCH ON?
+	JNZ	COLDSTART
+;	CLEAR THE CONTROLLER
+	OUT	RESET	;LOGIC CLEARED
 ;
 ;
-	lxi	d,iopbl	;length of iopb
-	dad	d	;addressing next iopb
-	dcr	b	;count down tracks
-	jnz	start
+	MVI	B,NTRKS	;NUMBER OF TRACKS TO READ
+	LXI	H,IOPB0
+;
+START:
+;
+;	READ FIRST/NEXT TRACK INTO CPMB
+	MOV	A,L
+	OUT	ILOW
+	MOV	A,H
+	OUT	IHIGH
+WAIT0:	IN	DSTAT
+	ANI	4
+	JZ	WAIT0
+;
+;	CHECK DISK STATUS
+	IN	RTYPE
+	ANI	11B
+	CPI	2
+;
+	IF	TESTING
+	CNC	RMON80	;GO TO MONITOR IF 11 OR 10
+	ENDIF
+	IF	!TESTING
+	JNC	RSTART	;RETRY THE LOAD
+	ENDIF
+;
+	IN	RBYTE	;I/O COMPLETE, CHECK STATUS
+;	IF NOT READY, THEN GO TO MON80
+	RAL
+	CC	RMON80	;NOT READY BIT SET
+	RAR		;RESTORE
+	ANI	11110B	;OVERRUN/ADDR ERR/SEEK/CRC/XXXX
+;
+	IF	TESTING
+	CNZ	RMON80	;GO TO MONITOR
+	ENDIF
+	IF	!TESTING
+	JNZ	RSTART	;RETRY THE LOAD
+	ENDIF
 ;
 ;
-;	jmp to boot to print initial message, and set up jmps
-	jmp	boot
+	LXI	D,IOPBL	;LENGTH OF IOPB
+	DAD	D	;ADDRESSING NEXT IOPB
+	DCR	B	;COUNT DOWN TRACKS
+	JNZ	START
 ;
-;	parameter blocks
-iopb0:	db	80h	;iocw, no update
-	db	readf	;read function
-	db	bdos0	;# sectors to read on track 0
-	db	0	;track 0
-	db	2	;start with sector 2 on track 0
-	dw	cpmb	;start at base of bdos
-iopbl	equ	$-iopb0
 ;
-iopb1:	db	80h
-	db	readf
-	db	bdos1	;sectors to read on track 1
-	db	1	;track 1
-	db	1	;sector 1
-	dw	cpmb+bdos0*128	;base of second read
+;	JMP TO BOOT TO PRINT INITIAL MESSAGE, AND SET UP JMPS
+	JMP	BOOT
 ;
-	end
+;	PARAMETER BLOCKS
+IOPB0:	DB	80H	;IOCW, NO UPDATE
+	DB	READF	;READ FUNCTION
+	DB	BDOS0	;# SECTORS TO READ ON TRACK 0
+	DB	0	;TRACK 0
+	DB	2	;START WITH SECTOR 2 ON TRACK 0
+	DW	CPMB	;START AT BASE OF BDOS
+IOPBL	EQU	$-IOPB0
+;
+IOPB1:	DB	80H
+	DB	READF
+	DB	BDOS1	;SECTORS TO READ ON TRACK 1
+	DB	1	;TRACK 1
+	DB	1	;SECTOR 1
+	DW	CPMB+BDOS0*128	;BASE OF SECOND READ
+;
+	END

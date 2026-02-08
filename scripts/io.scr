@@ -1,0 +1,4 @@
+cpu 8080
+ser 0xf4 com3
+fdc 0x78 disk_2_sectors.dsk[ro] disk_b.dsk
+dev

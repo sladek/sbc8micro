@@ -64,12 +64,20 @@ impl Memory {
         match port.get_memory_base_address() {
             Some(address) => {
                 for i in offset {
-                    self.data[(address + *i as u16) as usize] = MemCell::Io(address);
+                    let index = (address + *i as u16) as usize;
+                    match self.data[index] {
+                        MemCell::Io(_) => {
+                            return Err(format!("ERROR - Address 0x{:02X} is already in use", address).to_string());
+                        },
+                        MemCell::Memory(_) => {
+                            self.data[index] = MemCell::Io(address);
+                        }
+                    }
                 }
                 self.ports.insert(address, port);
                 Ok(())
             }
-            None => Err("Base address is not defined".to_string()),
+            None => Err("ERROR - Base address is not defined".to_string()),
         }
     }
     /// Removes ports mapped to base address

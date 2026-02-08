@@ -1,3 +1,5 @@
+use intelhex::file;
+
 use crate::commands::memory::Memory;
 use crate::ui::app::App;
 use crate::ui::app::AppState;
@@ -12,7 +14,7 @@ impl Fdc {
         let cpu = app.cpu_ui.as_mut().unwrap();
         if command.len() > 6 || command.len() < 3 {
             app.messages.push(
-                "Invalid number of parameters. Usage: fdc <address> <disk 1> [disk 2] [disk 3] [disk 4]"
+                "ERROR - Invalid number of parameters. Usage: fdc <address> <disk 1> [disk 2] [disk 3] [disk 4]"
                     .to_string(),
             );
             return Ok(AppState::Home);
@@ -26,7 +28,7 @@ impl Fdc {
         let base_address = Memory::from_hex_string(port_address)?;
         if base_address > 0xff && m_flag.is_empty() {
             app.messages.push(format!(
-                "Address cannot be bigger than 0xff, but it is 0x{:02X}",
+                "ERROR - Address cannot be bigger than 0xff, but it is 0x{:02X}",
                 base_address
             ));
             return Ok(AppState::Home);
@@ -42,20 +44,23 @@ impl Fdc {
             let floppy_file = command[floppy_index].to_string();
             let (file_name, ro_flag) = process_disk_name(floppy_file.clone());
             let floppy_char = char::from_u32(floppy_char as u32 + floppy_char_index).unwrap();
-            let floppy = format!(" {floppy_char}:{floppy_file}");
-            assigned_floppies.push_str(&floppy);
-            let floppy = match Floppy::new(&file_name, ro_flag) {
+            let floppy_str = format!(" {floppy_char}:{floppy_file}");
+            assigned_floppies.push_str(&floppy_str);
+            let mut floppy = match Floppy::new(&file_name, ro_flag) {
                 Ok(floppy) => {
-                    floppy
+                            floppy
                 }
                 Err(err) => {
-                    return Err(format!("Error[{:?}] - Cannot open floppy file: {:?}. Please check if the file name is correct.", err, file_name));
+                    return Err(format!("ERROR[{:?}] - Cannot open floppy file: {:?}. Please check if the file name is correct.", err, file_name));
                 }
             };
-            fdc.set_floppy(floppy, floppu_number);
+            if fdc.set_floppy(floppy, floppu_number).is_err() {
+                return Err(format!("ERROR - File {file_name} has already been assigned").to_string());
+            } else {
             floppu_number += 1;
             floppy_char_index += 1;
             floppy_index += 1;
+            }
         }
         if m_flag == "M" {
             fdc.set_memory_base_address(base_address);
@@ -67,8 +72,6 @@ impl Fdc {
             command[1]
         );
         app.messages.push(parameters);
-        //        cpu.get_io_memory().remove(base_address as u8);
-
         if m_flag == "M" {
             cpu.get_memory().map_port(fdc)?;
         } else {
@@ -78,7 +81,7 @@ impl Fdc {
                 }
                 None => {
                     app.messages.push(
-                        "This CPU doesn't suppor Io mapping, please use memory mapping"
+                        "ERROR - This CPU doesn't suppor Io mapping, please use memory mapping"
                             .to_string(),
                     );
                 }

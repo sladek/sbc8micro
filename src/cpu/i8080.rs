@@ -192,7 +192,7 @@ impl Cpu {
     fn inp(&mut self, address: u8) -> u8 {
         self.io_memory.read(address)
     }
-    fn out(&mut self, address: u8) {
+    pub fn out(&mut self, address: u8) {
         let memory = &mut self.memory.clone().borrow_mut().get_data();
         let dma = self.io_memory.write(memory, address, self.a);
         let _ = self.memory.borrow_mut().process_dma(dma);
@@ -1886,5 +1886,17 @@ impl CpuUi for Cpu {
     }
     fn set_debug_flag(&mut self, debug: bool) {
         self.debug = debug;
+    }
+    fn io_read(&mut self, address: u8) -> u8 {
+        let reg_a = self.a;
+        let res = self.inp(address);
+        self.a = reg_a;
+        res
+    }
+    fn io_write(&mut self, address: u8, data: u8) {
+        let reg_a = self.a;
+        self.a = data;
+        self.out(address);
+        self.a = reg_a;        
     }
 }

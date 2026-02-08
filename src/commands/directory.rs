@@ -67,7 +67,7 @@ impl Directory {
             }
             Err(_) => {
                 app.messages
-                    .push("Error occured when trying to get current folder.".to_string());
+                    .push("ERROR occured when trying to get current folder.".to_string());
             }
         }
         Ok(AppState::Home)

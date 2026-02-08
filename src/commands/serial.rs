@@ -11,7 +11,7 @@ impl Serial {
         let cpu = app.cpu_ui.as_mut().unwrap();
         if command.len() > 4 || command.len() < 3 {
             app.messages.push(
-                "Invalid number of parameters. Usage: serial <port name> [clock frequency]"
+                "ERROR - Invalid number of parameters. Usage: serial <port name> [clock frequency]"
                     .to_string(),
             );
             return Ok(AppState::Home);
@@ -26,7 +26,7 @@ impl Serial {
         let base_address = Memory::from_hex_string(port_address)?;
         if base_address > 0xff && m_flag.is_empty() {
             app.messages.push(format!(
-                "Address cannot be bigger than 0xff, but it is 0x{:02X}",
+                "ERROR - Address cannot be bigger than 0xff, but it is 0x{:02X}",
                 base_address
             ));
             return Ok(AppState::Home);
@@ -83,7 +83,7 @@ impl Serial {
                         }
                         None => {
                             app.messages.push(
-                                "This CPU doesn't suppor Io mapping, please use memory mapping"
+                                "ERROR - This CPU doesn't suppor Io mapping, please use memory mapping"
                                     .to_string(),
                             );
                         }

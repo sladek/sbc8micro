@@ -237,13 +237,23 @@ impl Isbc201 {
     /// Sets the controller to its initial state
     fn reset(&mut self) {
         self.active_floppy = 0;
-        self.dstat = 0;
+        self.dstat = Dstat::ControllerPresent as u8;
     }
     /// Assign floppy disk
     /// 
     /// Assignes floppy disk to bay 1 or bay 2
-    pub fn set_floppy(&mut self, floppy: Floppy, number: u8) {
+    pub fn set_floppy(&mut self, floppy: Floppy, number: u8) -> Result<()> {
         if number <= NUMBER_OF_DISKS as u8 {
+            let file_name = floppy.get_name();
+            for name in self.floppies.iter_mut() {
+                if name.is_none() {
+                    break
+                }
+                let floppy_name = name.as_mut().unwrap().get_name();
+                if floppy_name == file_name {
+                    return Err(ErrorIndicators::AddressError)
+                }
+            }
             self.floppies[number as usize] = Some(floppy);
             self.rtype = 0b000_0010;
             match number {
@@ -266,6 +276,7 @@ impl Isbc201 {
                 _ => {}
             }
         }
+        Ok(())
     }
     /// Remove floppy drive
     /// 
@@ -324,6 +335,7 @@ impl Isbc201 {
         let discette_instruction = DisketteInstruction::new(iopb.diskette_instruction);
         let opcode = discette_instruction.get_opcode();
         let unit = discette_instruction.get_unit_select();
+        self.reset_interrupt_pending();
         match opcode {
             opcode if opcode == Opcode::NoOperation as u8 => {
                 return Ok(None);
@@ -332,7 +344,7 @@ impl Isbc201 {
                 let track = iopb.track_address;
                 match &mut self.floppies[unit as usize] {
                     Some(floppy) => {
-                        floppy.seek(track)?
+                        floppy.seek(track)?;
                     }
                     None => {
                         return Err(ErrorIndicators::SeekError)
@@ -345,7 +357,7 @@ impl Isbc201 {
                 let track = iopb.track_address;
                 match &mut self.floppies[unit as usize] {
                     Some(floppy) => {
-                        floppy.format_track(track)?
+                        floppy.format_track(track)?;
                     }
                     None => {
                         return Err(ErrorIndicators::SeekError)
@@ -357,7 +369,7 @@ impl Isbc201 {
             opcode if opcode == Opcode::Recalibrate as u8 => {
                 match &mut self.floppies[unit as usize] {
                     Some(floppy) => {
-                        floppy.seek(0)?
+                        floppy.seek(0)?;
                     }
                     None => {
                         return Err(ErrorIndicators::SeekError)
@@ -375,27 +387,24 @@ impl Isbc201 {
             }
             opcode if opcode == Opcode::VerifyCrc as u8 => {
                 let _data = self.read_data(iopb)?; // Just read data. But dont transfer ot to CPU's memory.
-                self.set_interrupt_pending();
             }
             opcode if opcode == Opcode::WriteData as u8 => {
                 self.write_data(iopb, DataDeletedData::Data)?; // Write data based on iopb.
-                self.set_interrupt_pending();
             }
             opcode if opcode == Opcode::WriteDeletedData as u8 => {
                 self.write_data(iopb, DataDeletedData::DeletedData)?; // Write deleted data based on iopb.
-                self.set_interrupt_pending();
             }
             _ => {
                 // Do nothing, for now.
             }
         }
+        self.set_interrupt_pending();
         Ok(None)
     }
     /// Read data from floppy disk
     /// 
     /// Reads data from floppy disk based on IOPB.
     fn read_data(&mut self, iopb: &Iopb) -> Result<Vec<u8>> {
-        self.reset_interrupt_pending();
         let discette_instruction = DisketteInstruction::new(iopb.diskette_instruction);
         let unit = discette_instruction.get_unit_select();
         match &self.floppies[unit as usize] {
@@ -410,7 +419,6 @@ impl Isbc201 {
                     sector_num += 1;
                     sectors_to_read -= 1;
                 };
-                self.set_interrupt_pending();
                 Ok(result_data)
             }
             None => {
@@ -422,7 +430,6 @@ impl Isbc201 {
     /// 
     /// Write data to floppy disk based on IOPB.
     fn write_data(&mut self, iopb: &Iopb, data_deleted_data: DataDeletedData) -> Result<()> {
-        self.reset_interrupt_pending();
         let discette_instruction = DisketteInstruction::new(iopb.diskette_instruction);
         let unit = discette_instruction.get_unit_select();
         match &mut self.floppies[unit as usize] {
@@ -453,7 +460,6 @@ impl Isbc201 {
                         return Err(ErrorIndicators::AddressError)
                     }
                 }
-                self.set_interrupt_pending();
                 Ok(())
             }
             None => {
@@ -533,7 +539,7 @@ impl IoPort for Isbc201 {
             return Some(self.dstat);
         }
         if address == self.rtype_address {
-            return Some(self.rtype);
+            return Some(self.read_result_type());
         }
         if address == self.rbyte_address {
             if self.rtype & 0x03 == 0 {
@@ -550,7 +556,7 @@ impl IoPort for Isbc201 {
             return Some(self.dstat);
         }
         if address == self.rtype_memory_address {
-            return Some(self.rtype);
+            return Some(self.read_result_type());
         }
         if address == self.rbyte_memory_address {
             if self.rtype & 0x03 == 0 {
@@ -576,6 +582,7 @@ impl IoPort for Isbc201 {
                 Ok(dma) => {
                     self.rtype = 0b0000_0000;
                     self.rbyte_00 = 0b0000_0000;
+                    self.set_interrupt_pending();
                     return Ok(dma)
                 }
                 Err(err) => {
@@ -605,6 +612,7 @@ impl IoPort for Isbc201 {
             match self.process_iopb(&iopb) {
                 Ok(dma) => {
                     self.rtype = 0b0000_0000;
+                    self.rbyte_00 = 0b0000_0000;
                     return Ok(dma)
                 }
                 Err(err) => {
@@ -705,7 +713,7 @@ mod tests {
         let ihigh = 0x7au8;
         let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
-        fdc.set_floppy(floppy, 0);
+        let _ = fdc.set_floppy(floppy, 0);
         fdc.set_base_address(0x78);
         let io_memory = cpu.get_io_memory().unwrap();
         let res = io_memory.map_port(fdc);
@@ -776,7 +784,7 @@ mod tests {
         let ihigh = 0x7au8;
         let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
-        fdc.set_floppy(floppy, 0);
+        let _ = fdc.set_floppy(floppy, 0);
         fdc.set_base_address(0x78);
         let io_memory = cpu.get_io_memory().unwrap();
         let res = io_memory.map_port(fdc);
@@ -864,7 +872,7 @@ mod tests {
         let ihigh = 0x7au8;
         let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
-        fdc.set_floppy(floppy, 0);
+        let _ = fdc.set_floppy(floppy, 0);
         fdc.set_base_address(0x78);
         let io_memory = cpu.get_io_memory().unwrap();
         let res = io_memory.map_port(fdc);
@@ -932,7 +940,7 @@ mod tests {
         let ihigh = 0x7au8;
         let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
-        fdc.set_floppy(floppy, 0);
+        let _ = fdc.set_floppy(floppy, 0);
         fdc.set_base_address(0x78);
         let io_memory = cpu.get_io_memory().unwrap();
         let res = io_memory.map_port(fdc);
@@ -992,7 +1000,7 @@ mod tests {
         let ihigh = 0x7au8;
         let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
-        fdc.set_floppy(floppy, 0);
+        let _ = fdc.set_floppy(floppy, 0);
         fdc.set_base_address(0x78);
         let io_memory = cpu.get_io_memory().unwrap();
         let res = io_memory.map_port(fdc);
@@ -1054,7 +1062,7 @@ mod tests {
         let ihigh = 0x7au8;
         let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
-        fdc.set_floppy(floppy, 0);
+        let _ = fdc.set_floppy(floppy, 0);
         fdc.set_base_address(0x78);
         let io_memory = cpu.get_io_memory().unwrap();
         let res = io_memory.map_port(fdc);
@@ -1116,7 +1124,7 @@ mod tests {
         let ihigh = 0x7au8;
         let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
-        fdc.set_floppy(floppy, 0);
+        let _ = fdc.set_floppy(floppy, 0);
         fdc.set_base_address(0x78);
         let io_memory = cpu.get_io_memory().unwrap();
         let res = io_memory.map_port(fdc);
@@ -1179,7 +1187,7 @@ mod tests {
         let ihigh = base_addr + 2;
         let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
-        fdc.set_floppy(floppy, 0);
+        let _ = fdc.set_floppy(floppy, 0);
         fdc.set_memory_base_address(base_addr);
         let res = cpu.get_memory().map_port(fdc); 
         assert_eq!(Ok(()), res);
@@ -1249,7 +1257,7 @@ mod tests {
         let ihigh = base_addr + 2;
         let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
-        fdc.set_floppy(floppy, 0);
+        let _ = fdc.set_floppy(floppy, 0);
         fdc.set_memory_base_address(base_addr);
         let res = cpu.get_memory().map_port(fdc); 
         assert_eq!(Ok(()), res);
@@ -1321,7 +1329,7 @@ mod tests {
         let ihigh = 0x7au8;
         let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
-        fdc.set_floppy(floppy, 0);
+        let _ = fdc.set_floppy(floppy, 0);
         fdc.set_base_address(0x78);
         let io_memory = cpu.get_io_memory().unwrap();
         let res = io_memory.map_port(fdc);
@@ -1408,7 +1416,7 @@ mod tests {
         let ihigh = 0x7au8;
         let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
-        fdc.set_floppy(floppy, 0);
+        let _ = fdc.set_floppy(floppy, 0);
         fdc.set_base_address(0x78);
         let io_memory = cpu.get_io_memory().unwrap();
         let res = io_memory.map_port(fdc);
@@ -1512,7 +1520,7 @@ mod tests {
         let ihigh = 0x7au8;
         let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
-        fdc.set_floppy(floppy, 0);
+        let _ = fdc.set_floppy(floppy, 0);
         fdc.set_base_address(0x78);
         let io_memory = cpu.get_io_memory().unwrap();
         let res = io_memory.map_port(fdc);
@@ -1579,7 +1587,7 @@ mod tests {
         let ihigh = 0x7au8;
         let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
-        fdc.set_floppy(floppy, 0);
+        let _ = fdc.set_floppy(floppy, 0);
         fdc.set_base_address(0x78);
         let io_memory = cpu.get_io_memory().unwrap();
         let res = io_memory.map_port(fdc);

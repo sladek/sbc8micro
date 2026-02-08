@@ -25,6 +25,13 @@ pub trait CpuUi {
     fn get_io_memory(&mut self) -> Option<&mut memory::IoMemory>;
     fn get_pc(&mut self) -> u16;
     fn set_pc(&mut self, pc: u16);
+//    fn io_read(&mut self, address: u8) -> u8;
+//    fn io_write(&mut self, address: u8, data: u8);
+    fn io_read(&mut self, _address: u8) -> u8 {
+        0xff
+    }
+fn io_write(&mut self, _address: u8, _data: u8) {}
+
     fn disasm(&mut self, start: u16, end: u16) -> Vec<String>;
     fn print_disasm(&mut self, start: u16, end: u16) {
         let hex_dump = self.disasm(start, end);

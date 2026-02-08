@@ -1,7 +1,7 @@
-DATA    EQU 40H
-CONTROL EQU 41H
+DATA    EQU 0F4H
+CONTROL EQU 0F5H
 
-        ORG 1000H               ;See README for more info
+        ORG 100H               ;See README for more info
 
 ;Initialization and sign-on message
 LOG:    JMP SETUP           ;See README for more info
@@ -34,7 +34,8 @@ CINNE:  IN CONTROL
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 COUT:   PUSH B
         MOV B, A
-COUT1:  IN CONTROL
+COUT1:  
+        IN CONTROL
         ANI 01H
         JZ COUT1
         MOV A, B

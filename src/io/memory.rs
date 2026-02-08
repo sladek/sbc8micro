@@ -37,12 +37,16 @@ impl IoMemory {
         match port.get_base_address() {
             Some(address) => {
                 for i in offset {
-                    self.port_map[(address + *i) as usize] = Some(address);
+                    let index = (address + *i) as usize;
+                    if self.port_map[index].is_some() {
+                        return Err(format!("ERROR - Address 0x{:02X} is already in use", address));
+                    }
+                    self.port_map[index] = Some(address);
                 }
                 self.ports.insert(address, port);
                 Ok(())
             }
-            None => Err("Base address is not defined".to_string()),
+            None => Err("ERROR - Base address is not defined".to_string()),
         }
     }
     /// Reads data from io address.
@@ -90,7 +94,7 @@ impl IoMemory {
                 self.ports.remove(&base_address);
             }
             None => {
-                return Err(format!("No device mapped to this address [{base_address}]"));
+                return Err(format!("ERROR - No device mapped to this address [{base_address}]"));
             }
         }
         Ok(AppState::Home)

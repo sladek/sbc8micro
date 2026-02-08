@@ -79,7 +79,7 @@ impl Cpu {
                         // Set PC from command line value
                         Memory::from_hex_string(command[1].to_string())?
                     }
-                    _ => return Err("Invalid number of parameters. Usage: g or go".to_string()),
+                    _ => return Err("ERROR - Invalid number of parameters. Usage: g or go".to_string()),
                 };
                 cpu.set_debug_flag(false);
                 cpu.set_pc(pc); // Set PC before run
@@ -101,7 +101,7 @@ impl Cpu {
                             }
                             Err(err) => {
                                 cpu.set_debug_flag(debug);
-                                return Err(format!("Error occured: {}", err));
+                                return Err(format!("ERROR occured: {}", err));
                             }
                         };
                     }

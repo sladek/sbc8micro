@@ -32,7 +32,7 @@ impl Disasm {
                 end_address = Memory::from_hex_string(command[2].to_string())?;
                 if start_address > end_address {
                     app.messages
-                        .push("End address must be bigger than start address.".to_string());
+                        .push("ERROR - End address must be bigger than start address.".to_string());
                     return Ok(AppState::Home);
                 }
                 app.disasm.set_start_address(start_address);
@@ -40,7 +40,7 @@ impl Disasm {
             }
             _ => {
                 return Err(
-                    "Invalid number of parameters. Usage: disasm <start address> <end_address>"
+                    "ERROR - Invalid number of parameters. Usage: disasm <start address> <end_address>"
                         .to_string(),
                 );
             }
@@ -70,7 +70,7 @@ impl Disasm {
                 let range = Memory::from_hex_string(command[1].to_string())?;
                 if range < MIN_DISASM_RANGE {
                     return Err(format!(
-                        "Error: Minimum allowed disassembler range is {MIN_DISASM_RANGE}"
+                        "ERROR - Minimum allowed disassembler range is {MIN_DISASM_RANGE}"
                     ));
                 }
                 //range cannot increase end address beyond max memory size
@@ -78,7 +78,7 @@ impl Disasm {
             }
             _ => {
                 app.messages
-                    .push("Error: Wrong number of parameters.".to_string());
+                    .push("ERROR - Wrong number of parameters.".to_string());
                 app.messages
                     .push("  Usage: set dsasm_range <size>.".to_string());
                 return Ok(AppState::Home);

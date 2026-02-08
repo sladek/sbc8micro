@@ -60,7 +60,7 @@ impl Dev {
                                 }
                             }
                             None => {
-                                return Err("Io memory is not supported by this CPU".to_string());
+                                return Err("ERROR - Io memory is not supported by this CPU".to_string());
                             }
                         },
                         IoAddress::Mem(address) => {
@@ -85,7 +85,7 @@ impl Dev {
                 3 => {
                     if command[1].to_uppercase() != "REMOVE" {
                         return Err(format!(
-                            "Invalid parameter: {}. Usage: \'dev\' or \'dev <address>\' or \'dev remove <address>\' ",
+                            "ERROR - Invalid parameter: {}. Usage: \'dev\' or \'dev <address>\' or \'dev remove <address>\' ",
                             command[1]
                         ));
                     }
@@ -97,7 +97,7 @@ impl Dev {
                                 ports.remove(&address);
                             }
                             None => {
-                                return Err("Io memory is not supported by this CPU".to_string());
+                                return Err("ERROR - Io memory is not supported by this CPU".to_string());
                             }
                         },
                         IoAddress::Mem(address) => {
@@ -114,7 +114,7 @@ impl Dev {
                     }
                 }
                 _ => {
-                    app.messages.push("Invalid number of parameters. Usage: \'dev\' or \'dev <address>\' or \'dev remove <address>\'".to_string());
+                    app.messages.push("ERROR - Invalid number of parameters. Usage: \'dev\' or \'dev <address>\' or \'dev remove <address>\'".to_string());
                 }
             }
         }
@@ -145,7 +145,7 @@ impl Dev {
                 Ok(address) => {
                     if address > 0xff {
                         return Err(format!(
-                            "Address [0x{:4X}] of Io mapped dvice cannot be bigger than 0xff.",
+                            "ERROR - Address [0x{:4X}] of Io mapped dvice cannot be bigger than 0xff.",
                             address
                         ));
                     }

@@ -1,76 +1,75 @@
 ;--------------------------------------------------------------------
 ; 
-; PUTSYS - write system tracks from memory at 3380H
+; PUTSYS - WRITE SYSTEM TRACKS FROM MEMORY AT 3380H
 ;
-; based on getsys/putsys in D.R. manuals, configured for the
-; Digital Research Computers of Texas (Ferguson) Big-Board 
-;      Brian Kantor, 1983
+; BASED ON GETSYS/PUTSYS IN D.R. MANUALS, CONFIGURED FOR THE
+; DIGITAL RESEARCH COMPUTERS OF TEXAS (FERGUSON) BIG-BOARD 
+;      BRIAN KANTOR, 1983
 ;--------------------------------------------------------------------
-; Boot loader	image starts at 3380H
-; CCP		image starts at 3400H
-; BDOS		image starts at 3C00H
-; BIOS		image starts at 4000H
-; (end of system track image is end of bios at 4FFFH
+; BOOT LOADER	IMAGE STARTS AT E380H
+; CCP		IMAGE STARTS AT E400H
+; BDOS		IMAGE STARTS AT EC00H
+; BIOS		IMAGE STARTS AT FA00H
+; (END OF SYSTEM TRACK IMAGE IS END OF BIOS AT 4FFFH
 ;-------------------------------------------------------------------
 
-msize	equ	60			; size of cp/m in kbytes
 
-bias	equ	(msize-20)*1024
-ccp	equ	3400h+bias
-bdos	equ	ccp+800h
-bios	equ	ccp+1600h
+	.INCLUDE	"MEMCONF.DEF"
 
-	org	100h
+	ORG 	0
+LOOP:	JMP LOOP			; END LOOP USED FOR TESTING ONLY
 
-putsys:
-	mvi	c,1			;select the b disk
-	call	bios+27			;select
-	lxi	h,3380h			;convenient place
-	mvi	b,0			;start on track 0
-wr_trk:
-	mvi	c,1			;sector 1
-wr_sec:
-	call	write_sec		;put a sector
-	lxi	d,128			;sector length
-	dad	d			;put pointer at end of sector
-	inr	c			;bump count
-	mov	a,c			;check if we got 26 yet
-	cpi	27			;26 on a track
-	jnz	wr_sec
+	ORG	100H
 
-; at end of track, put next one
+PUTSYS:
+	MVI	C,1			;SELECT THE B DISK
+	CALL	BIOS+27			;SELECT
+	LXI	H,CCP			;CONVENIENT PLACE
+	MVI	B,0			;START ON TRACK 0
+WR_TRK:
+	MVI	C,1			;SECTOR 1
+WR_SEC:
+	CALL	WRITE_SEC		;PUT A SECTOR
+	LXI	D,128			;SECTOR LENGTH
+	DAD	D			;PUT POINTER AT END OF SECTOR
+	INR	C			;BUMP COUNT
+	MOV	A,C			;CHECK IF WE GOT 26 YET
+	CPI	27			;26 ON A TRACK
+	JNZ	WR_SEC
 
-	inr	b			;bump track count
-	mov	a,b			;check count
-	cpi	2			;done 0 and 1 yet?
-	jnz	wr_trk			;no, do another
+; AT END OF TRACK, PUT NEXT ONE
 
-; done, so boot system
+	INR	B			;BUMP TRACK COUNT
+	MOV	A,B			;CHECK COUNT
+	CPI	2			;DONE 0 AND 1 YET?
+	JNZ	WR_TRK			;NO, DO ANOTHER
 
-	jmp	0
+; DONE, SO BOOT SYSTEM
 
-; subroutine to write a sector (use the bios)
+	JMP	0
 
-write_sec:
-	push	h
-	push	b
-	mov	b,h			; set dma address
-	mov	c,l
-	call	bios+36			;setdma
-	pop	b
+; SUBROUTINE TO WRITE A SECTOR (USE THE BIOS)
 
-	push	b
-	mov	c,b			; set track number
-	mvi	b,0
-	call	bios+30
-	pop	b
+WRITE_SEC:
+	PUSH	H
+	PUSH	B
+	MOV	B,H			; SET DMA ADDRESS
+	MOV	C,L
+	CALL	BIOS+36			;SETDMA
+	POP	B
 
-	push	b
-	mvi	b,0
-	call	bios+33			; set sector number
-	call	bios+42			; sector write
-	pop	b
-	pop	h
-	ret
+	PUSH	B
+	MOV	C,B			; SET TRACK NUMBER
+	MVI	B,0
+	CALL	BIOS+30
+	POP	B
 
-	end
+	PUSH	B
+	MVI	B,0
+	CALL	BIOS+33			; SET SECTOR NUMBER
+	CALL	BIOS+42			; SECTOR WRITE
+	POP	B
+	POP	H
+	RET
+
+	END

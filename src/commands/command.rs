@@ -14,6 +14,7 @@ use crate::commands::opcodes::Opcodes;
 use crate::commands::registers::Registers;
 use crate::commands::script::Script;
 use crate::commands::serial::Serial;
+use crate::commands::io::Io;
 use crate::commands::{MIN_COMMAND_HISTORY_LENGTH, MIN_OUTPUT_HISTORY_LENGTH};
 use crate::help;
 use crate::ui::app::{App, AppState};
@@ -46,6 +47,7 @@ impl Command {
             "fdc" | "floppy" => Fdc::fdc(app, command),
             "g" | "go" => Cpu::go(app, command),
             "h" | "help" | "?" => Help::help(app, command),
+            "io" => Io::io(app, command),
             "l" | "load" => Load::load_file(app, command),
             "la" | "loada" => Load::load_acme_file(app, command),
             "lh" | "loadh" => Load::load_hex_file(app, command),
@@ -67,7 +69,7 @@ impl Command {
     fn get_usage(app: &mut App) -> Result<AppState, String> {
         let help = help::Help::new();
         let items = help.help_items;
-        app.messages.push(String::from("Unknown command."));
+        app.messages.push(String::from("ERROR - Unknown command."));
         app.messages.push(String::from("  Available commands:"));
         for item in items {
             let mut msg = String::from("    ");
@@ -97,7 +99,7 @@ impl Command {
                 let range = Memory::from_hex_string(command[1].to_string())?;
                 if range < MIN_OUTPUT_HISTORY_LENGTH {
                     return Err(format!(
-                        "Error: Minimal output history length is {MIN_OUTPUT_HISTORY_LENGTH}"
+                        "ERROR - Minimal output history length is {MIN_OUTPUT_HISTORY_LENGTH}"
                     ));
                 }
                 app.get_output_view_status()
@@ -105,7 +107,7 @@ impl Command {
             }
             _ => {
                 app.messages
-                    .push("Error: Wrong number of parameters.".to_string());
+                    .push("ERROR - Wrong number of parameters.".to_string());
                 app.messages
                     .push("  Usage: output_history [length] or oh [length]".to_string());
                 return Ok(AppState::Home);
@@ -134,14 +136,14 @@ impl Command {
                 let size = Memory::from_hex_string(command[1].to_string())?;
                 if size < MIN_COMMAND_HISTORY_LENGTH {
                     return Err(format!(
-                        "Error: Minimal command history length is {MIN_COMMAND_HISTORY_LENGTH}"
+                        "ERROR - Minimal command history length is {MIN_COMMAND_HISTORY_LENGTH}"
                     ));
                 }
                 app.set_command_history_size(size as usize);
             }
             _ => {
                 app.messages
-                    .push("Error: Wrong number of parameters.".to_string());
+                    .push("ERROR - Wrong number of parameters.".to_string());
                 app.messages
                     .push("  Usage: set command_history_size <size>.".to_string());
                 return Ok(AppState::Home);

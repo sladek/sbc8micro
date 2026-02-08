@@ -14,117 +14,117 @@ Assembly Listing                                                                
                            10 | ;This is the base monitor. Consult README for information
                            11 | ;on including the I/O module specific to your system.
                            12 | 
-                           13 |         ORG 1000H               ;See README for more info
+                           13 |         ORG 100H               ;See README for more info
                            14 | 
                            15 | ;Initialization and sign-on message
-1000: C3 33 12             16 | LOG:    JMP SETUP           ;See README for more info
-1003: 21 C4 11             17 | SE1:    LXI H, LOGMSG@
-1006: CD 5A 11             18 |         CALL STROUT
-1009: 21 6A 12             19 |         LXI H, MSG@
-100C: CD 5A 11             20 |         CALL STROUT
+0100: C3 33 03             16 | LOG:    JMP SETUP           ;See README for more info
+0103: 21 C4 02             17 | SE1:    LXI H, LOGMSG@
+0106: CD 5A 02             18 |         CALL STROUT
+0109: 21 6A 03             19 |         LXI H, MSG@
+010C: CD 5A 02             20 |         CALL STROUT
                            21 | 
                            22 | ;Main command loop
-100F: 21 1C 12             23 | CMDLP:  LXI H, PROMPT@
-1012: CD 5A 11             24 |         CALL STROUT
-1015: 21 0F 10             25 |         LXI H, CMDLP        ; Get CMDLP address in HL
-1018: E5                   26 |         PUSH H              ; Push HL, prime stack for RET to CMDLP
-1019: CD 50 12             27 |         CALL CIN
-101C: E6 5F                28 |         ANI 5Fh
-101E: FE 44                29 |         CPI 'D'
-1020: CA 9C 10             30 |         JZ MEMDMP
-1023: FE 45                31 |         CPI 'E'
-1025: CA 65 10             32 |         JZ EDMEM
-1028: FE 47                33 |         CPI 'G'
-102A: CA 93 10             34 |         JZ GO
-102D: FE 4F                35 |         CPI 'O'
-102F: CA 42 10             36 |         JZ OUTPUT
-1032: FE 49                37 |         CPI 'I'
-1034: CA 53 10             38 |         JZ INPUT
-1037: FE 4C                39 |         CPI 'L'
-1039: CA 75 11             40 |         JZ LOAD
-103C: 21 2A 12             41 |         LXI H, ERR@
-103F: C3 65 11             42 |         JMP ERROUT
+010F: 21 1C 03             23 | CMDLP:  LXI H, PROMPT@
+0112: CD 5A 02             24 |         CALL STROUT
+0115: 21 0F 01             25 |         LXI H, CMDLP        ; Get CMDLP address in HL
+0118: E5                   26 |         PUSH H              ; Push HL, prime stack for RET to CMDLP
+0119: CD 50 03             27 |         CALL CIN
+011C: E6 5F                28 |         ANI 5Fh
+011E: FE 44                29 |         CPI 'D'
+0120: CA 9C 01             30 |         JZ MEMDMP
+0123: FE 45                31 |         CPI 'E'
+0125: CA 65 01             32 |         JZ EDMEM
+0128: FE 47                33 |         CPI 'G'
+012A: CA 93 01             34 |         JZ GO
+012D: FE 4F                35 |         CPI 'O'
+012F: CA 42 01             36 |         JZ OUTPUT
+0132: FE 49                37 |         CPI 'I'
+0134: CA 53 01             38 |         JZ INPUT
+0137: FE 4C                39 |         CPI 'L'
+0139: CA 75 02             40 |         JZ LOAD
+013C: 21 2A 03             41 |         LXI H, ERR@
+013F: C3 65 02             42 |         JMP ERROUT
                            43 | 
                            44 | ;Get a port address, write byte out
-1042: CD 54 11             45 | OUTPUT: CALL SPCOUT
-1045: CD 13 11             46 |         CALL GETHEX
-1048: 47                   47 |         MOV B, A
-1049: CD 54 11             48 |         CALL SPCOUT
-104C: CD 13 11             49 |         CALL GETHEX
-104F: CD 3B 11             50 |         CALL JMPOUT
-1052: C9                   51 |         RET
+0142: CD 54 02             45 | OUTPUT: CALL SPCOUT
+0145: CD 13 02             46 |         CALL GETHEX
+0148: 47                   47 |         MOV B, A
+0149: CD 54 02             48 |         CALL SPCOUT
+014C: CD 13 02             49 |         CALL GETHEX
+014F: CD 3B 02             50 |         CALL JMPOUT
+0152: C9                   51 |         RET
                            52 | 
                            53 | ;Input from port, print contents
-1053: CD 54 11             54 | INPUT:  CALL SPCOUT
-1056: CD 13 11             55 |         CALL GETHEX
-1059: 47                   56 |         MOV B, A
+0153: CD 54 02             54 | INPUT:  CALL SPCOUT
+0156: CD 13 02             55 |         CALL GETHEX
+0159: 47                   56 |         MOV B, A
 
 
 Assembly Listing                                                                                                 Page: 2
 ------------------------------------------------------------------------------------------------------------------------
 
-105A: CD 54 11             57 |         CALL SPCOUT
-105D: 78                   58 |         MOV A, B
-105E: CD 41 11             59 |         CALL JMPIN
-1061: CD E1 10             60 |         CALL HEXOUT
-1064: C9                   61 |         RET
+015A: CD 54 02             57 |         CALL SPCOUT
+015D: 78                   58 |         MOV A, B
+015E: CD 41 02             59 |         CALL JMPIN
+0161: CD E1 01             60 |         CALL HEXOUT
+0164: C9                   61 |         RET
                            62 | 
                            63 | ;Edit memory from a starting address until X is
                            64 | ;pressed. Display mem loc, contents, and results
                            65 | ;of write.
-1065: CD 54 11             66 | EDMEM:  CALL SPCOUT
-1068: CD 0A 11             67 |         CALL ADRIN
-106B: 62                   68 |         MOV H, D
-106C: 6B                   69 |         MOV L, E
-106D: CD 6C 11             70 | ED1:    CALL CRLF
-1070: CD 01 11             71 |         CALL ADROUT
-1073: CD 54 11             72 |         CALL SPCOUT
-1076: 3E 3A                73 |         MVI A, ':'
-1078: CD 56 12             74 |         CALL COUT
-107B: CD 54 11             75 |         CALL SPCOUT
-107E: CD DC 10             76 |         CALL DMPLOC
-1081: CD 54 11             77 |         CALL SPCOUT
-1084: CD 13 11             78 |         CALL GETHEX
-1087: D8                   79 |         RC
-1088: 77                   80 |         MOV M, A
-1089: CD 54 11             81 |         CALL SPCOUT
-108C: CD DC 10             82 |         CALL DMPLOC
-108F: 23                   83 |         INX H
-1090: C3 6D 10             84 |         JMP ED1
+0165: CD 54 02             66 | EDMEM:  CALL SPCOUT
+0168: CD 0A 02             67 |         CALL ADRIN
+016B: 62                   68 |         MOV H, D
+016C: 6B                   69 |         MOV L, E
+016D: CD 6C 02             70 | ED1:    CALL CRLF
+0170: CD 01 02             71 |         CALL ADROUT
+0173: CD 54 02             72 |         CALL SPCOUT
+0176: 3E 3A                73 |         MVI A, ':'
+0178: CD 56 03             74 |         CALL COUT
+017B: CD 54 02             75 |         CALL SPCOUT
+017E: CD DC 01             76 |         CALL DMPLOC
+0181: CD 54 02             77 |         CALL SPCOUT
+0184: CD 13 02             78 |         CALL GETHEX
+0187: D8                   79 |         RC
+0188: 77                   80 |         MOV M, A
+0189: CD 54 02             81 |         CALL SPCOUT
+018C: CD DC 01             82 |         CALL DMPLOC
+018F: 23                   83 |         INX H
+0190: C3 6D 01             84 |         JMP ED1
                            85 | 
                            86 | ;Get an address and jump to it
-1093: CD 54 11             87 | GO:     CALL SPCOUT
-1096: CD 0A 11             88 |         CALL ADRIN
-1099: 62                   89 |         MOV H, D
-109A: 6B                   90 |         MOV L, E
-109B: E9                   91 |         PCHL
+0193: CD 54 02             87 | GO:     CALL SPCOUT
+0196: CD 0A 02             88 |         CALL ADRIN
+0199: 62                   89 |         MOV H, D
+019A: 6B                   90 |         MOV L, E
+019B: E9                   91 |         PCHL
                            92 | 
                            93 | ;Dump memory between two address locations
-109C: CD 54 11             94 | MEMDMP: CALL SPCOUT
-109F: CD 0A 11             95 |         CALL ADRIN
-10A2: 62                   96 |         MOV H, D            ; Start in HL
-10A3: 6B                   97 |         MOV L, E
-10A4: 0E 10                98 |         MVI C, 10h
-10A6: CD 54 11             99 |         CALL SPCOUT
-10A9: CD 0A 11            100 |         CALL ADRIN          ; End in DE
-10AC: CD 6C 11            101 | MD1:    CALL CRLF
-10AF: CD C3 10            102 |         CALL DMP16
-10B2: 7A                  103 |         MOV A, D            ; High byte of end address
-10B3: BC                  104 |         CMP H               ; Compare current high address
-10B4: F8                  105 |         RM                  ; Done if current high > end high
-10B5: 7B                  106 |         MOV A, E            ; Low byte of end address
-10B6: BD                  107 |         CMP L               ; Compare current low address
-10B7: DA BD 10            108 |         JC MD2              ; Current low > end low, check for rollover
-10BA: C3 AC 10            109 |         JMP MD1             ; Continue dumping memory
-10BD: 7A                  110 | MD2:    MOV A, D            ; High byte of end address
-10BE: BC                  111 |         CMP H               ; Are high bytes the same?
-10BF: C2 AC 10            112 |         JNZ MD1             ; Keep going if upper bytes aren't the same
+019C: CD 54 02             94 | MEMDMP: CALL SPCOUT
+019F: CD 0A 02             95 |         CALL ADRIN
+01A2: 62                   96 |         MOV H, D            ; Start in HL
+01A3: 6B                   97 |         MOV L, E
+01A4: 0E 10                98 |         MVI C, 10h
+01A6: CD 54 02             99 |         CALL SPCOUT
+01A9: CD 0A 02            100 |         CALL ADRIN          ; End in DE
+01AC: CD 6C 02            101 | MD1:    CALL CRLF
+01AF: CD C3 01            102 |         CALL DMP16
+01B2: 7A                  103 |         MOV A, D            ; High byte of end address
+01B3: BC                  104 |         CMP H               ; Compare current high address
+01B4: F8                  105 |         RM                  ; Done if current high > end high
+01B5: 7B                  106 |         MOV A, E            ; Low byte of end address
+01B6: BD                  107 |         CMP L               ; Compare current low address
+01B7: DA BD 01            108 |         JC MD2              ; Current low > end low, check for rollover
+01BA: C3 AC 01            109 |         JMP MD1             ; Continue dumping memory
+01BD: 7A                  110 | MD2:    MOV A, D            ; High byte of end address
+01BE: BC                  111 |         CMP H               ; Are high bytes the same?
+01BF: C2 AC 01            112 |         JNZ MD1             ; Keep going if upper bytes aren't the same
 
 
 Assembly Listing                                                                                                 Page: 3
 ------------------------------------------------------------------------------------------------------------------------
 
-10C2: C9                  113 |         RET                 ; Done if they are
+01C2: C9                  113 |         RET                 ; Done if they are
                           114 | 
                           115 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                           116 | ;DMP16 -- Dump 16 consecutive memory locations
@@ -133,17 +133,17 @@ Assembly Listing                                                                
                           119 | ;post: memory from HL to HL + 16 printed
                           120 | ;post: HL incremented to HL + 16
                           121 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-10C3: CD 01 11            122 | DMP16:  CALL ADROUT
-10C6: CD 54 11            123 |         CALL SPCOUT
-10C9: 3E 3A               124 |         MVI A, ':'
-10CB: CD 56 12            125 |         CALL COUT
-10CE: 0E 10               126 |         MVI C, 10h
-10D0: CD 54 11            127 | DM1:    CALL SPCOUT
-10D3: CD DC 10            128 |         CALL DMPLOC
-10D6: 23                  129 |         INX H
-10D7: 0D                  130 |         DCR C
-10D8: C8                  131 |         RZ
-10D9: C3 D0 10            132 |         JMP DM1
+01C3: CD 01 02            122 | DMP16:  CALL ADROUT
+01C6: CD 54 02            123 |         CALL SPCOUT
+01C9: 3E 3A               124 |         MVI A, ':'
+01CB: CD 56 03            125 |         CALL COUT
+01CE: 0E 10               126 |         MVI C, 10h
+01D0: CD 54 02            127 | DM1:    CALL SPCOUT
+01D3: CD DC 01            128 |         CALL DMPLOC
+01D6: 23                  129 |         INX H
+01D7: 0D                  130 |         DCR C
+01D8: C8                  131 |         RZ
+01D9: C3 D0 01            132 |         JMP DM1
                           133 | 
                           134 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                           135 | ;DMPLOC -- Print a byte at HL to console
@@ -151,9 +151,9 @@ Assembly Listing                                                                
                           137 | ;pre: HL pair contains address of byte
                           138 | ;post: byte at HL printed to console
                           139 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-10DC: 7E                  140 | DMPLOC: MOV A, M
-10DD: CD E1 10            141 |         CALL HEXOUT
-10E0: C9                  142 |         RET
+01DC: 7E                  140 | DMPLOC: MOV A, M
+01DD: CD E1 01            141 |         CALL HEXOUT
+01E0: C9                  142 |         RET
                           143 | 
                           144 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                           145 | ;HEXOUT -- Output byte to console as hex
@@ -161,21 +161,21 @@ Assembly Listing                                                                
                           147 | ;pre: A register contains byte to be output
                           148 | ;post: byte is output to console as hex
                           149 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-10E1: C5                  150 | HEXOUT: PUSH B
-10E2: 47                  151 |         MOV B, A
-10E3: 0F                  152 |         RRC
-10E4: 0F                  153 |         RRC
-10E5: 0F                  154 |         RRC
-10E6: 0F                  155 |         RRC
-10E7: E6 0F               156 |         ANI 0Fh
-10E9: CD FA 10            157 |         CALL HEXASC
-10EC: CD 56 12            158 |         CALL COUT
-10EF: 78                  159 |         MOV A, B
-10F0: E6 0F               160 |         ANI 0Fh
-10F2: CD FA 10            161 |         CALL HEXASC
-10F5: CD 56 12            162 |         CALL COUT
-10F8: C1                  163 |         POP B
-10F9: C9                  164 |         RET
+01E1: C5                  150 | HEXOUT: PUSH B
+01E2: 47                  151 |         MOV B, A
+01E3: 0F                  152 |         RRC
+01E4: 0F                  153 |         RRC
+01E5: 0F                  154 |         RRC
+01E6: 0F                  155 |         RRC
+01E7: E6 0F               156 |         ANI 0Fh
+01E9: CD FA 01            157 |         CALL HEXASC
+01EC: CD 56 03            158 |         CALL COUT
+01EF: 78                  159 |         MOV A, B
+01F0: E6 0F               160 |         ANI 0Fh
+01F2: CD FA 01            161 |         CALL HEXASC
+01F5: CD 56 03            162 |         CALL COUT
+01F8: C1                  163 |         POP B
+01F9: C9                  164 |         RET
                           165 | 
                           166 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                           167 | ;HEXASC -- Convert nybble to ASCII char
@@ -188,11 +188,11 @@ Assembly Listing                                                                
                           169 | ;pre: A register contains nybble
                           170 | ;post: A register contains ASCII char
                           171 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-10FA: C6 90               172 | HEXASC: ADI 90h
-10FC: 27                  173 |         DAA
-10FD: CE 40               174 |         ACI 40h
-10FF: 27                  175 |         DAA
-1100: C9                  176 |         RET
+01FA: C6 90               172 | HEXASC: ADI 90h
+01FC: 27                  173 |         DAA
+01FD: CE 40               174 |         ACI 40h
+01FF: 27                  175 |         DAA
+0200: C9                  176 |         RET
                           177 | 
                           178 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                           179 | ;ADROUT -- Print an address to the console
@@ -200,11 +200,11 @@ Assembly Listing                                                                
                           181 | ;pre: HL pair contains address to print
                           182 | ;post: HL printed to console as hex
                           183 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-1101: 7C                  184 | ADROUT: MOV A, H
-1102: CD E1 10            185 |         CALL HEXOUT
-1105: 7D                  186 |         MOV A, L
-1106: CD E1 10            187 |         CALL HEXOUT
-1109: C9                  188 |         RET
+0201: 7C                  184 | ADROUT: MOV A, H
+0202: CD E1 01            185 |         CALL HEXOUT
+0205: 7D                  186 |         MOV A, L
+0206: CD E1 01            187 |         CALL HEXOUT
+0209: C9                  188 |         RET
                           189 | 
                           190 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                           191 | ;ADRIN -- Get an address word from console
@@ -212,11 +212,11 @@ Assembly Listing                                                                
                           193 | ;pre: none
                           194 | ;post: DE contains address from console
                           195 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-110A: CD 13 11            196 | ADRIN:  CALL GETHEX
-110D: 57                  197 |         MOV D, A
-110E: CD 13 11            198 |         CALL GETHEX
-1111: 5F                  199 |         MOV E, A
-1112: C9                  200 |         RET
+020A: CD 13 02            196 | ADRIN:  CALL GETHEX
+020D: 57                  197 |         MOV D, A
+020E: CD 13 02            198 |         CALL GETHEX
+0211: 5F                  199 |         MOV E, A
+0212: C9                  200 |         RET
                           201 | 
                           202 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                           203 | ;GETHEX -- Get byte from console as hex
@@ -225,28 +225,28 @@ Assembly Listing                                                                
                           206 | ;post: A register contains byte from hex input
                           207 | ;post: Carry flag set if X was received
                           208 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-1113: D5                  209 | GETHEX: PUSH D
-1114: CD 50 12            210 |         CALL CIN
-1117: FE 58               211 |         CPI 'X'
-1119: CA 2D 11            212 |         JZ GE2
-111C: CD 31 11            213 |         CALL ASCHEX
-111F: 07                  214 |         RLC
-1120: 07                  215 |         RLC
-1121: 07                  216 |         RLC
-1122: 07                  217 |         RLC
-1123: 57                  218 |         MOV D, A
-1124: CD 50 12            219 |         CALL CIN
-1127: CD 31 11            220 |         CALL ASCHEX
-112A: B2                  221 |         ORA D
-112B: D1                  222 | GE1:    POP D
-112C: C9                  223 |         RET
-112D: 37                  224 | GE2:    STC
+0213: D5                  209 | GETHEX: PUSH D
+0214: CD 50 03            210 |         CALL CIN
+0217: FE 58               211 |         CPI 'X'
+0219: CA 2D 02            212 |         JZ GE2
+021C: CD 31 02            213 |         CALL ASCHEX
+021F: 07                  214 |         RLC
+0220: 07                  215 |         RLC
+0221: 07                  216 |         RLC
+0222: 07                  217 |         RLC
+0223: 57                  218 |         MOV D, A
+0224: CD 50 03            219 |         CALL CIN
+0227: CD 31 02            220 |         CALL ASCHEX
+022A: B2                  221 |         ORA D
+022B: D1                  222 | GE1:    POP D
+022C: C9                  223 |         RET
+022D: 37                  224 | GE2:    STC
 
 
 Assembly Listing                                                                                                 Page: 5
 ------------------------------------------------------------------------------------------------------------------------
 
-112E: C3 2B 11            225 |         JMP GE1
+022E: C3 2B 02            225 |         JMP GE1
                           226 | 
                           227 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                           228 | ;ASCHEX -- Convert ASCII coded hex to nybble
@@ -254,12 +254,12 @@ Assembly Listing                                                                
                           230 | ;pre: A register contains ASCII coded nybble
                           231 | ;post: A register contains nybble
                           232 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-1131: D6 30               233 | ASCHEX: SUI 30h
-1133: FE 0A               234 |         CPI 0Ah
-1135: F8                  235 |         RM
-1136: E6 5F               236 |         ANI 5Fh
-1138: D6 07               237 |         SUI 07h
-113A: C9                  238 |         RET
+0231: D6 30               233 | ASCHEX: SUI 30h
+0233: FE 0A               234 |         CPI 0Ah
+0235: F8                  235 |         RM
+0236: E6 5F               236 |         ANI 5Fh
+0238: D6 07               237 |         SUI 07h
+023A: C9                  238 |         RET
                           239 | 
                           240 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                           241 | ;JMPOUT -- Output to a dynamic port
@@ -268,9 +268,9 @@ Assembly Listing                                                                
                           244 | ;pre: A register contains the byte to output
                           245 | ;post: byte is output
                           246 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-113B: 0E D3               247 | JMPOUT: MVI C, 0D3h
-113D: CD 48 11            248 |         CALL GOBYT
-1140: C9                  249 |         RET
+023B: 0E D3               247 | JMPOUT: MVI C, 0D3h
+023D: CD 48 02            248 |         CALL GOBYT
+0240: C9                  249 |         RET
                           250 | 
                           251 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                           252 | ;JMPIN -- Input from a dynamic port
@@ -278,10 +278,10 @@ Assembly Listing                                                                
                           254 | ;pre: A register contains the port to input from
                           255 | ;post: A register contains port value
                           256 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-1141: 0E DB               257 | JMPIN:  MVI C, 0DBh
-1143: 47                  258 |         MOV B, A
-1144: CD 48 11            259 |         CALL GOBYT
-1147: C9                  260 |         RET
+0241: 0E DB               257 | JMPIN:  MVI C, 0DBh
+0243: 47                  258 |         MOV B, A
+0244: CD 48 02            259 |         CALL GOBYT
+0247: C9                  260 |         RET
                           261 | 
                           262 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                           263 | ;GOBYT -- Push a two-byte instruction and RET
@@ -291,15 +291,15 @@ Assembly Listing                                                                
                           267 | ;pre: C register contains opcode
                           268 | ;post: code executed, returns to caller
                           269 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-1148: 21 00 00            270 | GOBYT:  LXI H, 0000
-114B: 39                  271 |         DAD SP
-114C: 2B                  272 |         DCX H
-114D: 36 C9               273 |         MVI M, 0C9h
-114F: 2B                  274 |         DCX H
-1150: 70                  275 |         MOV M, B
-1151: 2B                  276 |         DCX H
-1152: 71                  277 |         MOV M, C
-1153: E9                  278 |         PCHL
+0248: 21 00 00            270 | GOBYT:  LXI H, 0000
+024B: 39                  271 |         DAD SP
+024C: 2B                  272 |         DCX H
+024D: 36 C9               273 |         MVI M, 0C9h
+024F: 2B                  274 |         DCX H
+0250: 70                  275 |         MOV M, B
+0251: 2B                  276 |         DCX H
+0252: 71                  277 |         MOV M, C
+0253: E9                  278 |         PCHL
                           279 | 
                           280 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -312,9 +312,9 @@ Assembly Listing                                                                
                           283 | ;pre: none
                           284 | ;post: 0x20 printed to console
                           285 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-1154: 3E 20               286 | SPCOUT: MVI A, ' '
-1156: CD 56 12            287 |         CALL COUT
-1159: C9                  288 |         RET
+0254: 3E 20               286 | SPCOUT: MVI A, ' '
+0256: CD 56 03            287 |         CALL COUT
+0259: C9                  288 |         RET
                           289 | 
                           290 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                           291 | ;STROUT -- Print a null-terminated string
@@ -323,12 +323,12 @@ Assembly Listing                                                                
                           294 | ;     terminated string
                           295 | ;post: string at HL printed to console
                           296 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-115A: 7E                  297 | STROUT: MOV A, M
-115B: FE 00               298 |         CPI 00
-115D: C8                  299 |         RZ
-115E: CD 56 12            300 |         CALL COUT
-1161: 23                  301 |         INX H
-1162: C3 5A 11            302 |         JMP STROUT
+025A: 7E                  297 | STROUT: MOV A, M
+025B: FE 00               298 |         CPI 00
+025D: C8                  299 |         RZ
+025E: CD 56 03            300 |         CALL COUT
+0261: 23                  301 |         INX H
+0262: C3 5A 02            302 |         JMP STROUT
                           303 | 
                           304 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                           305 | ;ERROUT -- Print a null-terminated error string
@@ -338,9 +338,9 @@ Assembly Listing                                                                
                           309 | ;post: string at HL printed to console
                           310 | ;post: program execution returned to command loop
                           311 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-1165: CD 6C 11            312 | ERROUT: CALL CRLF
-1168: CD 5A 11            313 |         CALL STROUT
-116B: C9                  314 |         RET
+0265: CD 6C 02            312 | ERROUT: CALL CRLF
+0268: CD 5A 02            313 |         CALL STROUT
+026B: C9                  314 |         RET
                           315 | 
                           316 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                           317 | ;CRLF -- Print a CR, LF
@@ -350,73 +350,73 @@ Assembly Listing                                                                
                           321 | ;pre: none
                           322 | ;post: CR, LF printed to console
                           323 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-116C: E5                  324 | CRLF:   PUSH H
-116D: 21 30 12            325 |         LXI H, CRLF@
-1170: CD 5A 11            326 |         CALL STROUT
-1173: E1                  327 |         POP H
-1174: C9                  328 |         RET
+026C: E5                  324 | CRLF:   PUSH H
+026D: 21 30 03            325 |         LXI H, CRLF@
+0270: CD 5A 02            326 |         CALL STROUT
+0273: E1                  327 |         POP H
+0274: C9                  328 |         RET
                           329 | 
                           330 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                           331 | ;LOAD -- Load an Intel HEX file from console
                           332 | ;
                           333 | ;post: Intel HEX file loaded, or error printed
                           334 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-1175: CD 6C 11            335 | LOAD:   CALL CRLF       ; Newline
-1178: CD 46 12            336 | LOAD1:  CALL CINNE
+0275: CD 6C 02            335 | LOAD:   CALL CRLF       ; Newline
+0278: CD 46 03            336 | LOAD1:  CALL CINNE
 
 
 Assembly Listing                                                                                                 Page: 7
 ------------------------------------------------------------------------------------------------------------------------
 
-117B: FE 3A               337 |         CPI ':'
-117D: C2 78 11            338 |         JNZ LOAD1       ; Wait for start colon
-1180: CD 56 12            339 |         CALL COUT
-1183: CD 13 11            340 |         CALL GETHEX     ; Get record length
-1186: 47                  341 |         MOV B, A        ; Record length in B
-1187: 4F                  342 |         MOV C, A        ; Start checksumming in C
-1188: CD 13 11            343 |         CALL GETHEX     ; Start address high byte
-118B: 67                  344 |         MOV H, A        ; Store in H
-118C: 81                  345 |         ADD C
-118D: 4F                  346 |         MOV C, A        ; Checksum
-118E: CD 13 11            347 |         CALL GETHEX     ; Start address low byte
-1191: 6F                  348 |         MOV L, A        ; Store in L
-1192: 81                  349 |         ADD C
-1193: 4F                  350 |         MOV C, A        ; Checksum
-1194: CD 13 11            351 |         CALL GETHEX     ; Get record type
-1197: 57                  352 |         MOV D, A        ; Store record type in D
-1198: 81                  353 |         ADD C
-1199: 4F                  354 |         MOV C, A        ; Checksum record type
-119A: 78                  355 |         MOV A, B        ; Check record length
-119B: A7                  356 |         ANA A
-119C: CA B5 11            357 |         JZ LOAD4        ; Length == 0, done getting data
-119F: CD 13 11            358 | LOAD2:  CALL GETHEX     ; This is the main record processing loop
-11A2: 77                  359 |         MOV M, A        ; Store char at HL
-11A3: 81                  360 |         ADD C
-11A4: 4F                  361 |         MOV C, A        ; Checksum
-11A5: 23                  362 |         INX H           ; Move memory pointer up
-11A6: 05                  363 |         DCR B
-11A7: C2 9F 11            364 |         JNZ LOAD2       ; Not done with the line
-11AA: CD 13 11            365 | LOAD3:  CALL GETHEX     ; Get checksum byte
-11AD: 81                  366 |         ADD C
-11AE: C2 BE 11            367 |         JNZ CSUMER      ; Checksum bad, print error
-11B1: B2                  368 |         ORA D
-11B2: CA 75 11            369 |         JZ LOAD         ; Record Type 00, keep going
-11B5: CD 46 12            370 | LOAD4:  CALL CINNE      ; Done getting data, silently eat chars
-11B8: FE 0A               371 |         CPI 10          ; Check for LF
-11BA: C2 B5 11            372 |         JNZ LOAD4
-11BD: C9                  373 |         RET             ; Got LF, return to command loop
-11BE: 21 21 12            374 | CSUMER: LXI H, CSERR@   ; Print checksum error to console
-11C1: C3 65 11            375 |         JMP ERROUT      ; RET from ERROUT will return to command loop
+027B: FE 3A               337 |         CPI ':'
+027D: C2 78 02            338 |         JNZ LOAD1       ; Wait for start colon
+0280: CD 56 03            339 |         CALL COUT
+0283: CD 13 02            340 |         CALL GETHEX     ; Get record length
+0286: 47                  341 |         MOV B, A        ; Record length in B
+0287: 4F                  342 |         MOV C, A        ; Start checksumming in C
+0288: CD 13 02            343 |         CALL GETHEX     ; Start address high byte
+028B: 67                  344 |         MOV H, A        ; Store in H
+028C: 81                  345 |         ADD C
+028D: 4F                  346 |         MOV C, A        ; Checksum
+028E: CD 13 02            347 |         CALL GETHEX     ; Start address low byte
+0291: 6F                  348 |         MOV L, A        ; Store in L
+0292: 81                  349 |         ADD C
+0293: 4F                  350 |         MOV C, A        ; Checksum
+0294: CD 13 02            351 |         CALL GETHEX     ; Get record type
+0297: 57                  352 |         MOV D, A        ; Store record type in D
+0298: 81                  353 |         ADD C
+0299: 4F                  354 |         MOV C, A        ; Checksum record type
+029A: 78                  355 |         MOV A, B        ; Check record length
+029B: A7                  356 |         ANA A
+029C: CA B5 02            357 |         JZ LOAD4        ; Length == 0, done getting data
+029F: CD 13 02            358 | LOAD2:  CALL GETHEX     ; This is the main record processing loop
+02A2: 77                  359 |         MOV M, A        ; Store char at HL
+02A3: 81                  360 |         ADD C
+02A4: 4F                  361 |         MOV C, A        ; Checksum
+02A5: 23                  362 |         INX H           ; Move memory pointer up
+02A6: 05                  363 |         DCR B
+02A7: C2 9F 02            364 |         JNZ LOAD2       ; Not done with the line
+02AA: CD 13 02            365 | LOAD3:  CALL GETHEX     ; Get checksum byte
+02AD: 81                  366 |         ADD C
+02AE: C2 BE 02            367 |         JNZ CSUMER      ; Checksum bad, print error
+02B1: B2                  368 |         ORA D
+02B2: CA 75 02            369 |         JZ LOAD         ; Record Type 00, keep going
+02B5: CD 46 03            370 | LOAD4:  CALL CINNE      ; Done getting data, silently eat chars
+02B8: FE 0A               371 |         CPI 10          ; Check for LF
+02BA: C2 B5 02            372 |         JNZ LOAD4
+02BD: C9                  373 |         RET             ; Got LF, return to command loop
+02BE: 21 21 03            374 | CSUMER: LXI H, CSERR@   ; Print checksum error to console
+02C1: C3 65 02            375 |         JMP ERROUT      ; RET from ERROUT will return to command loop
                           376 | 
                           377 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                           378 | ;Monitor Strings
                           379 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-11C4: 0D 0A 0A 47 57...   380 | LOGMSG@: db 13, 10, 10, 'GWMON-80 0.1.4 for 8080/8085/Z80 and Compatible', 13, 10
-11F8: 43 6F 70 79 72...   381 |          db 'Copyright (c) 2019 The Glitch Works', 0
-121C: 0D 0A 0A 3E 00      382 | PROMPT@: db 13, 10, 10, '>', 0
-1221: 43 48 45 43 4B...   383 | CSERR@:  db 'CHECKSUM '
-122A: 45 52 52 4F 52 00   384 | ERR@:    db 'ERROR', 0
-1230: 0D 0A 00            385 | CRLF@:   db 13, 10, 0
+02C4: 0D 0A 0A 47 57...   380 | LOGMSG@: db 13, 10, 10, 'GWMON-80 0.1.4 for 8080/8085/Z80 and Compatible', 13, 10
+02F8: 43 6F 70 79 72...   381 |          db 'Copyright (c) 2019 The Glitch Works', 0
+031C: 0D 0A 0A 3E 00      382 | PROMPT@: db 13, 10, 10, '>', 0
+0321: 43 48 45 43 4B...   383 | CSERR@:  db 'CHECKSUM '
+032A: 45 52 52 4F 52 00   384 | ERR@:    db 'ERROR', 0
+0330: 0D 0A 00            385 | CRLF@:   db 13, 10, 0
                           386 | ;Glitch Works Monitor I/O Module for Intel 8251 UART
                           387 | 
                           388 | ;Adjust CTLPRT and DATPRT for your specific hardware.
@@ -430,8 +430,8 @@ Assembly Listing                                                                
 ------------------------------------------------------------------------------------------------------------------------
 
                           393 | 
-                          394 | CTLPRT  equ 41H
-                          395 | DATPRT  equ 40H
+                          394 | DATPRT  equ 0F4H
+                          395 | CTLPRT  equ 0F5H
                           396 | 
                           397 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                           398 | ;SETUP -- Prepare the system for running the
@@ -440,15 +440,15 @@ Assembly Listing                                                                
                           401 | ;pre: none
                           402 | ;post: stack and console are initialized
                           403 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-1233: 31 FF FF            404 | SETUP:  LXI SP, 0FFFFH
-1236: 21 64 12            405 |         LXI H, INIUART@
-1239: 06 06               406 |         MVI B, 06H              ; length of ini string
-123B: 7E                  407 | INURT:  MOV A, M
-123C: D3 41               408 |         OUT CTLPRT
-123E: 23                  409 |         INX H
-123F: 05                  410 |         DCR B
-1240: C2 3B 12            411 |         JNZ INURT
-1243: C3 03 10            412 |         JMP SE1
+0333: 31 FF FF            404 | SETUP:  LXI SP, 0FFFFH
+0336: 21 64 03            405 |         LXI H, INIUART@
+0339: 06 06               406 |         MVI B, 06H              ; length of ini string
+033B: 7E                  407 | INURT:  MOV A, M
+033C: D3 F5               408 |         OUT CTLPRT
+033E: 23                  409 |         INX H
+033F: 05                  410 |         DCR B
+0340: C2 3B 03            411 |         JNZ INURT
+0343: C3 03 01            412 |         JMP SE1
                           413 | 
                           414 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                           415 | ;CINNE -- Get a char from the console, no echo
@@ -456,11 +456,11 @@ Assembly Listing                                                                
                           417 | ;pre: console device is initialized
                           418 | ;post: received char is in A register
                           419 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-1246: DB 41               420 | CINNE:  IN CTLPRT
-1248: E6 02               421 |         ANI 02H
-124A: CA 46 12            422 |         JZ CINNE
-124D: DB 40               423 |         IN DATPRT
-124F: C9                  424 |         RET
+0346: DB F5               420 | CINNE:  IN CTLPRT
+0348: E6 02               421 |         ANI 02H
+034A: CA 46 03            422 |         JZ CINNE
+034D: DB F4               423 |         IN DATPRT
+034F: C9                  424 |         RET
                           425 | 
                           426 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                           427 | ;CIN -- Get a char from the console and echo
@@ -469,9 +469,9 @@ Assembly Listing                                                                
                           430 | ;post: received char is in A register
                           431 | ;post: received char is echoed
                           432 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-1250: CD 46 12            433 | CIN:    CALL CINNE
-1253: D3 40               434 |         OUT DATPRT
-1255: C9                  435 |         RET
+0350: CD 46 03            433 | CIN:    CALL CINNE
+0353: D3 F4               434 |         OUT DATPRT
+0355: C9                  435 |         RET
                           436 | 
                           437 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                           438 | ;COUT -- Output a character to the console
@@ -479,26 +479,26 @@ Assembly Listing                                                                
                           440 | ;pre: A register contains char to be printed
                           441 | ;post: character is printed to the console
                           442 | ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-1256: C5                  443 | COUT:   PUSH B
-1257: 47                  444 |         MOV B, A
-1258: DB 41               445 | COUT1:  IN CTLPRT
-125A: E6 01               446 |         ANI 01H
-125C: CA 58 12            447 |         JZ COUT1
-125F: 78                  448 |         MOV A, B
+0356: C5                  443 | COUT:   PUSH B
+0357: 47                  444 |         MOV B, A
+0358: DB F5               445 | COUT1:  IN CTLPRT
+035A: E6 01               446 |         ANI 01H
+035C: CA 58 03            447 |         JZ COUT1
+035F: 78                  448 |         MOV A, B
 
 
 Assembly Listing                                                                                                 Page: 9
 ------------------------------------------------------------------------------------------------------------------------
 
-1260: D3 40               449 |         OUT DATPRT
-1262: C1                  450 |         POP B
-1263: C9                  451 |         RET
+0360: D3 F4               449 |         OUT DATPRT
+0362: C1                  450 |         POP B
+0363: C9                  451 |         RET
                           452 | 
-                          453 | ;Init string for the 8251, x16 clock, 8N1
-1264: 00 00 00 40 4E 37   454 | INIUART@:  db 00H, 00H, 00H, 40H, 4EH, 37H
+                          453 | ;Init string for the 8251, x64 clock, 8N1
+0364: 00 00 00 40 4F 37   454 | INIUART@:  db 00H, 00H, 00H, 40H, 4FH, 37H
                           455 | 
                           456 | ;I/O Module description string
-126A: 0D 0A 42 75 69...   457 | MSG@:     db 13, 10, 'Built with Intel 8251 I/O module', 0
+036A: 0D 0A 42 75 69...   457 | MSG@:     db 13, 10, 'Built with Intel 8251 I/O module', 0
                           458 | 
                           459 |         END
 

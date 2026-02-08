@@ -36,7 +36,7 @@ impl Breakpoint {
             }
             _ => {
                 app.messages
-                    .push("Invalid number of arguments: Usage: b or b <address>".to_string());
+                    .push("ERROR - Invalid number of arguments: Usage: b or b <address>".to_string());
             }
         }
         Ok(AppState::Home)
