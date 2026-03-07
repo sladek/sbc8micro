@@ -23,70 +23,76 @@ Assembly Listing                                                                
                             3 | CCP EQU 3400H+BIAS
                             4 | BDOS    EQU CCP+0806H
                             5 | BIOS    EQU CCP+1600H
+                            6 | 
+                            7 | VER:    EQU 2   ;CP/M VERSION
+                            8 | REL:    EQU 2   ;CP/M RELEASE
+                            9 | REV:    EQU 0   ;REVISION
+                           10 | SNH:    EQU 00  ;SERIAL NUMBER, HIGH. 2 DIGITS
+                           11 | SNL:    EQU 0000    ;SERIAL  NUMBER, LOW. 4 DIGITS
                            17 |     IFNDEF  MSIZE
                            18 : MSIZE:  EQU 20
                            19 :     ENDIF
                            20 | 
-                           21 |     ORG     0
-0000: C3 00 00             22 | LOOP:   JMP LOOP
-                           23 | 
-                           24 |     ORG 100H
-                           25 | GETSYS:
-0100: 0E 00                26 |     MVI C,0         ;SELECT THE A DISK
-0102: CD 1B FA             27 |     CALL    BIOS+27         ;SELDSK
-0105: 21 00 E4             28 |     LXI H,CCP           ;CONVENIENT PLACE
-0108: 06 00                29 |     MVI B,0         ;START ON TRACK 0
+                           21 |     ORG 100H
+                           22 | GETSYS:
+0100: 0E 00                23 |     MVI C,0         ;SELECT THE A DISK
+0102: CD 1B FA             24 |     CALL    BIOS+27         ;SELDSK
+0105: 21 00 E4             25 |     LXI H,CCP           ;CONVENIENT PLACE
+0108: 06 00                26 |     MVI B,0         ;START ON TRACK 0
+010A: 0E 02                27 |     MVI C,2         ;SECTOR 2 ON TRACK 1
+                           28 |     ; WE WILL START ON SECTOR 2 AS SECTOR 1 IS RESERVED FOR BOOT LOADER
+010C: C3 11 01             29 |     JMP RD_SEC
                            30 | RD_TRK:
-010A: 0E 01                31 |     MVI C,1         ;SECTOR 1
+010F: 0E 01                31 |     MVI C,1         ;SECTOR 1 ON OTHER TRACKS
                            32 | RD_SEC:
-010C: CD 24 01             33 |     CALL    READ_SEC        ;GET A SECTOR
-010F: 11 80 00             34 |     LXI D,128           ;SECTOR LENGTH
-0112: 19                   35 |     DAD D           ;PUT POINTER AT END OF SECTOR
-0113: 0C                   36 |     INR C           ;BUMP COUNT
-0114: 79                   37 |     MOV A,C         ;CHECK IF WE GOT 26 YET
-0115: FE 1B                38 |     CPI 27          ;26 ON A TRACK
-0117: C2 0C 01             39 |     JNZ RD_SEC
+0111: CD 29 01             33 |     CALL    READ_SEC        ;GET A SECTOR
+0114: 11 80 00             34 |     LXI D,128           ;SECTOR LENGTH
+0117: 19                   35 |     DAD D           ;PUT POINTER AT END OF SECTOR
+0118: 0C                   36 |     INR C           ;BUMP COUNT
+0119: 79                   37 |     MOV A,C         ;CHECK IF WE GOT 26 YET
+011A: FE 1B                38 |     CPI 27          ;26 ON A TRACK
+011C: C2 11 01             39 |     JNZ RD_SEC
                            40 | 
                            41 | ; AT END OF TRACK, GET NEXT ONE
                            42 | 
-011A: 04                   43 |     INR B           ;BUMP TRACK COUNT
-011B: 78                   44 |     MOV A,B         ;CHECK COUNT
-011C: FE 02                45 |     CPI 2           ;DONE 0 AND 1 YET?
-011E: C2 0A 01             46 |     JNZ RD_TRK          ;NO, DO ANOTHER
-                           47 | 
-                           48 | ; DONE, SO BOOT SYSTEM
-                           49 | 
-0121: C3 00 00             50 |     JMP 0           ;RETURN TO CP/M
-                           51 | ;
+011F: 04                   43 |     INR B           ;BUMP TRACK COUNT
+0120: 78                   44 |     MOV A,B         ;CHECK COUNT
+0121: FE 02                45 |     CPI 2           ;DONE 0 AND 1 YET?
 
 
 Assembly Listing                                                                                                 Page: 2
 ------------------------------------------------------------------------------------------------------------------------
 
+0123: C2 0F 01             46 |     JNZ RD_TRK          ;NO, DO ANOTHER
+                           47 | 
+                           48 | ; DONE, SO BOOT SYSTEM
+                           49 | 
+0126: C3 00 FA             50 |     JMP BIOS            ;GO TO BIOS AND INIT THE SYSTEM 
+                           51 | ;
                            52 | ; SUBROUTINE TO READ A SECTOR (USE THE BIOS)
                            53 | ;
                            54 | 
                            55 | READ_SEC:
-0124: E5                   56 |     PUSH    H
-0125: C5                   57 |     PUSH    B
-0126: 44                   58 |     MOV B,H         ; SET DMA ADDRESS
-0127: 4D                   59 |     MOV C,L
-0128: CD 24 FA             60 |     CALL    BIOS+36         ; SETDMA
-012B: C1                   61 |     POP B
+0129: E5                   56 |     PUSH    H
+012A: C5                   57 |     PUSH    B
+012B: 44                   58 |     MOV B,H         ; SET DMA ADDRESS
+012C: 4D                   59 |     MOV C,L
+012D: CD 24 FA             60 |     CALL    BIOS+36         ; SETDMA
+0130: C1                   61 |     POP B
                            62 | 
-012C: C5                   63 |     PUSH    B
-012D: 48                   64 |     MOV C,B         ; SET TRACK NUMBER
-012E: 06 00                65 |     MVI B,0
-0130: CD 1E FA             66 |     CALL    BIOS+30 ; SETTRK
-0133: C1                   67 |     POP B
+0131: C5                   63 |     PUSH    B
+0132: 48                   64 |     MOV C,B         ; SET TRACK NUMBER
+0133: 06 00                65 |     MVI B,0
+0135: CD 1E FA             66 |     CALL    BIOS+30 ; SETTRK
+0138: C1                   67 |     POP B
                            68 | 
-0134: C5                   69 |     PUSH    B
-0135: 06 00                70 |     MVI B,0
-0137: CD 21 FA             71 |     CALL    BIOS+33         ; SET SECTOR NUMBER (SETSEC)
-013A: CD 27 FA             72 |     CALL    BIOS+39         ; SECTOR READ
-013D: C1                   73 |     POP B
-013E: E1                   74 |     POP H
-013F: C9                   75 |     RET
+0139: C5                   69 |     PUSH    B
+013A: 06 00                70 |     MVI B,0
+013C: CD 21 FA             71 |     CALL    BIOS+33         ; SET SECTOR NUMBER (SETSEC)
+013F: CD 27 FA             72 |     CALL    BIOS+39         ; SECTOR READ
+0142: C1                   73 |     POP B
+0143: E1                   74 |     POP H
+0144: C9                   75 |     RET
                            76 | 
                            77 |     END
                            78 |     

@@ -350,7 +350,7 @@ impl Isbc201 {
                         return Err(ErrorIndicators::SeekError)
                     }
                 }
-                self.set_interrupt_pending();
+//                self.set_interrupt_pending();
                 return Ok(None);
             }
             opcode if opcode == Opcode::FormatTrack as u8 => {
@@ -363,7 +363,7 @@ impl Isbc201 {
                         return Err(ErrorIndicators::SeekError)
                     }
                 }
-                self.set_interrupt_pending();
+//                self.set_interrupt_pending();
                 return Ok(None);
             }
             opcode if opcode == Opcode::Recalibrate as u8 => {
@@ -375,14 +375,14 @@ impl Isbc201 {
                         return Err(ErrorIndicators::SeekError)
                     }
                 }
-                self.set_interrupt_pending();
+//                self.set_interrupt_pending();
                 return Ok(None);
             }
             opcode if opcode == Opcode::ReadData as u8 => {
                 let data = self.read_data(iopb)?;
                 let address: u16 = (iopb.buffer_address_high as u16) << 8 | iopb.buffer_address_low as u16;
                 let dma = DmaRequest::new(address, data);
-                self.set_interrupt_pending();
+//                self.set_interrupt_pending();
                 return Ok(Some(Dma::new(dma)));
             }
             opcode if opcode == Opcode::VerifyCrc as u8 => {
@@ -398,7 +398,7 @@ impl Isbc201 {
                 // Do nothing, for now.
             }
         }
-        self.set_interrupt_pending();
+//        self.set_interrupt_pending();
         Ok(None)
     }
     /// Read data from floppy disk
@@ -588,12 +588,14 @@ impl IoPort for Isbc201 {
                 Err(err) => {
                     self.rtype = 0b0000_0000;
                     self.rbyte_00 = err.clone() as u8;
+                    self.set_interrupt_pending();
                     return Err(err)
                 }
             }
         }
         if address == self.reset_address {
-            // Write memory address upper and start disk operation
+            // Reset
+            self.reset_interrupt_pending();
             self.reset();
         }
         Ok(None)
@@ -613,17 +615,20 @@ impl IoPort for Isbc201 {
                 Ok(dma) => {
                     self.rtype = 0b0000_0000;
                     self.rbyte_00 = 0b0000_0000;
+                    self.set_interrupt_pending();
                     return Ok(dma)
                 }
                 Err(err) => {
                     self.rtype = 0b0000_0010;
                     self.rbyte_10 = err.clone() as u8;
+                    self.set_interrupt_pending();
                     return Err(err)
                 }
             }
         }
         if address == self.reset_memory_address {
-            // Write memory address upper and start disk operation
+            // Reset
+            self.reset_interrupt_pending();
             self.reset();
         }
         Ok(None)
@@ -913,7 +918,7 @@ mod tests {
             }
         }
         let regc = cpu.c;
-        assert_eq!(0x09, regc); // assert dstat
+        assert_eq!(0x0d, regc); // assert dstat
         let regb = cpu.b;
         assert_eq!(0x00, regb); // assert rtype
         let acc= cpu.a;
@@ -1565,7 +1570,7 @@ mod tests {
             }
         }
         remove_disk(file_name);
-        assert_eq!(0x09, cpu.c); // assert dstat
+        assert_eq!(0x0D, cpu.c); // assert dstat
         assert_eq!(0x00, cpu.b); // assert rtype - IO complete
         assert_eq!(0x04, cpu.a);  // assert rbyte - Seek errors
     }

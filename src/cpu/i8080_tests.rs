@@ -680,7 +680,7 @@ fn ana_l() {
 fn ana_m() {
     let mut cpu = Cpu::new();
     cpu.memory.borrow_mut().write_byte(0x200, 0x55);
-    let program: Vec<u8> = vec![MVI_A, 0x12, MVI_L, 0x34, ANA_L, HLT];
+    let program: Vec<u8> = vec![MVI_A, 0x55, MVI_H, 0x02, MVI_L, 0x00, ANA_M, HLT];
     cpu.load_program(&program, 0x0600);
     loop {
         let opcode = cpu.memory.borrow_mut().read_byte(cpu.pc);
@@ -689,8 +689,8 @@ fn ana_m() {
             break;
         }
     }
-    assert_eq!(cpu.a, 0x10u8);
-    assert_eq!(cpu.status.value, 0x02);
+    assert_eq!(cpu.a, 0x55u8);
+    assert_eq!(cpu.status.value, 0x06);
 }
 #[test]
 ///

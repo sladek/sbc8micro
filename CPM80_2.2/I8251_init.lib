@@ -1,26 +1,26 @@
-; Assuming 8251 Data Port = 0D8H, Command/Status Port = 0DAH
-; Constants
-usart_data  EQU 0F4H    ; Data port
-usart_cmd   EQU 0F5H    ; Command/Status port
+; ASSUMING 8251 DATA PORT = 0F4H, COMMAND/STATUS PORT = 0F5H
+; CONSTANTS
+USART_DATA  EQU 0F4H    ; DATA PORT
+USART_CMD   EQU 0F5H    ; COMMAND/STATUS PORT
 
-init_console:
-    mvi a, 00H          ; 1. Send at least 3 nulls to ensure
-    out usart_cmd       ;    the 8251 is in command mode.
-    out usart_cmd
-    out usart_cmd
-    mvi a, 40H          ; 2. Internal Reset command
-    out usart_cmd
+INIT_CONSOLE:
+        MVI A, 00H          ; 1. SEND AT LEAST 3 NULLS TO ENSURE
+        OUT USART_CMD       ;    THE 8251 IS IN COMMAND MODE.
+        OUT USART_CMD
+        OUT USART_CMD
+        MVI A, 40H          ; 2. INTERNAL RESET COMMAND
+        OUT USART_CMD
     
-    ; 3. Mode Instruction:
-    ; Bits 0-1: 00 = Synchronous, 01 = 1x, 10 = 16x, 11 = 64x
-    ; Bits 2-3: 00 = 5bit, 01 = 6bit, 10 = 7bit, 11 = 8bit
-    ; Bits 4-5: Parity (00=none)
-    ; Bits 6-7: Stop bits (01=1 stop)
-    mvi a, 4FH          ; 0100 1110 -> 1 stop, no parity, 8 data, 64x baud
-    out usart_cmd
+        ; 3. MODE INSTRUCTION:
+        ; BITS 0-1: 00 = SYNCHRONOUS, 01 = 1X, 10 = 16X, 11 = 64X
+        ; BITS 2-3: 00 = 5BIT, 01 = 6BIT, 10 = 7BIT, 11 = 8BIT
+        ; BITS 4-5: PARITY (00=NONE)
+        ; BITS 6-7: STOP BITS (01=1 STOP)
+        MVI A, 4FH          ; 0100 1110 -> 1 STOP, NO PARITY, 8 DATA, 64X BAUD
+        OUT USART_CMD
     
-    ; 4. Command Instruction:
-    ; Enable Tx, Enable Rx, DTR, RTS
-    mvi a, 37H          ; 0011 0111 -> TxEN, RxE, DTR, RTS
-    out usart_cmd
-    ret
+        ; 4. COMMAND INSTRUCTION:
+        ; ENABLE TX, ENABLE RX, DTR, RTS
+        MVI A, 37H          ; 0011 0111 -> TXEN, RXE, DTR, RTS
+        OUT USART_CMD
+        RET

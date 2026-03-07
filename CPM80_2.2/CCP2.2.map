@@ -1,0 +1,401 @@
+
+SEGMENT LIST                                                           Page: 1
+------------------------------------------------------------------------------
+
+SEGMENT              FROM TO   LENX  LEND ATTRIBUTES
+-------------------- ---- ---- ---- ----- ------------------------------------
+CSEG                 E400 EBF1 07F2  2034 Fixed, Read/write, Initialised
+
+FIXUP LIST                                                             Page: 2
+------------------------------------------------------------------------------
+
+TARGET SEGMENT
+        LABEL: FIXUP OFFSET(S)
+------------------------------------------------------------------------------
+
+SYMBOL NAME                                                            Page: 3
+------------------------------------------------------------------------------
+
+HEX    DEC SEGMENT              SOURCE    SCOPE     NAME
+---- ----- -------------------- --------- --------- ----
+E659 58969 CSEG                 Address F Local     ADDAH
+EC06 60422 <unknown>            Const Int Local     BDOS
+E4C3 58563 CSEG                 Address F Local     BDOS1
+E4F4 58612 CSEG                 Address F Local     BDOS2
+0005     5 <unknown>            Const Int Local     BDOS_SYS
+B000 45056 <unknown>            Const Int Local     BIAS
+FA00 64000 <unknown>            Const Int Local    *BIOS
+E842 59458 CSEG                 Address F Local     BLKMOV
+E488 58504 CSEG                 Address F Local     BPTR1
+E48A 58506 CSEG                 Address F Local     BPTR2
+E408 58376 CSEG                 Address F Local     BUFFER
+E400 58368 <unknown>            Const Int Local     CCP
+E758 59224 CSEG                 Address F Local     CCP0
+E75C 59228 CSEG                 Address F Local     CCP1
+E798 59288 CSEG                 Address F Local     CCP2
+E630 58928 CSEG                 Address F Local     CHRCHK
+E4DA 58586 CSEG                 Address F Local     CLOSEF
+EB89 60297 CSEG                 Address F Local     CMEND1
+E539 58681 CSEG                 Address F Local     CMNDIN
+E710 59152 CSEG                 Address F Local     CMNDL
+E7C1 59329 CSEG                 Address F Local     CMNDT
+E5F5 58869 CSEG                 Address F Local     CMPSER
+E5FD 58877 CSEG                 Address F Local     CMPSN1
+EB83 60291 CSEG                 Address F Local     COM
+EB86 60294 CSEG                 Address F Local     COMEND
+E509 58633 CSEG                 Address F Local     CREATE
+E4A7 58535 CSEG                 Address F Local     CRMSG
+E72E 59182 CSEG                 Address F Local     CSRCH
+E733 59187 CSEG                 Address F Local     CSRCH1
+E73C 59196 CSEG                 Address F Local     CSRCH2
+E74F 59215 CSEG                 Address F Local     CSRCH3
+E754 59220 CSEG                 Address F Local     CSRCH4
+EBEF 60399 CSEG                 Address F Local     CURDSK
+0080   128 <unknown>            Const Int Local     DDMA
+E808 59400 CSEG                 Address F Local     DEC1
+E833 59443 CSEG                 Address F Local     DEC2
+E7F8 59384 CSEG                 Address F Local     DECIML
+E4EF 58607 CSEG                 Address F Local     DELETF
+005C    92 <unknown>            Const Int Local     DFCB
+E877 59511 CSEG                 Address F Local     DIR
+E888 59528 CSEG                 Address F Local     DIR0
+E88F 59535 CSEG                 Address F Local     DIR1
+E91B 59675 CSEG                 Address F Local     DIR10
+E898 59544 CSEG                 Address F Local     DIR2
+E8CC 59596 CSEG                 Address F Local     DIR3
+E8D4 59604 CSEG                 Address F Local     DIR4
+E8D9 59609 CSEG                 Address F Local     DIR5
+E8F7 59639 CSEG                 Address F Local     DIR6
+E8F9 59641 CSEG                 Address F Local     DIR7
+E90E 59662 CSEG                 Address F Local     DIR8
+E90F 59663 CSEG                 Address F Local     DIR9
+E84B 59467 CSEG                 Address F Local     DIRPTR
+E91F 59679 CSEG                 Address F Local     ERA
+
+SYMBOL NAME                                                            Page: 4
+------------------------------------------------------------------------------
+
+HEX    DEC SEGMENT              SOURCE    SCOPE     NAME
+---- ----- -------------------- --------- --------- ----
+E942 59714 CSEG                 Address F Local     ERA1
+E5DD 58845 CSEG                 Address F Local     EXITSB
+E7CF 59343 CSEG                 Address F Local     FATAL
+EBCD 60365 CSEG                 Address F Local     FCB
+EA79 60025 CSEG                 Address F Local     FEERR
+E513 58643 CSEG                 Address F Local     GETUSR
+E407 58375 CSEG                 Address F Local     INBLEN
+E406 58374 CSEG                 Address F Local     INPB
+E5D0 58832 CSEG                 Address F Local     INTDSK
+0003     3 <unknown>            Const Int Local    *IOBYTE
+E5C2 58818 CSEG                 Address F Local     KSTAT
+E530 58672 CSEG                 Address F Local     LCUC
+EB71 60273 CSEG                 Address F Local     LDERR
+E596 58774 CSEG                 Address F Local     LINEIN
+E5A7 58791 CSEG                 Address F Local     LINP1
+E5AB 58795 CSEG                 Address F Local     LINP2
+E5BA 58810 CSEG                 Address F Local     LINP3
+E529 58665 CSEG                 Address F Local     LOGCUR
+0004     4 <unknown>            Const Int Local     LOGIN
+E840 59456 CSEG                 Address F Local     MOVE3
+E7DF 59359 CSEG                 Address F Local     MSG1
+E7F0 59376 CSEG                 Address F Local     MSG2
+E952 59730 CSEG                 Address F Local     MSG3
+EA07 59911 CSEG                 Address F Local     MSG4
+EA82 60034 CSEG                 Address F Local     MSG6
+EB7A 60282 CSEG                 Address F Local     MSG7
+0040    64 <unknown>            Const Int Local     MSIZE
+E7EA 59370 CSEG                 Address F Local     NFERR
+E782 59266 CSEG                 Address F Local     NXTCMD
+E4CB 58571 CSEG                 Address F Local     OPENF
+E4D0 58576 CSEG                 Address F Local     OPENF1
+E400 58368 CSEG                 Address F Local     ORIGIN
+E48C 58508 CSEG                 Address F Local     OUTPUT
+E492 58514 CSEG                 Address F Local     PCHAR
+E498 58520 CSEG                 Address F Local     PCRLF
+E4AC 58540 CSEG                 Address F Local     PMSG
+E7D9 59353 CSEG                 Address F Local     RDERR
+E4FE 58622 CSEG                 Address F Local     READ1
+E4F9 58617 CSEG                 Address F Local     READF
+0002     2 <unknown>            Const Int Local     REL
+EA10 59920 CSEG                 Address F Local     REN
+EA3F 59967 CSEG                 Address F Local     REN1
+EA59 59993 CSEG                 Address F Local     REN2
+EA6D 60013 CSEG                 Address F Local     REN3
+EA73 60019 CSEG                 Address F Local     REN4
+E50E 58638 CSEG                 Address F Local     RENAME
+E4B8 58552 CSEG                 Address F Local     RESET
+EBEE 60398 CSEG                 Address F Local     RETVAL
+0000     0 <unknown>            Const Int Local     REV
+E9AD 59821 CSEG                 Address F Local     SAVE
+E9D4 59860 CSEG                 Address F Local     SAVE1
+E9F1 59889 CSEG                 Address F Local     SAVE2
+E9FB 59899 CSEG                 Address F Local     SAVE3
+
+SYMBOL NAME                                                            Page: 5
+------------------------------------------------------------------------------
+
+HEX    DEC SEGMENT              SOURCE    SCOPE     NAME
+---- ----- -------------------- --------- --------- ----
+EA01 59905 CSEG                 Address F Local     SAVE4
+0080   128 <unknown>            Const Int Local     SECLEN
+E4BD 58557 CSEG                 Address F Local     SELDSK
+E728 59176 CSEG                 Address F Local     SERNO
+E866 59494 CSEG                 Address F Local     SETCUR
+E5D5 58837 CSEG                 Address F Local     SETDMA
+E51A 58650 CSEG                 Address F Local     SETLOG
+E854 59476 CSEG                 Address F Local     SETTRD
+E515 58645 CSEG                 Address F Local     SETUSR
+0000     0 <unknown>            Const Int Local     SNH
+0000     0 <unknown>            Const Int Local     SNL
+E4A2 58530 CSEG                 Address F Local     SPACE
+E4DF 58591 CSEG                 Address F Local     SRCHF
+E4E9 58601 CSEG                 Address F Local     SRCHF1
+E4E4 58596 CSEG                 Address F Local     SRCHNX
+EBAB 60331 CSEG                 Address F Local     STACK
+E5D8 58840 CSEG                 Address F Local     STDMA1
+E64F 58959 CSEG                 Address F Local     STEP
+EBAC 60332 CSEG                 Address F Local     SUBFCB
+EBAB 60331 CSEG                 Address F Local     SUBFL
+0100   256 <unknown>            Const Int Local     TPA
+EAA5 60069 CSEG                 Address F Local     TRANS
+EAC4 60100 CSEG                 Address F Local     TRANS1
+EAE1 60129 CSEG                 Address F Local     TRANS2
+EB01 60161 CSEG                 Address F Local     TRANS3
+EB30 60208 CSEG                 Address F Local     TRANS4
+EB3E 60222 CSEG                 Address F Local     TRANS5
+EB43 60227 CSEG                 Address F Local     TRANS6
+EB4F 60239 CSEG                 Address F Local     TRANS7
+EB6B 60267 CSEG                 Address F Local     TRANS8
+EBF0 60400 CSEG                 Address F Local     TRDISK
+E6C0 59072 CSEG                 Address F Local     TRFC10
+E6C8 59080 CSEG                 Address F Local     TRFC11
+E6D9 59097 CSEG                 Address F Local     TRFC12
+E6DB 59099 CSEG                 Address F Local     TRFC13
+E6DF 59103 CSEG                 Address F Local     TRFC14
+E6E9 59113 CSEG                 Address F Local     TRFC15
+E6F0 59120 CSEG                 Address F Local     TRFC16
+E6F2 59122 CSEG                 Address F Local     TRFC17
+E701 59137 CSEG                 Address F Local     TRFC18
+E709 59145 CSEG                 Address F Local     TRFC19
+E65E 58974 CSEG                 Address F Local     TRFCB
+E660 58976 CSEG                 Address F Local     TRFCB1
+E689 59017 CSEG                 Address F Local     TRFCB2
+E690 59024 CSEG                 Address F Local     TRFCB3
+E696 59030 CSEG                 Address F Local     TRFCB4
+E698 59032 CSEG                 Address F Local     TRFCB5
+E6A9 59049 CSEG                 Address F Local     TRFCB6
+E6AB 59051 CSEG                 Address F Local     TRFCB7
+E6AF 59055 CSEG                 Address F Local     TRFCB8
+E6B9 59065 CSEG                 Address F Local     TRFCB9
+EBF1 60401 CSEG                 Address F Local     TYPCTR
+E95D 59741 CSEG                 Address F Local     TYPE
+
+SYMBOL NAME                                                            Page: 6
+------------------------------------------------------------------------------
+
+HEX    DEC SEGMENT              SOURCE    SCOPE     NAME
+---- ----- -------------------- --------- --------- ----
+E974 59764 CSEG                 Address F Local     TYPE1
+E987 59783 CSEG                 Address F Local     TYPE2
+E9A0 59808 CSEG                 Address F Local     TYPE3
+E9A7 59815 CSEG                 Address F Local     TYPE4
+EA8E 60046 CSEG                 Address F Local     USER
+0002     2 <unknown>            Const Int Local     VER
+E609 58889 CSEG                 Address F Local     WHAT
+E60F 58895 CSEG                 Address F Local     WHAT1
+E622 58914 CSEG                 Address F Local     WHAT2
+E504 58628 CSEG                 Address F Local     WRITEF
+
+SYMBOL ADDR                                                            Page: 7
+------------------------------------------------------------------------------
+
+HEX    DEC SEGMENT              SOURCE    SCOPE     NAME
+---- ----- -------------------- --------- --------- ----
+0000     0 <unknown>            Const Int Local     REV
+0000     0 <unknown>            Const Int Local     SNH
+0000     0 <unknown>            Const Int Local     SNL
+0002     2 <unknown>            Const Int Local     REL
+0002     2 <unknown>            Const Int Local     VER
+0003     3 <unknown>            Const Int Local    *IOBYTE
+0004     4 <unknown>            Const Int Local     LOGIN
+0005     5 <unknown>            Const Int Local     BDOS_SYS
+0040    64 <unknown>            Const Int Local     MSIZE
+005C    92 <unknown>            Const Int Local     DFCB
+0080   128 <unknown>            Const Int Local     DDMA
+0080   128 <unknown>            Const Int Local     SECLEN
+0100   256 <unknown>            Const Int Local     TPA
+B000 45056 <unknown>            Const Int Local     BIAS
+E400 58368 <unknown>            Const Int Local     CCP
+EC06 60422 <unknown>            Const Int Local     BDOS
+FA00 64000 <unknown>            Const Int Local    *BIOS
+E400 58368 CSEG                 Address F Local     ORIGIN
+E406 58374 CSEG                 Address F Local     INPB
+E407 58375 CSEG                 Address F Local     INBLEN
+E408 58376 CSEG                 Address F Local     BUFFER
+E488 58504 CSEG                 Address F Local     BPTR1
+E48A 58506 CSEG                 Address F Local     BPTR2
+E48C 58508 CSEG                 Address F Local     OUTPUT
+E492 58514 CSEG                 Address F Local     PCHAR
+E498 58520 CSEG                 Address F Local     PCRLF
+E4A2 58530 CSEG                 Address F Local     SPACE
+E4A7 58535 CSEG                 Address F Local     CRMSG
+E4AC 58540 CSEG                 Address F Local     PMSG
+E4B8 58552 CSEG                 Address F Local     RESET
+E4BD 58557 CSEG                 Address F Local     SELDSK
+E4C3 58563 CSEG                 Address F Local     BDOS1
+E4CB 58571 CSEG                 Address F Local     OPENF
+E4D0 58576 CSEG                 Address F Local     OPENF1
+E4DA 58586 CSEG                 Address F Local     CLOSEF
+E4DF 58591 CSEG                 Address F Local     SRCHF
+E4E4 58596 CSEG                 Address F Local     SRCHNX
+E4E9 58601 CSEG                 Address F Local     SRCHF1
+E4EF 58607 CSEG                 Address F Local     DELETF
+E4F4 58612 CSEG                 Address F Local     BDOS2
+E4F9 58617 CSEG                 Address F Local     READF
+E4FE 58622 CSEG                 Address F Local     READ1
+E504 58628 CSEG                 Address F Local     WRITEF
+E509 58633 CSEG                 Address F Local     CREATE
+E50E 58638 CSEG                 Address F Local     RENAME
+E513 58643 CSEG                 Address F Local     GETUSR
+E515 58645 CSEG                 Address F Local     SETUSR
+E51A 58650 CSEG                 Address F Local     SETLOG
+E529 58665 CSEG                 Address F Local     LOGCUR
+E530 58672 CSEG                 Address F Local     LCUC
+E539 58681 CSEG                 Address F Local     CMNDIN
+E596 58774 CSEG                 Address F Local     LINEIN
+E5A7 58791 CSEG                 Address F Local     LINP1
+
+SYMBOL ADDR                                                            Page: 8
+------------------------------------------------------------------------------
+
+HEX    DEC SEGMENT              SOURCE    SCOPE     NAME
+---- ----- -------------------- --------- --------- ----
+E5AB 58795 CSEG                 Address F Local     LINP2
+E5BA 58810 CSEG                 Address F Local     LINP3
+E5C2 58818 CSEG                 Address F Local     KSTAT
+E5D0 58832 CSEG                 Address F Local     INTDSK
+E5D5 58837 CSEG                 Address F Local     SETDMA
+E5D8 58840 CSEG                 Address F Local     STDMA1
+E5DD 58845 CSEG                 Address F Local     EXITSB
+E5F5 58869 CSEG                 Address F Local     CMPSER
+E5FD 58877 CSEG                 Address F Local     CMPSN1
+E609 58889 CSEG                 Address F Local     WHAT
+E60F 58895 CSEG                 Address F Local     WHAT1
+E622 58914 CSEG                 Address F Local     WHAT2
+E630 58928 CSEG                 Address F Local     CHRCHK
+E64F 58959 CSEG                 Address F Local     STEP
+E659 58969 CSEG                 Address F Local     ADDAH
+E65E 58974 CSEG                 Address F Local     TRFCB
+E660 58976 CSEG                 Address F Local     TRFCB1
+E689 59017 CSEG                 Address F Local     TRFCB2
+E690 59024 CSEG                 Address F Local     TRFCB3
+E696 59030 CSEG                 Address F Local     TRFCB4
+E698 59032 CSEG                 Address F Local     TRFCB5
+E6A9 59049 CSEG                 Address F Local     TRFCB6
+E6AB 59051 CSEG                 Address F Local     TRFCB7
+E6AF 59055 CSEG                 Address F Local     TRFCB8
+E6B9 59065 CSEG                 Address F Local     TRFCB9
+E6C0 59072 CSEG                 Address F Local     TRFC10
+E6C8 59080 CSEG                 Address F Local     TRFC11
+E6D9 59097 CSEG                 Address F Local     TRFC12
+E6DB 59099 CSEG                 Address F Local     TRFC13
+E6DF 59103 CSEG                 Address F Local     TRFC14
+E6E9 59113 CSEG                 Address F Local     TRFC15
+E6F0 59120 CSEG                 Address F Local     TRFC16
+E6F2 59122 CSEG                 Address F Local     TRFC17
+E701 59137 CSEG                 Address F Local     TRFC18
+E709 59145 CSEG                 Address F Local     TRFC19
+E710 59152 CSEG                 Address F Local     CMNDL
+E728 59176 CSEG                 Address F Local     SERNO
+E72E 59182 CSEG                 Address F Local     CSRCH
+E733 59187 CSEG                 Address F Local     CSRCH1
+E73C 59196 CSEG                 Address F Local     CSRCH2
+E74F 59215 CSEG                 Address F Local     CSRCH3
+E754 59220 CSEG                 Address F Local     CSRCH4
+E758 59224 CSEG                 Address F Local     CCP0
+E75C 59228 CSEG                 Address F Local     CCP1
+E782 59266 CSEG                 Address F Local     NXTCMD
+E798 59288 CSEG                 Address F Local     CCP2
+E7C1 59329 CSEG                 Address F Local     CMNDT
+E7CF 59343 CSEG                 Address F Local     FATAL
+E7D9 59353 CSEG                 Address F Local     RDERR
+E7DF 59359 CSEG                 Address F Local     MSG1
+E7EA 59370 CSEG                 Address F Local     NFERR
+E7F0 59376 CSEG                 Address F Local     MSG2
+E7F8 59384 CSEG                 Address F Local     DECIML
+
+SYMBOL ADDR                                                            Page: 9
+------------------------------------------------------------------------------
+
+HEX    DEC SEGMENT              SOURCE    SCOPE     NAME
+---- ----- -------------------- --------- --------- ----
+E808 59400 CSEG                 Address F Local     DEC1
+E833 59443 CSEG                 Address F Local     DEC2
+E840 59456 CSEG                 Address F Local     MOVE3
+E842 59458 CSEG                 Address F Local     BLKMOV
+E84B 59467 CSEG                 Address F Local     DIRPTR
+E854 59476 CSEG                 Address F Local     SETTRD
+E866 59494 CSEG                 Address F Local     SETCUR
+E877 59511 CSEG                 Address F Local     DIR
+E888 59528 CSEG                 Address F Local     DIR0
+E88F 59535 CSEG                 Address F Local     DIR1
+E898 59544 CSEG                 Address F Local     DIR2
+E8CC 59596 CSEG                 Address F Local     DIR3
+E8D4 59604 CSEG                 Address F Local     DIR4
+E8D9 59609 CSEG                 Address F Local     DIR5
+E8F7 59639 CSEG                 Address F Local     DIR6
+E8F9 59641 CSEG                 Address F Local     DIR7
+E90E 59662 CSEG                 Address F Local     DIR8
+E90F 59663 CSEG                 Address F Local     DIR9
+E91B 59675 CSEG                 Address F Local     DIR10
+E91F 59679 CSEG                 Address F Local     ERA
+E942 59714 CSEG                 Address F Local     ERA1
+E952 59730 CSEG                 Address F Local     MSG3
+E95D 59741 CSEG                 Address F Local     TYPE
+E974 59764 CSEG                 Address F Local     TYPE1
+E987 59783 CSEG                 Address F Local     TYPE2
+E9A0 59808 CSEG                 Address F Local     TYPE3
+E9A7 59815 CSEG                 Address F Local     TYPE4
+E9AD 59821 CSEG                 Address F Local     SAVE
+E9D4 59860 CSEG                 Address F Local     SAVE1
+E9F1 59889 CSEG                 Address F Local     SAVE2
+E9FB 59899 CSEG                 Address F Local     SAVE3
+EA01 59905 CSEG                 Address F Local     SAVE4
+EA07 59911 CSEG                 Address F Local     MSG4
+EA10 59920 CSEG                 Address F Local     REN
+EA3F 59967 CSEG                 Address F Local     REN1
+EA59 59993 CSEG                 Address F Local     REN2
+EA6D 60013 CSEG                 Address F Local     REN3
+EA73 60019 CSEG                 Address F Local     REN4
+EA79 60025 CSEG                 Address F Local     FEERR
+EA82 60034 CSEG                 Address F Local     MSG6
+EA8E 60046 CSEG                 Address F Local     USER
+EAA5 60069 CSEG                 Address F Local     TRANS
+EAC4 60100 CSEG                 Address F Local     TRANS1
+EAE1 60129 CSEG                 Address F Local     TRANS2
+EB01 60161 CSEG                 Address F Local     TRANS3
+EB30 60208 CSEG                 Address F Local     TRANS4
+EB3E 60222 CSEG                 Address F Local     TRANS5
+EB43 60227 CSEG                 Address F Local     TRANS6
+EB4F 60239 CSEG                 Address F Local     TRANS7
+EB6B 60267 CSEG                 Address F Local     TRANS8
+EB71 60273 CSEG                 Address F Local     LDERR
+EB7A 60282 CSEG                 Address F Local     MSG7
+EB83 60291 CSEG                 Address F Local     COM
+
+SYMBOL ADDR                                                           Page: 10
+------------------------------------------------------------------------------
+
+HEX    DEC SEGMENT              SOURCE    SCOPE     NAME
+---- ----- -------------------- --------- --------- ----
+EB86 60294 CSEG                 Address F Local     COMEND
+EB89 60297 CSEG                 Address F Local     CMEND1
+EBAB 60331 CSEG                 Address F Local     STACK
+EBAB 60331 CSEG                 Address F Local     SUBFL
+EBAC 60332 CSEG                 Address F Local     SUBFCB
+EBCD 60365 CSEG                 Address F Local     FCB
+EBEE 60398 CSEG                 Address F Local     RETVAL
+EBEF 60399 CSEG                 Address F Local     CURDSK
+EBF0 60400 CSEG                 Address F Local     TRDISK
+EBF1 60401 CSEG                 Address F Local     TYPCTR
+

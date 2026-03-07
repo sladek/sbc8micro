@@ -11,7 +11,7 @@ const NUM_OF_TRACKS: u8 = 77; // Valid number of track is 0 - 76
 const DATA_SIZE: usize = 128;
 const ID_ADDRESS_MARK: u8 = 0xFE; // ID Address Mark identifier byte
 const SECTOR_SIZE: u16 = 195; // Number of bytes in one complete sector
-const FORMAT_PATTERN: u8 = 0x00;
+const FORMAT_PATTERN: u8 = 0xE5;
 const FLOPPY_CAPACITY: usize = 388388; // Full capacitu of 8" floppy disk
 
 #[derive(Clone)]

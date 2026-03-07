@@ -1,0 +1,55 @@
+
+SEGMENT LIST                                                           Page: 1
+------------------------------------------------------------------------------
+
+SEGMENT              FROM TO   LENX  LEND ATTRIBUTES
+-------------------- ---- ---- ---- ----- ------------------------------------
+CSEG                 0100 0144 0045    69 Fixed, Read/write, Initialised
+
+FIXUP LIST                                                             Page: 2
+------------------------------------------------------------------------------
+
+TARGET SEGMENT
+        LABEL: FIXUP OFFSET(S)
+------------------------------------------------------------------------------
+
+SYMBOL NAME                                                            Page: 3
+------------------------------------------------------------------------------
+
+HEX    DEC SEGMENT              SOURCE    SCOPE     NAME
+---- ----- -------------------- --------- --------- ----
+EC06 60422 <unknown>            Const Int Local    *BDOS
+B000 45056 <unknown>            Const Int Local     BIAS
+FA00 64000 <unknown>            Const Int Local     BIOS
+E400 58368 <unknown>            Const Int Local     CCP
+0100   256 CSEG                 Address F Local    *GETSYS
+0040    64 <unknown>            Const Int Local     MSIZE
+0111   273 CSEG                 Address F Local     RD_SEC
+010F   271 CSEG                 Address F Local     RD_TRK
+0129   297 CSEG                 Address F Local     READ_SEC
+0002     2 <unknown>            Const Int Local    *REL
+0000     0 <unknown>            Const Int Local    *REV
+0000     0 <unknown>            Const Int Local    *SNH
+0000     0 <unknown>            Const Int Local    *SNL
+0002     2 <unknown>            Const Int Local    *VER
+
+SYMBOL ADDR                                                            Page: 4
+------------------------------------------------------------------------------
+
+HEX    DEC SEGMENT              SOURCE    SCOPE     NAME
+---- ----- -------------------- --------- --------- ----
+0000     0 <unknown>            Const Int Local    *REV
+0000     0 <unknown>            Const Int Local    *SNH
+0000     0 <unknown>            Const Int Local    *SNL
+0002     2 <unknown>            Const Int Local    *REL
+0002     2 <unknown>            Const Int Local    *VER
+0040    64 <unknown>            Const Int Local     MSIZE
+B000 45056 <unknown>            Const Int Local     BIAS
+E400 58368 <unknown>            Const Int Local     CCP
+EC06 60422 <unknown>            Const Int Local    *BDOS
+FA00 64000 <unknown>            Const Int Local     BIOS
+0100   256 CSEG                 Address F Local    *GETSYS
+010F   271 CSEG                 Address F Local     RD_TRK
+0111   273 CSEG                 Address F Local     RD_SEC
+0129   297 CSEG                 Address F Local     READ_SEC
+

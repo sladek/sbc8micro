@@ -33,6 +33,12 @@ Assembly Listing                                                                
                             3 | CCP EQU 3400H+BIAS
                             4 | BDOS    EQU CCP+0806H
                             5 | BIOS    EQU CCP+1600H
+                            6 | 
+                            7 | VER:    EQU 2   ;CP/M VERSION
+                            8 | REL:    EQU 2   ;CP/M RELEASE
+                            9 | REV:    EQU 0   ;REVISION
+                           10 | SNH:    EQU 00  ;SERIAL NUMBER, HIGH. 2 DIGITS
+                           11 | SNL:    EQU 0000    ;SERIAL  NUMBER, LOW. 4 DIGITS
                            27 | ;
                            28 | ;
                            29 | BDOS_SYS    EQU 0005H   ;Link to operating system
@@ -43,1406 +49,1398 @@ Assembly Listing                                                                
                            34 | DDMA    EQU 0080H   ;Default DMA block
                            35 | SECLEN  EQU 0080H   ;Sector length := 128 bytes.
                            36 | ;
-                           37 | ;   SERIAL NUMBERS
-                           38 | ;
-                           39 | VER EQU 2   ;CPM VERSION
-                           40 | REL EQU 2   ;CPM RELEASE
-                           41 | REV EQU 00  ;USER REVISION
-                           42 | SNH EQU 00  ;SERIAL NUMBER, HIGH
-                           43 | SNL EQU 00  ;SERIAL NUMBER, LOW
+                           37 | ;   NOTE:
+                           38 | ;       USER MUST INSERT CORRECT SERIAL NUMBER
+                           39 | ;       IN THE FORMAT HH-LLLL, WHERE HH IS TWO
+                           40 | ;       DIGITS & LLLL IS FOUR DIGITS. IF THE
+                           41 | ;       SERIAL NUMBERS IN CCP/CPM AND BDOS/CPM
+                           42 | ;       DO NOT MATCH, YOU WILL BOMB OUT WHEN
+                           43 | ;       LOADING A TRANSIENT PROGRAM.
                            44 | ;
-                           45 | ;   NOTE:
-                           46 | ;       USER MUST INSERT CORRECT SERIAL NUMBER
-                           47 | ;       IN THE FORMAT HH-LLLL, WHERE HH IS TWO
-                           48 | ;       DIGITS & LLLL IS FOUR DIGITS. IF THE
-                           49 | ;       SERIAL NUMBERS IN CCP/CPM AND BDOS/CPM
-                           50 | ;       DO NOT MATCH, YOU WILL BOMB OUT WHEN
-                           51 | ;       LOADING A TRANSIENT PROGRAM.
+                           45 | ;
 
 
 Assembly Listing                                                                                                 Page: 2
 ------------------------------------------------------------------------------------------------------------------------
 
-                           52 | ;
-                           53 | ;
-                           54 |     ORG CCP ;SET PROGRAM START
-                           55 | ;
-                           56 | ;   NOTE:
-                           57 | ;       On entry (C) contains the user number in the
-                           58 | ;       upper 4 bits, and the current logged in disk
-                           59 | ;       number in to lower 4 bits. This is why you log
-                           60 | ;       back to disk B: if you rebooted while logged
-                           61 | ;       into B:
-                           62 | ;
-E400: C3 5C E7             63 | ORIGIN: JMP CCP1    ;JUMP TO START OF CONSOLE COMMAND PROGRAM
-                           64 | ;
-E403: C3 58 E7             65 |     JMP CCP0    ;JUMP TO START OF CCP W/ CLEARING OF INPUT BUFFER COUNTER
-                           66 | ;
-                           67 | ;   INPUT BUFFER WITH COPYRIGHT MESSAGE THROWN IN
-                           68 | ;
-E406: 7F                   69 | INPB:   DB  127 ;MAXIMUM LENGTH OF INPUT BUFFER
-E407: 00                   70 | INBLEN: DB  0   ;CURRENT LENGTH OF INPUT BUFFER
-E408: 20 20 20 20 20...    71 | BUFFER: DB  '                '
-E418: 43 4F 50 59 52...    72 |     DB  'COPYRIGHT (C) 1979, '
-E42C: 44 49 47 49 54...    73 |     DB  'DIGITAL RESEARCH  '
-E43E:                      74 |     DS  BUFFER+128-$
-                           75 | ;
-                           76 | ;   POINTERS TO INPUT BUFFER
-                           77 | ;
-E488: 08 E4                78 | BPTR1:  DW  BUFFER  ;Pointer to input buffer used while parsing input line
-E48A: 00 00                79 | BPTR2:  DW  0000H   ;Pointer to start of current command inn input buffer.
-                           80 |             ;Used by WHAT for error prompt.
-                           81 | ;   ***************
-                           82 | ;   SUBROUTINE AREA
-                           83 | ;   ***************
+                           46 |     ORG CCP ;SET PROGRAM START
+                           47 | ;
+                           48 | ;   NOTE:
+                           49 | ;       On entry (C) contains the user number in the
+                           50 | ;       upper 4 bits, and the current logged in disk
+                           51 | ;       number in to lower 4 bits. This is why you log
+                           52 | ;       back to disk B: if you rebooted while logged
+                           53 | ;       into B:
+                           54 | ;
+E400: C3 5C E7             55 | ORIGIN: JMP CCP1    ;JUMP TO START OF CONSOLE COMMAND PROGRAM
+                           56 | ;
+E403: C3 58 E7             57 |     JMP CCP0    ;JUMP TO START OF CCP W/ CLEARING OF INPUT BUFFER COUNTER
+                           58 | ;
+                           59 | ;   INPUT BUFFER WITH COPYRIGHT MESSAGE THROWN IN
+                           60 | ;
+E406: 7F                   61 | INPB:   DB  127 ;MAXIMUM LENGTH OF INPUT BUFFER
+E407: 00                   62 | INBLEN: DB  0   ;CURRENT LENGTH OF INPUT BUFFER
+E408: 20 20 20 20 20...    63 | BUFFER: DB  '                '
+E418: 43 4F 50 59 52...    64 |     DB  'COPYRIGHT (C) 1979, '
+E42C: 44 49 47 49 54...    65 |     DB  'DIGITAL RESEARCH  '
+E43E:                      66 |     DS  BUFFER+128-$
+                           67 | ;
+                           68 | ;   POINTERS TO INPUT BUFFER
+                           69 | ;
+E488: 08 E4                70 | BPTR1:  DW  BUFFER  ;Pointer to input buffer used while parsing input line
+E48A: 00 00                71 | BPTR2:  DW  0000H   ;Pointer to start of current command inn input buffer.
+                           72 |             ;Used by WHAT for error prompt.
+                           73 | ;   ***************
+                           74 | ;   SUBROUTINE AREA
+                           75 | ;   ***************
+                           76 | ;
+                           77 | ;   TIES TO BDOS VIA VECTOR IN 0005H
+                           78 | ;
+                           79 | ;   NOTE:
+                           80 | ;       The code in this section could be cleaned up
+                           81 | ;       shortened by rearranging things to have the
+                           82 | ;       code flow from one segment to the next
+                           83 | ;       instead of jumping back.
                            84 | ;
-                           85 | ;   TIES TO BDOS VIA VECTOR IN 0005H
-                           86 | ;
-                           87 | ;   NOTE:
-                           88 | ;       The code in this section could be cleaned up
-                           89 | ;       shortened by rearranging things to have the
-                           90 | ;       code flow from one segment to the next
-                           91 | ;       instead of jumping back.
-                           92 | ;
-E48C: 5F                   93 | OUTPUT: MOV E,A ;OUTPUT 1 BYTE TO CONSOLE
-E48D: 0E 02                94 |     MVI C,02H   ;
-E48F: C3 05 00             95 |     JMP BDOS_SYS    ;
-                           96 | ;
-                           97 | ;   NOTE:
-                           98 | ;       Why not include OUTPUT inside of PCHAR and
-                           99 | ;       thus eliminate an- extra call?
-                          100 | ;       The only other call to OUTPUT is in PMSG,
-                          101 | ;       which should be changed anyway.
-                          102 | ;
-                          103 | ;PCHAR: PUSH    B   ;
-                          104 | ;   MOV E,A ;
-                          105 | ;   MVI C,02H   ;
-                          106 | ;   CALL    BDOS_SYS    ;
-                          107 | ;   POP B   ;
+E48C: 5F                   85 | OUTPUT: MOV E,A ;OUTPUT 1 BYTE TO CONSOLE
+E48D: 0E 02                86 |     MVI C,02H   ;
+E48F: C3 05 00             87 |     JMP BDOS_SYS    ;
+                           88 | ;
+                           89 | ;   NOTE:
+                           90 | ;       Why not include OUTPUT inside of PCHAR and
+                           91 | ;       thus eliminate an- extra call?
+                           92 | ;       The only other call to OUTPUT is in PMSG,
+                           93 | ;       which should be changed anyway.
+                           94 | ;
+                           95 | ;PCHAR: PUSH    B   ;
+                           96 | ;   MOV E,A ;
+                           97 | ;   MVI C,02H   ;
+                           98 | ;   CALL    BDOS_SYS    ;
+                           99 | ;   POP B   ;
+                          100 | ;   RET     ;
+                          101 | ;
 
 
 Assembly Listing                                                                                                 Page: 3
 ------------------------------------------------------------------------------------------------------------------------
 
-                          108 | ;   RET     ;
-                          109 | ;
-E492: C5                  110 | PCHAR:  PUSH    B   ;PRINT A CHARACTER ON THE CONSOLE
-E493: CD 8C E4            111 |     CALL    OUTPUT  ;
-E496: C1                  112 |     POP B   ;
-E497: C9                  113 |     RET     ;
+E492: C5                  102 | PCHAR:  PUSH    B   ;PRINT A CHARACTER ON THE CONSOLE
+E493: CD 8C E4            103 |     CALL    OUTPUT  ;
+E496: C1                  104 |     POP B   ;
+E497: C9                  105 |     RET     ;
+                          106 | ;
+E498: 3E 0D               107 | PCRLF:  MVI A,0DH   ;PRINT A CARRIAGE RETURN & LINE FEED
+E49A: CD 92 E4            108 |     CALL    PCHAR   ;
+E49D: 3E 0A               109 |     MVI A,0AH   ;
+E49F: C3 92 E4            110 |     JMP PCHAR   ;
+                          111 | ;
+E4A2: 3E 20               112 | SPACE:  MVI A,20H   ;PRINT A SPACE
+E4A4: C3 92 E4            113 |     JMP PCHAR   ;
                           114 | ;
-E498: 3E 0D               115 | PCRLF:  MVI A,0DH   ;PRINT A CARRIAGE RETURN & LINE FEED
-E49A: CD 92 E4            116 |     CALL    PCHAR   ;
-E49D: 3E 0A               117 |     MVI A,0AH   ;
-E49F: C3 92 E4            118 |     JMP PCHAR   ;
-                          119 | ;
-E4A2: 3E 20               120 | SPACE:  MVI A,20H   ;PRINT A SPACE
-E4A4: C3 92 E4            121 |     JMP PCHAR   ;
+E4A7: C5                  115 | CRMSG:  PUSH    B   ;PRINT A STRING PRECEDED BY A CR/LF
+E4A8: CD 98 E4            116 |     CALL    PCRLF   ;
+E4AB: E1                  117 |     POP H   ;
+                          118 | ;
+                          119 | ;   This code could be shortened by terminating the
+                          120 | ;   error code strings with a '$' and using BDOS
+                          121 | ;   command 9.
                           122 | ;
-E4A7: C5                  123 | CRMSG:  PUSH    B   ;PRINT A STRING PRECEDED BY A CR/LF
-E4A8: CD 98 E4            124 |     CALL    PCRLF   ;
-E4AB: E1                  125 |     POP H   ;
-                          126 | ;
-                          127 | ;   This code could be shortened by terminating the
-                          128 | ;   error code strings with a '$' and using BDOS
-                          129 | ;   command 9.
-                          130 | ;
-E4AC: 7E                  131 | PMSG:   MOV A,M ;PRINT A STRING TERMINATED BY A NULL
-E4AD: B7                  132 |     ORA A   ;
-E4AE: C8                  133 |     RZ      ;
-E4AF: 23                  134 |     INX H   ;
-E4B0: E5                  135 |     PUSH    H   ;
-E4B1: CD 8C E4            136 |     CALL    OUTPUT  ;
-E4B4: E1                  137 |     POP H   ;
-E4B5: C3 AC E4            138 |     JMP PMSG    ;
-                          139 | ;
-E4B8: 0E 0D               140 | RESET:  MVI C,0DH   ;RESET THE DISK SYSTEM
-E4BA: C3 05 00            141 |     JMP BDOS_SYS    ;
-                          142 | ;
-E4BD: 5F                  143 | SELDSK: MOV E,A ;SELECT DISK
-E4BE: 0E 0E               144 |     MVI C,0EH   ;
-E4C0: C3 05 00            145 |     JMP BDOS_SYS    ;
+E4AC: 7E                  123 | PMSG:   MOV A,M ;PRINT A STRING TERMINATED BY A NULL
+E4AD: B7                  124 |     ORA A   ;
+E4AE: C8                  125 |     RZ      ;
+E4AF: 23                  126 |     INX H   ;
+E4B0: E5                  127 |     PUSH    H   ;
+E4B1: CD 8C E4            128 |     CALL    OUTPUT  ;
+E4B4: E1                  129 |     POP H   ;
+E4B5: C3 AC E4            130 |     JMP PMSG    ;
+                          131 | ;
+E4B8: 0E 0D               132 | RESET:  MVI C,0DH   ;RESET THE DISK SYSTEM
+E4BA: C3 05 00            133 |     JMP BDOS_SYS    ;
+                          134 | ;
+E4BD: 5F                  135 | SELDSK: MOV E,A ;SELECT DISK
+E4BE: 0E 0E               136 |     MVI C,0EH   ;
+E4C0: C3 05 00            137 |     JMP BDOS_SYS    ;
+                          138 | ;
+E4C3: CD 05 00            139 | BDOS1:  CALL    BDOS_SYS    ; CALL TO BDOS W/ RETURN VALUE SAVED
+E4C6: 32 EE EB            140 |     STA RETVAL  ;
+E4C9: 3C                  141 |     INR A   ;Set the ZFLAG for error condition
+E4CA: C9                  142 |     RET     ;
+                          143 | ;
+E4CB: 0E 0F               144 | OPENF:  MVI C,0FH   ;OPEN DISK FILE FOR READING OR WRITING
+E4CD: C3 C3 E4            145 |     JMP BDOS1   ; CALL TO BDOS W/ RETURN VALUE
                           146 | ;
-E4C3: CD 05 00            147 | BDOS1:  CALL    BDOS_SYS    ; CALL TO BDOS W/ RETURN VALUE SAVED
-E4C6: 32 EE EB            148 |     STA RETVAL  ;
-E4C9: 3C                  149 |     INR A   ;Set the ZFLAG for error condition
-E4CA: C9                  150 |     RET     ;
+E4D0: AF                  147 | OPENF1: XRA A   ;OPEN FILE @ FCB, AND ZERO RECORD COUNTER
+E4D1: 32 ED EB            148 |     STA FCB+32  ;
+E4D4: 11 CD EB            149 |     LXI D,FCB   ;
+E4D7: C3 CB E4            150 |     JMP OPENF   ;
                           151 | ;
-E4CB: 0E 0F               152 | OPENF:  MVI C,0FH   ;OPEN DISK FILE FOR READING OR WRITING
-E4CD: C3 C3 E4            153 |     JMP BDOS1   ; CALL TO BDOS W/ RETURN VALUE
+E4DA: 0E 10               152 | CLOSEF: MVI C,10H   ;CLOSE FILE AFTER READING OR WRITING
+E4DC: C3 C3 E4            153 |     JMP BDOS1   ; CALL TO BDOS W/ RETURN VALUE
                           154 | ;
-E4D0: AF                  155 | OPENF1: XRA A   ;OPEN FILE @ FCB, AND ZERO RECORD COUNTER
-E4D1: 32 ED EB            156 |     STA FCB+32  ;
-E4D4: 11 CD EB            157 |     LXI D,FCB   ;
-E4D7: C3 CB E4            158 |     JMP OPENF   ;
-                          159 | ;
-E4DA: 0E 10               160 | CLOSEF: MVI C,10H   ;CLOSE FILE AFTER READING OR WRITING
-E4DC: C3 C3 E4            161 |     JMP BDOS1   ; CALL TO BDOS W/ RETURN VALUE
-                          162 | ;
-E4DF: 0E 11               163 | SRCHF:  MVI C,11H   ;SEARCH FOR FIRST OCCURENCE OF FILE NAME
+E4DF: 0E 11               155 | SRCHF:  MVI C,11H   ;SEARCH FOR FIRST OCCURENCE OF FILE NAME
+E4E1: C3 C3 E4            156 |     JMP BDOS1   ; CALL TO BDOS W/ RETURN VALUE
+                          157 | ;
 
 
 Assembly Listing                                                                                                 Page: 4
 ------------------------------------------------------------------------------------------------------------------------
 
-E4E1: C3 C3 E4            164 |     JMP BDOS1   ; CALL TO BDOS W/ RETURN VALUE
-                          165 | ;
-E4E4: 0E 12               166 | SRCHNX: MVI C,12H   ;SEARCH FOR NEXT OCCURENCE OF FILE NAME
-E4E6: C3 C3 E4            167 |     JMP BDOS1   ; CALL TO BDOS W/ RETURN VALUE
-                          168 | ;
-E4E9: 11 CD EB            169 | SRCHF1: LXI D,FCB   ;SEARCH FOR FIRST OCCURENCE OF FILE
-E4EC: C3 DF E4            170 |     JMP SRCHF   ; NAME USING (FCB).
-                          171 | ;
-E4EF: 0E 13               172 | DELETF: MVI C,13H   ;DELETE FILE FROM DIRECTORY
-E4F1: C3 05 00            173 |     JMP BDOS_SYS    ;
-                          174 | ;
-E4F4: CD 05 00            175 | BDOS2:  CALL    BDOS_SYS    ; CALL TO BDOS W/ RETURN VALUE
-E4F7: B7                  176 |     ORA A   ;
-E4F8: C9                  177 |     RET     ;
-                          178 | ;
-E4F9: 0E 14               179 | READF:  MVI C,14H   ;READ ONE SECTOR FROM DISK
-E4FB: C3 F4 E4            180 |     JMP BDOS2   ; CALL TO BDOS W/ RETURN VALUE
-                          181 | ;
-E4FE: 11 CD EB            182 | READ1:  LXI D,FCB   ;READ ONE SECTOR USING 'FCB'
-E501: C3 F9 E4            183 |     JMP READF   ;
-                          184 | ;
-E504: 0E 15               185 | WRITEF: MVI C,15H   ;WRITE ONE SECTOR TO DISK
-E506: C3 F4 E4            186 |     JMP BDOS2   ; CALL TO BDOS W/ RETURN VALUE
+E4E4: 0E 12               158 | SRCHNX: MVI C,12H   ;SEARCH FOR NEXT OCCURENCE OF FILE NAME
+E4E6: C3 C3 E4            159 |     JMP BDOS1   ; CALL TO BDOS W/ RETURN VALUE
+                          160 | ;
+E4E9: 11 CD EB            161 | SRCHF1: LXI D,FCB   ;SEARCH FOR FIRST OCCURENCE OF FILE
+E4EC: C3 DF E4            162 |     JMP SRCHF   ; NAME USING (FCB).
+                          163 | ;
+E4EF: 0E 13               164 | DELETF: MVI C,13H   ;DELETE FILE FROM DIRECTORY
+E4F1: C3 05 00            165 |     JMP BDOS_SYS    ;
+                          166 | ;
+E4F4: CD 05 00            167 | BDOS2:  CALL    BDOS_SYS    ; CALL TO BDOS W/ RETURN VALUE
+E4F7: B7                  168 |     ORA A   ;
+E4F8: C9                  169 |     RET     ;
+                          170 | ;
+E4F9: 0E 14               171 | READF:  MVI C,14H   ;READ ONE SECTOR FROM DISK
+E4FB: C3 F4 E4            172 |     JMP BDOS2   ; CALL TO BDOS W/ RETURN VALUE
+                          173 | ;
+E4FE: 11 CD EB            174 | READ1:  LXI D,FCB   ;READ ONE SECTOR USING 'FCB'
+E501: C3 F9 E4            175 |     JMP READF   ;
+                          176 | ;
+E504: 0E 15               177 | WRITEF: MVI C,15H   ;WRITE ONE SECTOR TO DISK
+E506: C3 F4 E4            178 |     JMP BDOS2   ; CALL TO BDOS W/ RETURN VALUE
+                          179 | ;
+E509: 0E 16               180 | CREATE: MVI C,16H   ;CREATE A NEW FILE NAME IN DISK DIRECTORY
+E50B: C3 C3 E4            181 |     JMP BDOS1   ; CALL TO BDOS W/ RETURN VALUE
+                          182 | ;
+E50E: 0E 17               183 | RENAME: MVI C,17H   ;RENAME EXISTING FILE IN DISK DIRECTORY
+E510: C3 05 00            184 |     JMP BDOS_SYS    ;
+                          185 | ;
+E513: 1E FF               186 | GETUSR: MVI E,0FFH  ;GET CURRENT USER NUMBER
                           187 | ;
-E509: 0E 16               188 | CREATE: MVI C,16H   ;CREATE A NEW FILE NAME IN DISK DIRECTORY
-E50B: C3 C3 E4            189 |     JMP BDOS1   ; CALL TO BDOS W/ RETURN VALUE
+                          188 | ;   SET USER NUMBER TO VALUE IN (E), EXCEPT IF
+                          189 | ;   VALUE IS 0FFH.
                           190 | ;
-E50E: 0E 17               191 | RENAME: MVI C,17H   ;RENAME EXISTING FILE IN DISK DIRECTORY
-E510: C3 05 00            192 |     JMP BDOS_SYS    ;
+E515: 0E 20               191 | SETUSR: MVI C,20H   ;
+E517: C3 05 00            192 |     JMP BDOS_SYS    ;
                           193 | ;
-E513: 1E FF               194 | GETUSR: MVI E,0FFH  ;GET CURRENT USER NUMBER
-                          195 | ;
-                          196 | ;   SET USER NUMBER TO VALUE IN (E), EXCEPT IF
-                          197 | ;   VALUE IS 0FFH.
-                          198 | ;
-E515: 0E 20               199 | SETUSR: MVI C,20H   ;
-E517: C3 05 00            200 |     JMP BDOS_SYS    ;
-                          201 | ;
-                          202 | ;   Set log-in byte for transient program with current
-                          203 | ;   user number in upper 4 bits and current drive in
-                          204 | ;   lower 4 bits.
-                          205 | ;
-E51A: CD 13 E5            206 | SETLOG: CALL    GETUSR  ; SET LOG-IN BYTE W/ CURRENT DRIVE & USER NUMBER
-E51D: 87                  207 |     ADD A   ;
-E51E: 87                  208 |     ADD A   ;
-E51F: 87                  209 |     ADD A   ;
-E520: 87                  210 |     ADD A   ;Shift user number to upper nibble
-E521: 21 EF EB            211 |     LXI H,CURDSK    ;
-E524: B6                  212 |     ORA M   ;Combine with disk number
-E525: 32 04 00            213 |     STA LOGIN   ;Place where transient programs
-E528: C9                  214 |     RET     ;  can find it.
-                          215 | ;
-                          216 | ;   LOG IN CURRENT DISK
-                          217 | ;   Place current drive number in log-in byte without
-                          218 | ;   including user number.
-                          219 | ;
+                          194 | ;   Set log-in byte for transient program with current
+                          195 | ;   user number in upper 4 bits and current drive in
+                          196 | ;   lower 4 bits.
+                          197 | ;
+E51A: CD 13 E5            198 | SETLOG: CALL    GETUSR  ; SET LOG-IN BYTE W/ CURRENT DRIVE & USER NUMBER
+E51D: 87                  199 |     ADD A   ;
+E51E: 87                  200 |     ADD A   ;
+E51F: 87                  201 |     ADD A   ;
+E520: 87                  202 |     ADD A   ;Shift user number to upper nibble
+E521: 21 EF EB            203 |     LXI H,CURDSK    ;
+E524: B6                  204 |     ORA M   ;Combine with disk number
+E525: 32 04 00            205 |     STA LOGIN   ;Place where transient programs
+E528: C9                  206 |     RET     ;  can find it.
+                          207 | ;
+                          208 | ;   LOG IN CURRENT DISK
+                          209 | ;   Place current drive number in log-in byte without
+                          210 | ;   including user number.
+                          211 | ;
+E529: 3A EF EB            212 | LOGCUR: LDA CURDSK  ;
+E52C: 32 04 00            213 |     STA LOGIN   ;
 
 
 Assembly Listing                                                                                                 Page: 5
 ------------------------------------------------------------------------------------------------------------------------
 
-E529: 3A EF EB            220 | LOGCUR: LDA CURDSK  ;
-E52C: 32 04 00            221 |     STA LOGIN   ;
-E52F: C9                  222 |     RET     ;
-                          223 | ;
-                          224 | ;   CONVERT lower case INPUT TO UPPER CASE
-                          225 | ;
-E530: FE 61               226 | LCUC:   CPI 61H ;'a'
-E532: D8                  227 |     RC      ;
-E533: FE 7B               228 |     CPI 7BH ;'z'+1
-E535: D0                  229 |     RNC     ;
-E536: E6 5F               230 |     ANI 5FH ;MASK OFF BIT 5
-E538: C9                  231 |     RET     ;
-                          232 | ;
-                          233 | ;   COMMAND INPUT
-                          234 | ;
-                          235 | ;   IF SUBMIT FLAG <> 0 THEN INPUT FROM SUBMIT FILE\
-                          236 | ;       ELSE INPUT FROM KEYBOARD INPUT BUFFER
-                          237 | ;
-E539: 3A AB EB            238 | CMNDIN: LDA SUBFL   ;CHECK SUBMIT FILE FLAG
-E53C: B7                  239 |     ORA A   ;
-E53D: CA 96 E5            240 |     JZ  LINEIN  ;FLAG RESET: GET INPUT FROM KEYBOARD
-                          241 | ;
-                          242 | ;   NOTE ABOUT SUBMIT FILES:
-                          243 | ;
-                          244 | ;   When the command SUBMIT <filename>
-                          245 | ;   is given, a file named $$$.SUB is compiled with
-                          246 | ;   one command line per record in the file.
-                          247 | ;   the file is unusual in that the commands are stored
-                          248 | ;   in reverse order. This makes it simple for the
-                          249 | ;   following code to pull one command off at a time,
-                          250 | ;   erasing as it goes. Note that the sector counter is
-                          251 | ;   decremented and the file closed each time.
-                          252 | ;   When the last command has been executed, or if an
-                          253 | ;   error is encountered, the $$$.SUB file is erased
-                          254 | ;   and control reverts to the keyboard for input.
-                          255 | ;
-E540: 3A EF EB            256 |     LDA CURDSK  ;FLAG SET: GET INPUT FROM SUBMIT FILE ON CURRENT DISK
-E543: B7                  257 |     ORA A   ;
-E544: 3E 00               258 |     MVI A,00H   ;
-E546: C4 BD E4            259 |     CNZ SELDSK  ;Set to disk 0 if not there already
-E549: 11 AC EB            260 |     LXI D,SUBFCB    ; Point to submit file's file control block
-E54C: CD CB E4            261 |     CALL    OPENF   ; Open the submit file for reading
-E54F: CA 96 E5            262 |     JZ  LINEIN  ;Go to console on Open File Error
-E552: 3A BB EB            263 |     LDA SUBFCB+15   ;Get top sector number
-E555: 3D                  264 |     DCR A   ;Decrement? Yes $$$.SUB files are backwards
-E556: 32 CC EB            265 |     STA SUBFCB+32   ;Put number in Next Sector slot
-E559: 11 AC EB            266 |     LXI D,SUBFCB    ;
-E55C: CD F9 E4            267 |     CALL    READF   ;Read sector into buffer
-E55F: C2 96 E5            268 |     JNZ LINEIN  ;Go to console on read error
-E562: 11 07 E4            269 |     LXI D,INBLEN    ;Point to start of keyboard buffer
-E565: 21 80 00            270 |     LXI H,DDMA  ;Point to start of default buffer
-E568: 06 80               271 |     MVI B,SECLEN    ;Set counter
-E56A: CD 42 E8            272 |     CALL    BLKMOV  ;Move line into keyboard buffer
-E56D: 21 BA EB            273 |     LXI H,SUBFCB+14 ;
-E570: 36 00               274 |     MVI M,00H   ;
-E572: 23                  275 |     INX H   ;
+E52F: C9                  214 |     RET     ;
+                          215 | ;
+                          216 | ;   CONVERT lower case INPUT TO UPPER CASE
+                          217 | ;
+E530: FE 61               218 | LCUC:   CPI 61H ;'a'
+E532: D8                  219 |     RC      ;
+E533: FE 7B               220 |     CPI 7BH ;'z'+1
+E535: D0                  221 |     RNC     ;
+E536: E6 5F               222 |     ANI 5FH ;MASK OFF BIT 5
+E538: C9                  223 |     RET     ;
+                          224 | ;
+                          225 | ;   COMMAND INPUT
+                          226 | ;
+                          227 | ;   IF SUBMIT FLAG <> 0 THEN INPUT FROM SUBMIT FILE\
+                          228 | ;       ELSE INPUT FROM KEYBOARD INPUT BUFFER
+                          229 | ;
+E539: 3A AB EB            230 | CMNDIN: LDA SUBFL   ;CHECK SUBMIT FILE FLAG
+E53C: B7                  231 |     ORA A   ;
+E53D: CA 96 E5            232 |     JZ  LINEIN  ;FLAG RESET: GET INPUT FROM KEYBOARD
+                          233 | ;
+                          234 | ;   NOTE ABOUT SUBMIT FILES:
+                          235 | ;
+                          236 | ;   When the command SUBMIT <filename>
+                          237 | ;   is given, a file named $$$.SUB is compiled with
+                          238 | ;   one command line per record in the file.
+                          239 | ;   the file is unusual in that the commands are stored
+                          240 | ;   in reverse order. This makes it simple for the
+                          241 | ;   following code to pull one command off at a time,
+                          242 | ;   erasing as it goes. Note that the sector counter is
+                          243 | ;   decremented and the file closed each time.
+                          244 | ;   When the last command has been executed, or if an
+                          245 | ;   error is encountered, the $$$.SUB file is erased
+                          246 | ;   and control reverts to the keyboard for input.
+                          247 | ;
+E540: 3A EF EB            248 |     LDA CURDSK  ;FLAG SET: GET INPUT FROM SUBMIT FILE ON CURRENT DISK
+E543: B7                  249 |     ORA A   ;
+E544: 3E 00               250 |     MVI A,00H   ;
+E546: C4 BD E4            251 |     CNZ SELDSK  ;Set to disk 0 if not there already
+E549: 11 AC EB            252 |     LXI D,SUBFCB    ; Point to submit file's file control block
+E54C: CD CB E4            253 |     CALL    OPENF   ; Open the submit file for reading
+E54F: CA 96 E5            254 |     JZ  LINEIN  ;Go to console on Open File Error
+E552: 3A BB EB            255 |     LDA SUBFCB+15   ;Get top sector number
+E555: 3D                  256 |     DCR A   ;Decrement? Yes $$$.SUB files are backwards
+E556: 32 CC EB            257 |     STA SUBFCB+32   ;Put number in Next Sector slot
+E559: 11 AC EB            258 |     LXI D,SUBFCB    ;
+E55C: CD F9 E4            259 |     CALL    READF   ;Read sector into buffer
+E55F: C2 96 E5            260 |     JNZ LINEIN  ;Go to console on read error
+E562: 11 07 E4            261 |     LXI D,INBLEN    ;Point to start of keyboard buffer
+E565: 21 80 00            262 |     LXI H,DDMA  ;Point to start of default buffer
+E568: 06 80               263 |     MVI B,SECLEN    ;Set counter
+E56A: CD 42 E8            264 |     CALL    BLKMOV  ;Move line into keyboard buffer
+E56D: 21 BA EB            265 |     LXI H,SUBFCB+14 ;
+E570: 36 00               266 |     MVI M,00H   ;
+E572: 23                  267 |     INX H   ;
+E573: 35                  268 |     DCR M   ;Decrement sector count
+E574: 11 AC EB            269 |     LXI D,SUBFCB    ;close the file
 
 
 Assembly Listing                                                                                                 Page: 6
 ------------------------------------------------------------------------------------------------------------------------
 
-E573: 35                  276 |     DCR M   ;Decrement sector count
-E574: 11 AC EB            277 |     LXI D,SUBFCB    ;close the file
-E577: CD DA E4            278 |     CALL    CLOSEF  ;
-E57A: CA 96 E5            279 |     JZ  LINEIN  ;Go to console on close error
-E57D: 3A EF EB            280 |     LDA CURDSK  ;
-E580: B7                  281 |     ORA A   ;
-E581: C4 BD E4            282 |     CNZ SELDSK  ;Set to current disk if not so already
-E584: 21 08 E4            283 |     LXI H,BUFFER    ;
-E587: CD AC E4            284 |     CALL    PMSG    ;Echo the $$$.SUB line to console
-E58A: CD C2 E5            285 |     CALL    KSTAT   ;Check for a keyboard break
-E58D: CA A7 E5            286 |     JZ  LINP1   ;NO BREAK- Continue
-E590: CD DD E5            287 |     CALL    EXITSB  ; BREAK- Close off submit mode
-E593: C3 82 E7            288 |     JMP NXTCMD  ;This leaves the return address on the
-                          289 |             ;stack, but NXTCMD re-initializes stack
-                          290 | ;
-                          291 | ;   Get the input from the Console Device
-                          292 | ;
-E596: CD DD E5            293 | LINEIN: CALL    EXITSB  ;RESET SUBMIT MODE FLAGS< ETC
-E599: CD 1A E5            294 |     CALL    SETLOG  ; SET LOG-IN BYTE W/ CURRENT DRIVE & USER NUMBER
-E59C: 0E 0A               295 |     MVI C,0AH   ;BDOS COMMAND 10 ::= READ INPUT BUFFER
-E59E: 11 06 E4            296 |     LXI D,INPB  ;POINT TO START OF INPUT BUFFER
-E5A1: CD 05 00            297 |     CALL    BDOS_SYS    ;GET A LINE FROM THE CONSOLE
-E5A4: CD 29 E5            298 |     CALL    LOGCUR  ;
-E5A7: 21 07 E4            299 | LINP1:  LXI H,INBLEN    ;
-E5AA: 46                  300 |     MOV B,M ;Move the line byte count into (B)
-E5AB: 23                  301 | LINP2:  INX H   ;Step through buffer changing lower
-E5AC: 78                  302 |     MOV A,B ;case into upper case.
-E5AD: B7                  303 |     ORA A   ;
-E5AE: CA BA E5            304 |     JZ  LINP3   ;Exit when (B)=0
-E5B1: 7E                  305 |     MOV A,M ;
-E5B2: CD 30 E5            306 |     CALL    LCUC    ;Convert lower case to UPPER CASE
-E5B5: 77                  307 |     MOV M,A ;
-E5B6: 05                  308 |     DCR B   ;
-E5B7: C3 AB E5            309 |     JMP LINP2   ;Loop
-                          310 | ;
-E5BA: 77                  311 | LINP3:  MOV M,A ;Poke a zero into end of line to mark end
-E5BB: 21 08 E4            312 |     LXI H,BUFFER    ;Save command starting address
-E5BE: 22 88 E4            313 |     SHLD    BPTR1   ; for later use.
-E5C1: C9                  314 |     RET     ;
-                          315 | ;
-                          316 | ;   KEYBOARD STATUS CHECK
-                          317 | ;   Return with ZFLAG set is no key pressed
-                          318 | ;   Else return with character in accumulator
-                          319 | ;
-E5C2: 0E 0B               320 | KSTAT:  MVI C,0BH   ;
-E5C4: CD 05 00            321 |     CALL    BDOS_SYS    ;
-E5C7: B7                  322 |     ORA A   ;
-E5C8: C8                  323 |     RZ      ;
-E5C9: 0E 01               324 |     MVI C,01H   ;
-E5CB: CD 05 00            325 |     CALL    BDOS_SYS    ;
-E5CE: B7                  326 |     ORA A   ;
-E5CF: C9                  327 |     RET     ;
-                          328 | ;
-                          329 | ;   INTEROGATE THE DISK
-                          330 | ;
-E5D0: 0E 19               331 | INTDSK: MVI C,19H   ;
+E577: CD DA E4            270 |     CALL    CLOSEF  ;
+E57A: CA 96 E5            271 |     JZ  LINEIN  ;Go to console on close error
+E57D: 3A EF EB            272 |     LDA CURDSK  ;
+E580: B7                  273 |     ORA A   ;
+E581: C4 BD E4            274 |     CNZ SELDSK  ;Set to current disk if not so already
+E584: 21 08 E4            275 |     LXI H,BUFFER    ;
+E587: CD AC E4            276 |     CALL    PMSG    ;Echo the $$$.SUB line to console
+E58A: CD C2 E5            277 |     CALL    KSTAT   ;Check for a keyboard break
+E58D: CA A7 E5            278 |     JZ  LINP1   ;NO BREAK- Continue
+E590: CD DD E5            279 |     CALL    EXITSB  ; BREAK- Close off submit mode
+E593: C3 82 E7            280 |     JMP NXTCMD  ;This leaves the return address on the
+                          281 |             ;stack, but NXTCMD re-initializes stack
+                          282 | ;
+                          283 | ;   Get the input from the Console Device
+                          284 | ;
+E596: CD DD E5            285 | LINEIN: CALL    EXITSB  ;RESET SUBMIT MODE FLAGS< ETC
+E599: CD 1A E5            286 |     CALL    SETLOG  ; SET LOG-IN BYTE W/ CURRENT DRIVE & USER NUMBER
+E59C: 0E 0A               287 |     MVI C,0AH   ;BDOS COMMAND 10 ::= READ INPUT BUFFER
+E59E: 11 06 E4            288 |     LXI D,INPB  ;POINT TO START OF INPUT BUFFER
+E5A1: CD 05 00            289 |     CALL    BDOS_SYS    ;GET A LINE FROM THE CONSOLE
+E5A4: CD 29 E5            290 |     CALL    LOGCUR  ;
+E5A7: 21 07 E4            291 | LINP1:  LXI H,INBLEN    ;
+E5AA: 46                  292 |     MOV B,M ;Move the line byte count into (B)
+E5AB: 23                  293 | LINP2:  INX H   ;Step through buffer changing lower
+E5AC: 78                  294 |     MOV A,B ;case into upper case.
+E5AD: B7                  295 |     ORA A   ;
+E5AE: CA BA E5            296 |     JZ  LINP3   ;Exit when (B)=0
+E5B1: 7E                  297 |     MOV A,M ;
+E5B2: CD 30 E5            298 |     CALL    LCUC    ;Convert lower case to UPPER CASE
+E5B5: 77                  299 |     MOV M,A ;
+E5B6: 05                  300 |     DCR B   ;
+E5B7: C3 AB E5            301 |     JMP LINP2   ;Loop
+                          302 | ;
+E5BA: 77                  303 | LINP3:  MOV M,A ;Poke a zero into end of line to mark end
+E5BB: 21 08 E4            304 |     LXI H,BUFFER    ;Save command starting address
+E5BE: 22 88 E4            305 |     SHLD    BPTR1   ; for later use.
+E5C1: C9                  306 |     RET     ;
+                          307 | ;
+                          308 | ;   KEYBOARD STATUS CHECK
+                          309 | ;   Return with ZFLAG set is no key pressed
+                          310 | ;   Else return with character in accumulator
+                          311 | ;
+E5C2: 0E 0B               312 | KSTAT:  MVI C,0BH   ;
+E5C4: CD 05 00            313 |     CALL    BDOS_SYS    ;
+E5C7: B7                  314 |     ORA A   ;
+E5C8: C8                  315 |     RZ      ;
+E5C9: 0E 01               316 |     MVI C,01H   ;
+E5CB: CD 05 00            317 |     CALL    BDOS_SYS    ;
+E5CE: B7                  318 |     ORA A   ;
+E5CF: C9                  319 |     RET     ;
+                          320 | ;
+                          321 | ;   INTEROGATE THE DISK
+                          322 | ;
+E5D0: 0E 19               323 | INTDSK: MVI C,19H   ;
+E5D2: C3 05 00            324 |     JMP BDOS_SYS    ;
+                          325 | ;
 
 
 Assembly Listing                                                                                                 Page: 7
 ------------------------------------------------------------------------------------------------------------------------
 
-E5D2: C3 05 00            332 |     JMP BDOS_SYS    ;
-                          333 | ;
-                          334 | ;   SET THE DMA ADDRESS
-                          335 | ;
-E5D5: 11 80 00            336 | SETDMA: LXI D,DDMA  ;
-E5D8: 0E 1A               337 | STDMA1: MVI C,1AH   ;
-E5DA: C3 05 00            338 |     JMP BDOS_SYS    ;
-                          339 | ;
-                          340 | ;   EXIT THE SUBMIT MODE
-                          341 | ;   Check to see if the Submit flag is set
-                          342 | ;   and reset it, along with the disk selection
-                          343 | ;   Erase any $$$.SUB file that may be in the directory
-                          344 | ;
-E5DD: 21 AB EB            345 | EXITSB: LXI H,SUBFL ;SUBMIT FILE FLAG
-E5E0: 7E                  346 |     MOV A,M ;
-E5E1: B7                  347 |     ORA A   ;
-E5E2: C8                  348 |     RZ      ;Not in submit mode, exit
-E5E3: 36 00               349 |     MVI M,00H   ;Reset submit flag
-E5E5: AF                  350 |     XRA A   ;
-E5E6: CD BD E4            351 |     CALL    SELDSK  ;Select correct disk
-E5E9: 11 AC EB            352 |     LXI D,SUBFCB    ;
-E5EC: CD EF E4            353 |     CALL    DELETF  ;Delete the $$$.SUB file from disk
-E5EF: 3A EF EB            354 |     LDA CURDSK  ;
-E5F2: C3 BD E4            355 |     JMP SELDSK  ;Restore current disk and exit
-                          356 | ;
-                          357 | ;   COMPARE SERIAL NUMBERS
-                          358 | ;   Serial numbers of CCP and BDOS are
-                          359 | ;   compared. If there is no match, you
-                          360 | ;   are banished to Digital Siberia.
-                          361 | ;   This S/R is called before a transient
-                          362 | ;   program is loaded into the TPA.
-                          363 | ;
-E5F5: 11 28 E7            364 | CMPSER: LXI D,SERNO ;Point to serial no in CCP
-E5F8: 21 06 EC            365 |     LXI H,BDOS  ;Point to serial no in BDOS
-E5FB: 06 06               366 |     MVI B,6 ;Number of bytes to compared
-E5FD: 1A                  367 | CMPSN1: LDAX    D   ;
-E5FE: BE                  368 |     CMP M   ;
-E5FF: C2 CF E7            369 |     JNZ FATAL   ; OK, you've had it. You are locked out.
-E602: 13                  370 |     INX D   ;
-E603: 23                  371 |     INX H   ;
-E604: 05                  372 |     DCR B   ;
-E605: C2 FD E5            373 |     JNZ CMPSN1  ;
-E608: C9                  374 |     RET     ; Good comparison. You are home free
-                          375 | ;
-                          376 | ;   GENERAL PURPOSE ERROR HANDLING ROUTINE
-                          377 | ;   Anything that you do wrong in entering a
-                          378 | ;   command lands you here. The command line
-                          379 | ;   is typed back at you for your edification
-                          380 | ;   and embarrassment. After you have been shown
-                          381 | ;   a '?', you are put back in the command mode.
-                          382 | ;
-E609: CD 98 E4            383 | WHAT:   CALL    PCRLF   ;
-E60C: 2A 8A E4            384 |     LHLD    BPTR2   ; Point to the offending command
-E60F: 7E                  385 | WHAT1:  MOV A,M ; and print until a space or null is found
-E610: FE 20               386 |     CPI ' ' ;
-E612: CA 22 E6            387 |     JZ  WHAT2   ;
+                          326 | ;   SET THE DMA ADDRESS
+                          327 | ;
+E5D5: 11 80 00            328 | SETDMA: LXI D,DDMA  ;
+E5D8: 0E 1A               329 | STDMA1: MVI C,1AH   ;
+E5DA: C3 05 00            330 |     JMP BDOS_SYS    ;
+                          331 | ;
+                          332 | ;   EXIT THE SUBMIT MODE
+                          333 | ;   Check to see if the Submit flag is set
+                          334 | ;   and reset it, along with the disk selection
+                          335 | ;   Erase any $$$.SUB file that may be in the directory
+                          336 | ;
+E5DD: 21 AB EB            337 | EXITSB: LXI H,SUBFL ;SUBMIT FILE FLAG
+E5E0: 7E                  338 |     MOV A,M ;
+E5E1: B7                  339 |     ORA A   ;
+E5E2: C8                  340 |     RZ      ;Not in submit mode, exit
+E5E3: 36 00               341 |     MVI M,00H   ;Reset submit flag
+E5E5: AF                  342 |     XRA A   ;
+E5E6: CD BD E4            343 |     CALL    SELDSK  ;Select correct disk
+E5E9: 11 AC EB            344 |     LXI D,SUBFCB    ;
+E5EC: CD EF E4            345 |     CALL    DELETF  ;Delete the $$$.SUB file from disk
+E5EF: 3A EF EB            346 |     LDA CURDSK  ;
+E5F2: C3 BD E4            347 |     JMP SELDSK  ;Restore current disk and exit
+                          348 | ;
+                          349 | ;   COMPARE SERIAL NUMBERS
+                          350 | ;   Serial numbers of CCP and BDOS are
+                          351 | ;   compared. If there is no match, you
+                          352 | ;   are banished to Digital Siberia.
+                          353 | ;   This S/R is called before a transient
+                          354 | ;   program is loaded into the TPA.
+                          355 | ;
+E5F5: 11 28 E7            356 | CMPSER: LXI D,SERNO ;Point to serial no in CCP
+E5F8: 21 00 EC            357 |     LXI H,BDOS-6;Point to serial no in BDOS
+E5FB: 06 06               358 |     MVI B,6 ;Number of bytes to compared
+E5FD: 1A                  359 | CMPSN1: LDAX    D   ;
+E5FE: BE                  360 |     CMP M   ;
+E5FF: C2 CF E7            361 |     JNZ FATAL   ; OK, you've had it. You are locked out.
+E602: 13                  362 |     INX D   ;
+E603: 23                  363 |     INX H   ;
+E604: 05                  364 |     DCR B   ;
+E605: C2 FD E5            365 |     JNZ CMPSN1  ;
+E608: C9                  366 |     RET     ; Good comparison. You are home free
+                          367 | ;
+                          368 | ;   GENERAL PURPOSE ERROR HANDLING ROUTINE
+                          369 | ;   Anything that you do wrong in entering a
+                          370 | ;   command lands you here. The command line
+                          371 | ;   is typed back at you for your edification
+                          372 | ;   and embarrassment. After you have been shown
+                          373 | ;   a '?', you are put back in the command mode.
+                          374 | ;
+E609: CD 98 E4            375 | WHAT:   CALL    PCRLF   ;
+E60C: 2A 8A E4            376 |     LHLD    BPTR2   ; Point to the offending command
+E60F: 7E                  377 | WHAT1:  MOV A,M ; and print until a space or null is found
+E610: FE 20               378 |     CPI ' ' ;
+E612: CA 22 E6            379 |     JZ  WHAT2   ;
+E615: B7                  380 |     ORA A   ;
+E616: CA 22 E6            381 |     JZ  WHAT2   ;
 
 
 Assembly Listing                                                                                                 Page: 8
 ------------------------------------------------------------------------------------------------------------------------
 
-E615: B7                  388 |     ORA A   ;
-E616: CA 22 E6            389 |     JZ  WHAT2   ;
-E619: E5                  390 |     PUSH    H   ;
-E61A: CD 8C E4            391 |     CALL    OUTPUT  ;
-E61D: E1                  392 |     POP H   ;
-E61E: 23                  393 |     INX H   ;
-E61F: C3 0F E6            394 |     JMP WHAT1   ;
-                          395 | ;
-E622: 3E 3F               396 | WHAT2:  MVI A,'?'   ; OK, what did you have in mind?
-E624: CD 8C E4            397 |     CALL    OUTPUT  ;
-E627: CD 98 E4            398 |     CALL    PCRLF   ;
-E62A: CD DD E5            399 |     CALL    EXITSB  ;
-E62D: C3 82 E7            400 |     JMP NXTCMD  ; Back for another command.
-                          401 | ;
-                          402 | ;   SPECIAL CHARACTER CHECK
-                          403 | ;   Returns with ZFLAG set if any of the special
-                          404 | ;   characters is found, or bombs you out if a
-                          405 | ;   control character is found. Contains a useless
-                          406 | ;   byte.
-                          407 | ;
-E630: 1A                  408 | CHRCHK: LDAX    D   ;
-E631: B7                  409 |     ORA A   ;
-E632: C8                  410 |     RZ      ;Exit on null
-E633: FE 20               411 |     CPI ' ' ;
-E635: DA 09 E6            412 |     JC  WHAT    ;Bomb out on control character
-E638: C8                  413 |     RZ      ;
-E639: FE 3D               414 |     CPI '=' ;
-E63B: C8                  415 |     RZ      ;
-E63C: FE 5F               416 |     CPI '_' ;
-E63E: C8                  417 |     RZ      ;
-E63F: FE 2E               418 |     CPI '.' ;
-E641: C8                  419 |     RZ      ;
-E642: FE 3A               420 |     CPI ':' ;
-E644: C8                  421 |     RZ      ;
-E645: FE 3B               422 |     CPI ';' ;
-E647: C8                  423 |     RZ      ;
-E648: FE 3C               424 |     CPI '<' ;
-E64A: C8                  425 |     RZ      ;
-E64B: FE 3E               426 |     CPI '>' ;
-E64D: C8                  427 |     RZ      ; This command is redundant!
-E64E: C9                  428 |     RET     ;
-                          429 | ;
-                          430 | ;   STEP (DE) UNTIL A NULL OR NON-SPACE IS FOUND
-                          431 | ;   Return with the character in the accumulator.
+E619: E5                  382 |     PUSH    H   ;
+E61A: CD 8C E4            383 |     CALL    OUTPUT  ;
+E61D: E1                  384 |     POP H   ;
+E61E: 23                  385 |     INX H   ;
+E61F: C3 0F E6            386 |     JMP WHAT1   ;
+                          387 | ;
+E622: 3E 3F               388 | WHAT2:  MVI A,'?'   ; OK, what did you have in mind?
+E624: CD 8C E4            389 |     CALL    OUTPUT  ;
+E627: CD 98 E4            390 |     CALL    PCRLF   ;
+E62A: CD DD E5            391 |     CALL    EXITSB  ;
+E62D: C3 82 E7            392 |     JMP NXTCMD  ; Back for another command.
+                          393 | ;
+                          394 | ;   SPECIAL CHARACTER CHECK
+                          395 | ;   Returns with ZFLAG set if any of the special
+                          396 | ;   characters is found, or bombs you out if a
+                          397 | ;   control character is found. Contains a useless
+                          398 | ;   byte.
+                          399 | ;
+E630: 1A                  400 | CHRCHK: LDAX    D   ;
+E631: B7                  401 |     ORA A   ;
+E632: C8                  402 |     RZ      ;Exit on null
+E633: FE 20               403 |     CPI ' ' ;
+E635: DA 09 E6            404 |     JC  WHAT    ;Bomb out on control character
+E638: C8                  405 |     RZ      ;
+E639: FE 3D               406 |     CPI '=' ;
+E63B: C8                  407 |     RZ      ;
+E63C: FE 5F               408 |     CPI '_' ;
+E63E: C8                  409 |     RZ      ;
+E63F: FE 2E               410 |     CPI '.' ;
+E641: C8                  411 |     RZ      ;
+E642: FE 3A               412 |     CPI ':' ;
+E644: C8                  413 |     RZ      ;
+E645: FE 3B               414 |     CPI ';' ;
+E647: C8                  415 |     RZ      ;
+E648: FE 3C               416 |     CPI '<' ;
+E64A: C8                  417 |     RZ      ;
+E64B: FE 3E               418 |     CPI '>' ;
+E64D: C8                  419 |     RZ      ; This command is redundant!
+E64E: C9                  420 |     RET     ;
+                          421 | ;
+                          422 | ;   STEP (DE) UNTIL A NULL OR NON-SPACE IS FOUND
+                          423 | ;   Return with the character in the accumulator.
+                          424 | ;
+E64F: 1A                  425 | STEP:   LDAX    D   ;
+E650: B7                  426 |     ORA A   ;
+E651: C8                  427 |     RZ      ;
+E652: FE 20               428 |     CPI 20H ;' '
+E654: C0                  429 |     RNZ     ;
+E655: 13                  430 |     INX D   ;
+E656: C3 4F E6            431 |     JMP STEP    ;
                           432 | ;
-E64F: 1A                  433 | STEP:   LDAX    D   ;
-E650: B7                  434 |     ORA A   ;
-E651: C8                  435 |     RZ      ;
-E652: FE 20               436 |     CPI 20H ;' '
-E654: C0                  437 |     RNZ     ;
-E655: 13                  438 |     INX D   ;
-E656: C3 4F E6            439 |     JMP STEP    ;
-                          440 | ;
-                          441 | ;   ADD THE ACCUMULATOR TO (HL)
-                          442 | ;   Return with the result in (HL)
-                          443 | ;
+                          433 | ;   ADD THE ACCUMULATOR TO (HL)
+                          434 | ;   Return with the result in (HL)
+                          435 | ;
+E659: 85                  436 | ADDAH:  ADD L   ; (HL) <-  (HL) + (A)
+E65A: 6F                  437 |     MOV L,A ;
 
 
 Assembly Listing                                                                                                 Page: 9
 ------------------------------------------------------------------------------------------------------------------------
 
-E659: 85                  444 | ADDAH:  ADD L   ; (HL) <-  (HL) + (A)
-E65A: 6F                  445 |     MOV L,A ;
-E65B: D0                  446 |     RNC     ;
-E65C: 24                  447 |     INR H   ;
-E65D: C9                  448 |     RET     ;
-                          449 | ;
-                          450 | ;   TRANSFER FILE CONTROL BLOCK
-                          451 | ;   This is a key subroutine that handles all
-                          452 | ;   of the setting up of file control blocks
-                          453 | ;   and of moving around the control buffer.
-                          454 | ;
-                          455 | ;   No entry parameters are passed in registers
-                          456 | ;   On exit (A) contains a count of the number of
-                          457 | ;   '?' wildcards in file control block and ZFLAG
-                          458 | ;   is set if this count =0 and FCB contains the
-                          459 | ;   file block. The input buffer pointer has been
-                          460 | ;   advanced to one beyond end of information used.
-                          461 | ;
-                          462 | ;   This subroutine is not only used to set up
-                          463 | ;   file control blocks, but also the numbers
-                          464 | ;   for SAVE and USER.
-                          465 | ;
-E65E: 3E 00               466 | TRFCB:  MVI A,00H   ;Initial offset=0, primary entry point
-E660: 21 CD EB            467 | TRFCB1: LXI H,FCB   ;(Alternate entry point, offset in (A))
-E663: CD 59 E6            468 |     CALL    ADDAH   ;Point to current character in FCB
-E666: E5                  469 |     PUSH    H   ;
-E667: E5                  470 |     PUSH    H   ;Save pointer twice.
-E668: AF                  471 |     XRA A   ;
-E669: 32 F0 EB            472 |     STA TRDISK  ;
-E66C: 2A 88 E4            473 |     LHLD    BPTR1   ;Get current pointer to the input buffer
-E66F: EB                  474 |     XCHG        ;
-E670: CD 4F E6            475 |     CALL    STEP    ;Get first non-blank character
-E673: EB                  476 |     XCHG        ;
-E674: 22 8A E4            477 |     SHLD    BPTR2   ;Save pointer in case of error
-E677: EB                  478 |     XCHG        ;
-E678: E1                  479 |     POP H   ;Get FCB pointer
-E679: 1A                  480 |     LDAX    D   ;
-E67A: B7                  481 |     ORA A   ;Check for null command
-E67B: CA 89 E6            482 |     JZ  TRFCB2  ;
-E67E: DE 40               483 |     SBI 40H ;Remove ASCII bias.
-E680: 47                  484 |     MOV B,A ;Save possible disk number in (B)
-E681: 13                  485 |     INX D   ;
-E682: 1A                  486 |     LDAX    D   ;
-E683: FE 3A               487 |     CPI ':' ; This means that this is a disk number.
-E685: CA 90 E6            488 |     JZ  TRFCB3  ; Go set transient disk.
-E688: 1B                  489 |     DCX D   ; Get current logged in disk number.
-E689: 3A EF EB            490 | TRFCB2: LDA CURDSK  ;
-E68C: 77                  491 |     MOV M,A ;
-E68D: C3 96 E6            492 |     JMP TRFCB4  ;
-                          493 | ;
-E690: 78                  494 | TRFCB3: MOV A,B ; Set transient disk number.
-E691: 32 F0 EB            495 |     STA TRDISK  ;
-E694: 70                  496 |     MOV M,B ; Put disk number into head of File Control Block.
-E695: 13                  497 |     INX D   ;
-                          498 | ;
-                          499 | ;   Move file name of up to 8 characters into bytes
+E65B: D0                  438 |     RNC     ;
+E65C: 24                  439 |     INR H   ;
+E65D: C9                  440 |     RET     ;
+                          441 | ;
+                          442 | ;   TRANSFER FILE CONTROL BLOCK
+                          443 | ;   This is a key subroutine that handles all
+                          444 | ;   of the setting up of file control blocks
+                          445 | ;   and of moving around the control buffer.
+                          446 | ;
+                          447 | ;   No entry parameters are passed in registers
+                          448 | ;   On exit (A) contains a count of the number of
+                          449 | ;   '?' wildcards in file control block and ZFLAG
+                          450 | ;   is set if this count =0 and FCB contains the
+                          451 | ;   file block. The input buffer pointer has been
+                          452 | ;   advanced to one beyond end of information used.
+                          453 | ;
+                          454 | ;   This subroutine is not only used to set up
+                          455 | ;   file control blocks, but also the numbers
+                          456 | ;   for SAVE and USER.
+                          457 | ;
+E65E: 3E 00               458 | TRFCB:  MVI A,00H   ;Initial offset=0, primary entry point
+E660: 21 CD EB            459 | TRFCB1: LXI H,FCB   ;(Alternate entry point, offset in (A))
+E663: CD 59 E6            460 |     CALL    ADDAH   ;Point to current character in FCB
+E666: E5                  461 |     PUSH    H   ;
+E667: E5                  462 |     PUSH    H   ;Save pointer twice.
+E668: AF                  463 |     XRA A   ;
+E669: 32 F0 EB            464 |     STA TRDISK  ;
+E66C: 2A 88 E4            465 |     LHLD    BPTR1   ;Get current pointer to the input buffer
+E66F: EB                  466 |     XCHG        ;
+E670: CD 4F E6            467 |     CALL    STEP    ;Get first non-blank character
+E673: EB                  468 |     XCHG        ;
+E674: 22 8A E4            469 |     SHLD    BPTR2   ;Save pointer in case of error
+E677: EB                  470 |     XCHG        ;
+E678: E1                  471 |     POP H   ;Get FCB pointer
+E679: 1A                  472 |     LDAX    D   ;
+E67A: B7                  473 |     ORA A   ;Check for null command
+E67B: CA 89 E6            474 |     JZ  TRFCB2  ;
+E67E: DE 40               475 |     SBI 40H ;Remove ASCII bias.
+E680: 47                  476 |     MOV B,A ;Save possible disk number in (B)
+E681: 13                  477 |     INX D   ;
+E682: 1A                  478 |     LDAX    D   ;
+E683: FE 3A               479 |     CPI ':' ; This means that this is a disk number.
+E685: CA 90 E6            480 |     JZ  TRFCB3  ; Go set transient disk.
+E688: 1B                  481 |     DCX D   ; Get current logged in disk number.
+E689: 3A EF EB            482 | TRFCB2: LDA CURDSK  ;
+E68C: 77                  483 |     MOV M,A ;
+E68D: C3 96 E6            484 |     JMP TRFCB4  ;
+                          485 | ;
+E690: 78                  486 | TRFCB3: MOV A,B ; Set transient disk number.
+E691: 32 F0 EB            487 |     STA TRDISK  ;
+E694: 70                  488 |     MOV M,B ; Put disk number into head of File Control Block.
+E695: 13                  489 |     INX D   ;
+                          490 | ;
+                          491 | ;   Move file name of up to 8 characters into bytes
+                          492 | ;   1 through 8 of FCB. Exit at reaching a special
+                          493 | ;   character or a null. Pad excess with blanks.
 
 
 Assembly Listing                                                                                                Page: 10
 ------------------------------------------------------------------------------------------------------------------------
 
-                          500 | ;   1 through 8 of FCB. Exit at reaching a special
-                          501 | ;   character or a null. Pad excess with blanks.
-                          502 | ;   If a '*' is found, fill the rest of the name block
-                          503 | ;   with '?'
-                          504 | ;
-E696: 06 08               505 | TRFCB4: MVI B,08H   ; Move file name of up to 8 Characters.
-E698: CD 30 E6            506 | TRFCB5: CALL    CHRCHK  ; Exit if a special character is found.
-E69B: CA B9 E6            507 |     JZ  TRFCB9  ; Go pad the rest of the block w/ ' '
-E69E: 23                  508 |     INX H   ;
-E69F: FE 2A               509 |     CPI '*' ;This is a Wild card match
-E6A1: C2 A9 E6            510 |     JNZ TRFCB6  ;
-E6A4: 36 3F               511 |     MVI M,'?'   ;This is an 'anything match'.
-E6A6: C3 AB E6            512 |     JMP TRFCB7  ;
-                          513 | ;
-E6A9: 77                  514 | TRFCB6: MOV M,A ;
-E6AA: 13                  515 |     INX D   ;
-E6AB: 05                  516 | TRFCB7: DCR B   ;
-E6AC: C2 98 E6            517 |     JNZ TRFCB5  ;
-                          518 | ;
-E6AF: CD 30 E6            519 | TRFCB8: CALL    CHRCHK  ;Check for special character
-E6B2: CA C0 E6            520 |     JZ  TRFC10  ;
-E6B5: 13                  521 |     INX D   ;
-E6B6: C3 AF E6            522 |     JMP TRFCB8  ;
-                          523 | ;
-E6B9: 23                  524 | TRFCB9: INX H   ; Pad the rest of the file name with blanks.
-E6BA: 36 20               525 |     MVI M,' '   ;
-E6BC: 05                  526 |     DCR B   ;
-E6BD: C2 B9 E6            527 |     JNZ TRFCB9  ;
-                          528 | ;
-                          529 | ;   Move the file extention into bytes 9 through 11 of
-                          530 | ;   FCB. Pad excess with blancks, and fill with '?'
-                          531 | ;   in the same manner as the filename.
-                          532 | ;
-E6C0: 06 03               533 | TRFC10: MVI B,03H   ; Move a file type of up to 3 Characters.
-E6C2: FE 2E               534 |     CPI '.' ;A period is the only legal special character in this case.
-E6C4: C2 E9 E6            535 |     JNZ TRFC15  ;
-E6C7: 13                  536 |     INX D   ;
-E6C8: CD 30 E6            537 | TRFC11: CALL    CHRCHK  ; Check for special characters.
-E6CB: CA E9 E6            538 |     JZ  TRFC15  ;
-E6CE: 23                  539 |     INX H   ;
-E6CF: FE 2A               540 |     CPI '*' ;Wild card match- Pad the 3 bytes with ???
-E6D1: C2 D9 E6            541 |     JNZ TRFC12  ;
-E6D4: 36 3F               542 |     MVI M,'?'   ;
-E6D6: C3 DB E6            543 |     JMP TRFC13  ;
-                          544 | ;
-E6D9: 77                  545 | TRFC12: MOV M,A ;Put the character into FCB
-E6DA: 13                  546 |     INX D   ;Advance FCB pointer
-E6DB: 05                  547 | TRFC13: DCR B   ;Decrement character counter
-E6DC: C2 C8 E6            548 |     JNZ TRFC11  ;Loop until counter is zero
-E6DF: CD 30 E6            549 | TRFC14: CALL    CHRCHK  ;Step buffer until special character,
-E6E2: CA F0 E6            550 |     JZ  TRFC16  ;     or null is found.
-E6E5: 13                  551 |     INX D   ;
-E6E6: C3 DF E6            552 |     JMP TRFC14  ;
-                          553 | ;
-E6E9: 23                  554 | TRFC15: INX H   ;Pad the rest of the extent with ' '
-E6EA: 36 20               555 |     MVI M,' '   ;
+                          494 | ;   If a '*' is found, fill the rest of the name block
+                          495 | ;   with '?'
+                          496 | ;
+E696: 06 08               497 | TRFCB4: MVI B,08H   ; Move file name of up to 8 Characters.
+E698: CD 30 E6            498 | TRFCB5: CALL    CHRCHK  ; Exit if a special character is found.
+E69B: CA B9 E6            499 |     JZ  TRFCB9  ; Go pad the rest of the block w/ ' '
+E69E: 23                  500 |     INX H   ;
+E69F: FE 2A               501 |     CPI '*' ;This is a Wild card match
+E6A1: C2 A9 E6            502 |     JNZ TRFCB6  ;
+E6A4: 36 3F               503 |     MVI M,'?'   ;This is an 'anything match'.
+E6A6: C3 AB E6            504 |     JMP TRFCB7  ;
+                          505 | ;
+E6A9: 77                  506 | TRFCB6: MOV M,A ;
+E6AA: 13                  507 |     INX D   ;
+E6AB: 05                  508 | TRFCB7: DCR B   ;
+E6AC: C2 98 E6            509 |     JNZ TRFCB5  ;
+                          510 | ;
+E6AF: CD 30 E6            511 | TRFCB8: CALL    CHRCHK  ;Check for special character
+E6B2: CA C0 E6            512 |     JZ  TRFC10  ;
+E6B5: 13                  513 |     INX D   ;
+E6B6: C3 AF E6            514 |     JMP TRFCB8  ;
+                          515 | ;
+E6B9: 23                  516 | TRFCB9: INX H   ; Pad the rest of the file name with blanks.
+E6BA: 36 20               517 |     MVI M,' '   ;
+E6BC: 05                  518 |     DCR B   ;
+E6BD: C2 B9 E6            519 |     JNZ TRFCB9  ;
+                          520 | ;
+                          521 | ;   Move the file extention into bytes 9 through 11 of
+                          522 | ;   FCB. Pad excess with blancks, and fill with '?'
+                          523 | ;   in the same manner as the filename.
+                          524 | ;
+E6C0: 06 03               525 | TRFC10: MVI B,03H   ; Move a file type of up to 3 Characters.
+E6C2: FE 2E               526 |     CPI '.' ;A period is the only legal special character in this case.
+E6C4: C2 E9 E6            527 |     JNZ TRFC15  ;
+E6C7: 13                  528 |     INX D   ;
+E6C8: CD 30 E6            529 | TRFC11: CALL    CHRCHK  ; Check for special characters.
+E6CB: CA E9 E6            530 |     JZ  TRFC15  ;
+E6CE: 23                  531 |     INX H   ;
+E6CF: FE 2A               532 |     CPI '*' ;Wild card match- Pad the 3 bytes with ???
+E6D1: C2 D9 E6            533 |     JNZ TRFC12  ;
+E6D4: 36 3F               534 |     MVI M,'?'   ;
+E6D6: C3 DB E6            535 |     JMP TRFC13  ;
+                          536 | ;
+E6D9: 77                  537 | TRFC12: MOV M,A ;Put the character into FCB
+E6DA: 13                  538 |     INX D   ;Advance FCB pointer
+E6DB: 05                  539 | TRFC13: DCR B   ;Decrement character counter
+E6DC: C2 C8 E6            540 |     JNZ TRFC11  ;Loop until counter is zero
+E6DF: CD 30 E6            541 | TRFC14: CALL    CHRCHK  ;Step buffer until special character,
+E6E2: CA F0 E6            542 |     JZ  TRFC16  ;     or null is found.
+E6E5: 13                  543 |     INX D   ;
+E6E6: C3 DF E6            544 |     JMP TRFC14  ;
+                          545 | ;
+E6E9: 23                  546 | TRFC15: INX H   ;Pad the rest of the extent with ' '
+E6EA: 36 20               547 |     MVI M,' '   ;
+E6EC: 05                  548 |     DCR B   ;
+E6ED: C2 E9 E6            549 |     JNZ TRFC15  ;
 
 
 Assembly Listing                                                                                                Page: 11
 ------------------------------------------------------------------------------------------------------------------------
 
-E6EC: 05                  556 |     DCR B   ;
-E6ED: C2 E9 E6            557 |     JNZ TRFC15  ;
-                          558 | ;
-E6F0: 06 03               559 | TRFC16: MVI B,03H   ;Zero out bytes 12 through 14
-E6F2: 23                  560 | TRFC17: INX H   ;
-E6F3: 36 00               561 |     MVI M,00H   ;
-E6F5: 05                  562 |     DCR B   ;
-E6F6: C2 F2 E6            563 |     JNZ TRFC17  ;
-                          564 | ;
-E6F9: EB                  565 |     XCHG        ;
-E6FA: 22 88 E4            566 |     SHLD    BPTR1   ;Save the input buffer pointer
-E6FD: E1                  567 |     POP H   ;(HL) = FCB
-E6FE: 01 0B 00            568 |     LXI B,11    ;Set counter
-E701: 23                  569 | TRFC18: INX H   ;Count number of '?' in filename.ext
-E702: 7E                  570 |     MOV A,M ;
-E703: FE 3F               571 |     CPI '?' ;
-E705: C2 09 E7            572 |     JNZ TRFC19  ;Skip if not'?'
-E708: 04                  573 |     INR B   ;
-E709: 0D                  574 | TRFC19: DCR C   ;
-E70A: C2 01 E7            575 |     JNZ TRFC18  ;
-E70D: 78                  576 |     MOV A,B ;Move '?' count into (A)
-E70E: B7                  577 |     ORA A   ;Set flags to indicate ambigous filename
-E70F: C9                  578 |     RET     ;
-                          579 | ;
-                          580 | ;   COMMAND NAME LIST
-                          581 | ;
-E710: 44 49 52 20         582 | CMNDL:  DB  'DIR '  ;Read directory
-E714: 45 52 41 20         583 |     DB  'ERA '  ;Erase file
-E718: 54 59 50 45         584 |     DB  'TYPE'  ;Output named file to console
-E71C: 53 41 56 45         585 |     DB  'SAVE'  ;Save named file on disk
-E720: 52 45 4E 20         586 |     DB  'REN '  ;Rename file
-E724: 55 53 45 52         587 |     DB  'USER'  ;Set user number
+                          550 | ;
+E6F0: 06 03               551 | TRFC16: MVI B,03H   ;Zero out bytes 12 through 14
+E6F2: 23                  552 | TRFC17: INX H   ;
+E6F3: 36 00               553 |     MVI M,00H   ;
+E6F5: 05                  554 |     DCR B   ;
+E6F6: C2 F2 E6            555 |     JNZ TRFC17  ;
+                          556 | ;
+E6F9: EB                  557 |     XCHG        ;
+E6FA: 22 88 E4            558 |     SHLD    BPTR1   ;Save the input buffer pointer
+E6FD: E1                  559 |     POP H   ;(HL) = FCB
+E6FE: 01 0B 00            560 |     LXI B,11    ;Set counter
+E701: 23                  561 | TRFC18: INX H   ;Count number of '?' in filename.ext
+E702: 7E                  562 |     MOV A,M ;
+E703: FE 3F               563 |     CPI '?' ;
+E705: C2 09 E7            564 |     JNZ TRFC19  ;Skip if not'?'
+E708: 04                  565 |     INR B   ;
+E709: 0D                  566 | TRFC19: DCR C   ;
+E70A: C2 01 E7            567 |     JNZ TRFC18  ;
+E70D: 78                  568 |     MOV A,B ;Move '?' count into (A)
+E70E: B7                  569 |     ORA A   ;Set flags to indicate ambigous filename
+E70F: C9                  570 |     RET     ;
+                          571 | ;
+                          572 | ;   COMMAND NAME LIST
+                          573 | ;
+E710: 44 49 52 20         574 | CMNDL:  DB  'DIR '  ;Read directory
+E714: 45 52 41 20         575 |     DB  'ERA '  ;Erase file
+E718: 54 59 50 45         576 |     DB  'TYPE'  ;Output named file to console
+E71C: 53 41 56 45         577 |     DB  'SAVE'  ;Save named file on disk
+E720: 52 45 4E 20         578 |     DB  'REN '  ;Rename file
+E724: 55 53 45 52         579 |     DB  'USER'  ;Set user number
+                          580 | ;
+                          581 | ;   SERIAL NUMBERS
+                          582 | ;
+E728: 00                  583 | SERNO:  DB  SNH ;
+E729: 16                  584 |     DB  VER*10+REL  ;2.2 IS 16H
+E72A: 00 00               585 |     DW  REV ;
+E72C: 00                  586 |     DB  SNL/256 ;
+E72D: 00                  587 |     DB  SNL MOD 256 ;
                           588 | ;
-                          589 | ;   SERIAL NUMBERS
+                          589 | ;   COMMAND SEARCH
                           590 | ;
-E728: 00                  591 | SERNO:  DB  SNH ;
-E729: 16                  592 |     DB  VER*10+REL  ;2.2 IS 16H
-E72A: 00 00               593 |     DW  REV ;
-E72C: 00                  594 |     DB  SNL/256 ;
-E72D: 00                  595 |     DB  SNL MOD 256 ;
+                          591 | ;   Try to match command name starting at FCB + 1
+                          592 | ;   with those in the intrinsic command list.
+                          593 | ;   Exit with command number (0 to 5) in (A) if a
+                          594 | ;   match has been made, else exit with a 6 in (A)
+                          595 | ;   signifying that this may be a transient command.
                           596 | ;
-                          597 | ;   COMMAND SEARCH
-                          598 | ;
-                          599 | ;   Try to match command name starting at FCB + 1
-                          600 | ;   with those in the intrinsic command list.
-                          601 | ;   Exit with command number (0 to 5) in (A) if a
-                          602 | ;   match has been made, else exit with a 6 in (A)
-                          603 | ;   signifying that this may be a transient command.
-                          604 | ;
-E72E: 21 10 E7            605 | CSRCH:  LXI H,CMNDL ; Point to start of command list.
-E731: 0E 00               606 |     MVI C,00H   ; Zero out command counter.
-E733: 79                  607 | CSRCH1: MOV A,C ; Check counter for maximum number of tries.
-E734: FE 06               608 |     CPI 6   ;(There are 6 intrinsic commands + transients)
-E736: D0                  609 |     RNC     ; Return is no match in six tries. It is a transient command.
-E737: 11 CE EB            610 |     LXI D,FCB+1 ; Point to start of command to be matched.
-E73A: 06 04               611 |     MVI B,04H   ; Maximum number of characters in command name.
+E72E: 21 10 E7            597 | CSRCH:  LXI H,CMNDL ; Point to start of command list.
+E731: 0E 00               598 |     MVI C,00H   ; Zero out command counter.
+E733: 79                  599 | CSRCH1: MOV A,C ; Check counter for maximum number of tries.
+E734: FE 06               600 |     CPI 6   ;(There are 6 intrinsic commands + transients)
+E736: D0                  601 |     RNC     ; Return is no match in six tries. It is a transient command.
+E737: 11 CE EB            602 |     LXI D,FCB+1 ; Point to start of command to be matched.
+E73A: 06 04               603 |     MVI B,04H   ; Maximum number of characters in command name.
+E73C: 1A                  604 | CSRCH2: LDAX    D   ;
+E73D: BE                  605 |     CMP M   ;
 
 
 Assembly Listing                                                                                                Page: 12
 ------------------------------------------------------------------------------------------------------------------------
 
-E73C: 1A                  612 | CSRCH2: LDAX    D   ;
-E73D: BE                  613 |     CMP M   ;
-E73E: C2 4F E7            614 |     JNZ CSRCH3  ; No match- exit loop.
-E741: 13                  615 |     INX D   ;
-E742: 23                  616 |     INX H   ;
-E743: 05                  617 |     DCR B   ;
-E744: C2 3C E7            618 |     JNZ CSRCH2  ; Back for another match.
-E747: 1A                  619 |     LDAX    D   ; Found the command, now check for a separating space.
-E748: FE 20               620 |     CPI ' ' ;
-E74A: C2 54 E7            621 |     JNZ CSRCH4  ; No space, try for something else.
-E74D: 79                  622 |     MOV A,C ; Put command count in accumulator.
-E74E: C9                  623 |     RET     ; Exit routine with command number.
-                          624 | ;
-E74F: 23                  625 | CSRCH3: INX H   ; Step forwards to that start of the next command name.
-E750: 05                  626 |     DCR B   ;
-E751: C2 4F E7            627 |     JNZ CSRCH3  ;
-E754: 0C                  628 | CSRCH4: INR C   ; Bump command counter by one.
-E755: C3 33 E7            629 |     JMP CSRCH1  ; Back for another try.
+E73E: C2 4F E7            606 |     JNZ CSRCH3  ; No match- exit loop.
+E741: 13                  607 |     INX D   ;
+E742: 23                  608 |     INX H   ;
+E743: 05                  609 |     DCR B   ;
+E744: C2 3C E7            610 |     JNZ CSRCH2  ; Back for another match.
+E747: 1A                  611 |     LDAX    D   ; Found the command, now check for a separating space.
+E748: FE 20               612 |     CPI ' ' ;
+E74A: C2 54 E7            613 |     JNZ CSRCH4  ; No space, try for something else.
+E74D: 79                  614 |     MOV A,C ; Put command count in accumulator.
+E74E: C9                  615 |     RET     ; Exit routine with command number.
+                          616 | ;
+E74F: 23                  617 | CSRCH3: INX H   ; Step forwards to that start of the next command name.
+E750: 05                  618 |     DCR B   ;
+E751: C2 4F E7            619 |     JNZ CSRCH3  ;
+E754: 0C                  620 | CSRCH4: INR C   ; Bump command counter by one.
+E755: C3 33 E7            621 |     JMP CSRCH1  ; Back for another try.
+                          622 | ;
+                          623 | ;   ******************************
+                          624 | ;   MAIN OPERATING ROUTINE FOR CCP
+                          625 | ;   ******************************
+                          626 | ;
+                          627 | ;   Entry point number 1
+                          628 | ;   Input buffer counter is zeroed out so no imbedded
+                          629 | ;   command can be executed on initial boot up.
                           630 | ;
-                          631 | ;   ******************************
-                          632 | ;   MAIN OPERATING ROUTINE FOR CCP
-                          633 | ;   ******************************
+E758: AF                  631 | CCP0:   XRA A   ;
+E759: 32 07 E4            632 |     STA INBLEN  ;
+                          633 | ;
                           634 | ;
-                          635 | ;   Entry point number 1
-                          636 | ;   Input buffer counter is zeroed out so no imbedded
-                          637 | ;   command can be executed on initial boot up.
-                          638 | ;
-E758: AF                  639 | CCP0:   XRA A   ;
-E759: 32 07 E4            640 |     STA INBLEN  ;
-                          641 | ;
+                          635 | ;   Entry point number 2
+                          636 | ;   Entry a this point allows commands inbedded in
+                          637 | ;   input buffer to be automatically executed
+                          638 | ;   on initial boot up.
+                          639 | ;
+                          640 | ;   On entry (C) has user number in the high nibble
+                          641 | ;   and the disk drive in the lower nibble
                           642 | ;
-                          643 | ;   Entry point number 2
-                          644 | ;   Entry a this point allows commands inbedded in
-                          645 | ;   input buffer to be automatically executed
-                          646 | ;   on initial boot up.
-                          647 | ;
-                          648 | ;   On entry (C) has user number in the high nibble
-                          649 | ;   and the disk drive in the lower nibble
-                          650 | ;
-E75C: 31 00 00            651 | CCP1:   LXI SP,STACK    ;Set up loacal stack
-E75F: C5                  652 |     PUSH    B   ;Save entry parameter
-E760: 79                  653 |     MOV A,C ;
-E761: 1F                  654 |     RAR     ;Move upper 4 bits down
-E762: 1F                  655 |     RAR     ;
-E763: 1F                  656 |     RAR     ;
-E764: 1F                  657 |     RAR     ;
-E765: E6 0F               658 |     ANI 0FH ;Extract user number from input parameter
-E767: 5F                  659 |     MOV E,A ;
-E768: CD 15 E5            660 |     CALL    SETUSR  ;Put user number in its place
-E76B: CD B8 E4            661 |     CALL    RESET   ;Reset disk system
-E76E: 32 AB EB            662 |     STA SUBFL   ;SUBMIT FILE FLAG
-E771: C1                  663 |     POP B   ;Get back entry parameter
-E772: 79                  664 |     MOV A,C ;
-E773: E6 0F               665 |     ANI 0FH ;Extract disk drive number from input parameter
-E775: 32 EF EB            666 |     STA CURDSK  ;Set to correct disk drive
-E778: CD BD E4            667 |     CALL    SELDSK  ;
+E75C: 31 AB EB            643 | CCP1:   LXI SP,STACK    ;Set up loacal stack
+E75F: C5                  644 |     PUSH    B   ;Save entry parameter
+E760: 79                  645 |     MOV A,C ;
+E761: 1F                  646 |     RAR     ;Move upper 4 bits down
+E762: 1F                  647 |     RAR     ;
+E763: 1F                  648 |     RAR     ;
+E764: 1F                  649 |     RAR     ;
+E765: E6 0F               650 |     ANI 0FH ;Extract user number from input parameter
+E767: 5F                  651 |     MOV E,A ;
+E768: CD 15 E5            652 |     CALL    SETUSR  ;Put user number in its place
+E76B: CD B8 E4            653 |     CALL    RESET   ;Reset disk system
+E76E: 32 AB EB            654 |     STA SUBFL   ;SUBMIT FILE FLAG
+E771: C1                  655 |     POP B   ;Get back entry parameter
+E772: 79                  656 |     MOV A,C ;
+E773: E6 0F               657 |     ANI 0FH ;Extract disk drive number from input parameter
+E775: 32 EF EB            658 |     STA CURDSK  ;Set to correct disk drive
+E778: CD BD E4            659 |     CALL    SELDSK  ;
+E77B: 3A 07 E4            660 |     LDA INBLEN  ;
+E77E: B7                  661 |     ORA A   ;Check to see if there is anything in the input buffer
 
 
 Assembly Listing                                                                                                Page: 13
 ------------------------------------------------------------------------------------------------------------------------
 
-E77B: 3A 07 E4            668 |     LDA INBLEN  ;
-E77E: B7                  669 |     ORA A   ;Check to see if there is anything in the input buffer
-E77F: C2 98 E7            670 |     JNZ CCP2    ;There is, so don't bother with input.
-                          671 | ;
-                          672 | ;   RE-ENTRY POINT FOR NEXT COMMAND
-                          673 | ;
-E782: 31 00 00            674 | NXTCMD: LXI SP,STACK    ; Reset stack, and put out a prompt so
-                          675 |                 ; that you know what disk you are operating on.
-E785: CD 98 E4            676 |     CALL    PCRLF   ;
-E788: CD D0 E5            677 |     CALL    INTDSK  ;Get drive number
-E78B: C6 41               678 |     ADI 'A' ;Add  ASCII bias
-E78D: CD 8C E4            679 |     CALL    OUTPUT  ;
-E790: 3E 3E               680 |     MVI A,'>'   ;Prompt character
-E792: CD 8C E4            681 |     CALL    OUTPUT  ;
-E795: CD 39 E5            682 |     CALL    CMNDIN  ; Input the next command line from the console or submit file.
-E798: 11 80 00            683 | CCP2:   LXI D,DDMA  ;Set to the default DMA (0080H)
-E79B: CD D8 E5            684 |     CALL    STDMA1  ;
-E79E: CD D0 E5            685 |     CALL    INTDSK  ;Check disk drive
-E7A1: 32 EF EB            686 |     STA CURDSK  ;
-E7A4: CD 5E E6            687 |     CALL    TRFCB   ;Put command name in FCB
-E7A7: C4 09 E6            688 |     CNZ WHAT    ;Ambigous filename.ext No good
-E7AA: 3A F0 EB            689 |     LDA TRDISK  ;
-E7AD: B7                  690 |     ORA A   ;
-E7AE: C2 A5 EA            691 |     JNZ TRANS   ;Transient command
-E7B1: CD 2E E7            692 |     CALL    CSRCH   ;Find command in command list
-E7B4: 21 C1 E7            693 |     LXI H,CMNDT ;Point to command vector table
-E7B7: 5F                  694 |     MOV E,A ;Put command number in (DE)
-E7B8: 16 00               695 |     MVI D,00H   ;
-E7BA: 19                  696 |     DAD D   ;
-E7BB: 19                  697 |     DAD D   ;(HL) <-- CMNDT + 2 * Command number
-E7BC: 7E                  698 |     MOV A,M ;Move command vector into (HL)
-E7BD: 23                  699 |     INX H   ;
-E7BE: 66                  700 |     MOV H,M ;
-E7BF: 6F                  701 |     MOV L,A ;
-E7C0: E9                  702 |     PCHL        ;Go forth and execute the command.
-                          703 | ;
-                          704 | ;   COMMAND VECTOR TABLE
+E77F: C2 98 E7            662 |     JNZ CCP2    ;There is, so don't bother with input.
+                          663 | ;
+                          664 | ;   RE-ENTRY POINT FOR NEXT COMMAND
+                          665 | ;
+E782: 31 AB EB            666 | NXTCMD: LXI SP,STACK    ; Reset stack, and put out a prompt so
+                          667 |                 ; that you know what disk you are operating on.
+E785: CD 98 E4            668 |     CALL    PCRLF   ;
+E788: CD D0 E5            669 |     CALL    INTDSK  ;Get drive number
+E78B: C6 41               670 |     ADI 'A' ;Add  ASCII bias
+E78D: CD 8C E4            671 |     CALL    OUTPUT  ;
+E790: 3E 3E               672 |     MVI A,'>'   ;Prompt character
+E792: CD 8C E4            673 |     CALL    OUTPUT  ;
+E795: CD 39 E5            674 |     CALL    CMNDIN  ; Input the next command line from the console or submit file.
+E798: 11 80 00            675 | CCP2:   LXI D,DDMA  ;Set to the default DMA (0080H)
+E79B: CD D8 E5            676 |     CALL    STDMA1  ;
+E79E: CD D0 E5            677 |     CALL    INTDSK  ;Check disk drive
+E7A1: 32 EF EB            678 |     STA CURDSK  ;
+E7A4: CD 5E E6            679 |     CALL    TRFCB   ;Put command name in FCB
+E7A7: C4 09 E6            680 |     CNZ WHAT    ;Ambigous filename.ext No good
+E7AA: 3A F0 EB            681 |     LDA TRDISK  ;
+E7AD: B7                  682 |     ORA A   ;
+E7AE: C2 A5 EA            683 |     JNZ TRANS   ;Transient command
+E7B1: CD 2E E7            684 |     CALL    CSRCH   ;Find command in command list
+E7B4: 21 C1 E7            685 |     LXI H,CMNDT ;Point to command vector table
+E7B7: 5F                  686 |     MOV E,A ;Put command number in (DE)
+E7B8: 16 00               687 |     MVI D,00H   ;
+E7BA: 19                  688 |     DAD D   ;
+E7BB: 19                  689 |     DAD D   ;(HL) <-- CMNDT + 2 * Command number
+E7BC: 7E                  690 |     MOV A,M ;Move command vector into (HL)
+E7BD: 23                  691 |     INX H   ;
+E7BE: 66                  692 |     MOV H,M ;
+E7BF: 6F                  693 |     MOV L,A ;
+E7C0: E9                  694 |     PCHL        ;Go forth and execute the command.
+                          695 | ;
+                          696 | ;   COMMAND VECTOR TABLE
+                          697 | ;
+E7C1: 77 E8               698 | CMNDT:  DW  DIR ;Display directory
+E7C3: 1F E9               699 |     DW  ERA ;Erase file
+E7C5: 5D E9               700 |     DW  TYPE    ;Type file to console
+E7C7: AD E9               701 |     DW  SAVE    ;Save file on disk
+E7C9: 10 EA               702 |     DW  REN ;Rename file
+E7CB: 8E EA               703 |     DW  USER    ;Set user number
+E7CD: A5 EA               704 |     DW  TRANS   ;Load and execute transient command
                           705 | ;
-E7C1: 77 E8               706 | CMNDT:  DW  DIR ;Display directory
-E7C3: 1F E9               707 |     DW  ERA ;Erase file
-E7C5: 5D E9               708 |     DW  TYPE    ;Type file to console
-E7C7: AD E9               709 |     DW  SAVE    ;Save file on disk
-E7C9: 10 EA               710 |     DW  REN ;Rename file
-E7CB: 8E EA               711 |     DW  USER    ;Set user number
-E7CD: A5 EA               712 |     DW  TRANS   ;Load and execute transient command
+                          706 | ;   OK- You were warned about the serial numbers, but
+                          707 | ;   you went ahead anyway. Now you must pay the penalty
+                          708 | ;
+E7CF: 21 F3 76            709 | FATAL:  LXI H,76F3H ;STUFF A DI  & HLT
+E7D2: 22 00 E4            710 |     SHLD    ORIGIN  ;AT THE HEAD OF CCP
+E7D5: 21 00 E4            711 |     LXI H,ORIGIN    ;
+E7D8: E9                  712 |     PCHL        ;HANG UP THERE UNTIL RESET
                           713 | ;
-                          714 | ;   OK- You were warned about the serial numbers, but
-                          715 | ;   you went ahead anyway. Now you must pay the penalty
-                          716 | ;
-E7CF: 21 F3 76            717 | FATAL:  LXI H,76F3H ;STUFF A DI  & HLT
-E7D2: 22 00 E4            718 |     SHLD    ORIGIN  ;AT THE HEAD OF CCP
-E7D5: 21 00 E4            719 |     LXI H,ORIGIN    ;
-E7D8: E9                  720 |     PCHL        ;HANG UP THERE UNTIL RESET
-                          721 | ;
-                          722 | ;   FILE READ ERROR
-                          723 | ;
+                          714 | ;   FILE READ ERROR
+                          715 | ;
+E7D9: 01 DF E7            716 | RDERR:  LXI B,MSG1  ;Load pointer to message
+E7DC: C3 A7 E4            717 |     JMP CRMSG   ;Display message & return
 
 
 Assembly Listing                                                                                                Page: 14
 ------------------------------------------------------------------------------------------------------------------------
 
-E7D9: 01 DF E7            724 | RDERR:  LXI B,MSG1  ;Load pointer to message
-E7DC: C3 A7 E4            725 |     JMP CRMSG   ;Display message & return
-                          726 | ;
-E7DF: 52 45 41 44 20...   727 | MSG1:   DB  'READ ERROR',0
-                          728 | ;
-                          729 | ;   FILE NOT FOUND ERROR
+                          718 | ;
+E7DF: 52 45 41 44 20...   719 | MSG1:   DB  'READ ERROR',0
+                          720 | ;
+                          721 | ;   FILE NOT FOUND ERROR
+                          722 | ;
+E7EA: 01 F0 E7            723 | NFERR:  LXI B,MSG2  ;Load pointer to message
+E7ED: C3 A7 E4            724 |     JMP CRMSG   ;Display message & return
+                          725 | ;
+E7F0: 4E 4F 20 46 49...   726 | MSG2:   DB  'NO FILE',0
+                          727 | ;
+                          728 | ;   DECIMAL TO BINARY CONVERSION
+                          729 | ;   Used by SAVE and USER
                           730 | ;
-E7EA: 01 F0 E7            731 | NFERR:  LXI B,MSG2  ;Load pointer to message
-E7ED: C3 A7 E4            732 |     JMP CRMSG   ;Display message & return
-                          733 | ;
-E7F0: 4E 4F 20 46 49...   734 | MSG2:   DB  'NO FILE',0
-                          735 | ;
-                          736 | ;   DECIMAL TO BINARY CONVERSION
-                          737 | ;   Used by SAVE and USER
-                          738 | ;
-                          739 | ;   NOTE:
-                          740 | ;
-                          741 | ;   There is some inefficient code in this subroutine
-                          742 | ;   TRFCB will move the numbers into FCB and pad the
-                          743 | ;   rest of the block with ' '. The number can be 3
-                          744 | ;   digits long at most, so that the elaborate stepping
-                          745 | ;   past blanks, etc is not needed. Code that can be
-                          746 | ;   revised is marked by '*'
-                          747 | ;
-E7F8: CD 5E E6            748 | DECIML: CALL    TRFCB   ;Move numbers into FCB
-E7FB: 3A F0 EB            749 |     LDA TRDISK  ;
-E7FE: B7                  750 |     ORA A   ;
-E7FF: C2 09 E6            751 |     JNZ WHAT    ;
-E802: 21 CE EB            752 |     LXI H,FCB+1 ;
-E805: 01 0B 00            753 |     LXI B,11    ;8 NUMBER FILE NAME & 3 CHAR EXT
-E808: 7E                  754 | DEC1:   MOV A,M ;
-E809: FE 20               755 |     CPI ' ' ;
-E80B: CA 33 E8            756 |     JZ  DEC2    ;
-E80E: 23                  757 |     INX H   ;
-E80F: D6 30               758 |     SUI '0' ;REMOVE ASCII BIAS
-E811: FE 0A               759 |     CPI 10  ;
-E813: D2 09 E6            760 |     JNC WHAT    ;
-E816: 57                  761 |     MOV D,A ;
-E817: 78                  762 |     MOV A,B ;*
-E818: E6 E0               763 |     ANI 0E0H    ;*
-E81A: C2 09 E6            764 |     JNZ WHAT    ;*
-E81D: 78                  765 |     MOV A,B ;*
-E81E: 07                  766 |     RLC     ;MULTIPLY BY 10
-E81F: 07                  767 |     RLC     ;
-E820: 07                  768 |     RLC     ;
-E821: 80                  769 |     ADD B   ;
-E822: DA 09 E6            770 |     JC  WHAT    ;Overflow
-E825: 80                  771 |     ADD B   ;
-E826: DA 09 E6            772 |     JC  WHAT    ;Overflow
-E829: 82                  773 |     ADD D   ;
-E82A: DA 09 E6            774 |     JC  WHAT    ;Overflow
-E82D: 47                  775 |     MOV B,A ;
-E82E: 0D                  776 |     DCR C   ;*
-E82F: C2 08 E8            777 |     JNZ DEC1    ;* Should be JMP DEC1
-E832: C9                  778 |     RET     ;*
-                          779 | ;
+                          731 | ;   NOTE:
+                          732 | ;
+                          733 | ;   There is some inefficient code in this subroutine
+                          734 | ;   TRFCB will move the numbers into FCB and pad the
+                          735 | ;   rest of the block with ' '. The number can be 3
+                          736 | ;   digits long at most, so that the elaborate stepping
+                          737 | ;   past blanks, etc is not needed. Code that can be
+                          738 | ;   revised is marked by '*'
+                          739 | ;
+E7F8: CD 5E E6            740 | DECIML: CALL    TRFCB   ;Move numbers into FCB
+E7FB: 3A F0 EB            741 |     LDA TRDISK  ;
+E7FE: B7                  742 |     ORA A   ;
+E7FF: C2 09 E6            743 |     JNZ WHAT    ;
+E802: 21 CE EB            744 |     LXI H,FCB+1 ;
+E805: 01 0B 00            745 |     LXI B,11    ;8 NUMBER FILE NAME & 3 CHAR EXT
+E808: 7E                  746 | DEC1:   MOV A,M ;
+E809: FE 20               747 |     CPI ' ' ;
+E80B: CA 33 E8            748 |     JZ  DEC2    ;
+E80E: 23                  749 |     INX H   ;
+E80F: D6 30               750 |     SUI '0' ;REMOVE ASCII BIAS
+E811: FE 0A               751 |     CPI 10  ;
+E813: D2 09 E6            752 |     JNC WHAT    ;
+E816: 57                  753 |     MOV D,A ;
+E817: 78                  754 |     MOV A,B ;*
+E818: E6 E0               755 |     ANI 0E0H    ;*
+E81A: C2 09 E6            756 |     JNZ WHAT    ;*
+E81D: 78                  757 |     MOV A,B ;*
+E81E: 07                  758 |     RLC     ;MULTIPLY BY 10
+E81F: 07                  759 |     RLC     ;
+E820: 07                  760 |     RLC     ;
+E821: 80                  761 |     ADD B   ;
+E822: DA 09 E6            762 |     JC  WHAT    ;Overflow
+E825: 80                  763 |     ADD B   ;
+E826: DA 09 E6            764 |     JC  WHAT    ;Overflow
+E829: 82                  765 |     ADD D   ;
+E82A: DA 09 E6            766 |     JC  WHAT    ;Overflow
+E82D: 47                  767 |     MOV B,A ;
+E82E: 0D                  768 |     DCR C   ;*
+E82F: C2 08 E8            769 |     JNZ DEC1    ;* Should be JMP DEC1
+E832: C9                  770 |     RET     ;*
+                          771 | ;
+E833: 7E                  772 | DEC2:   MOV A,M ;*Step over blanks to end of block
+E834: FE 20               773 |     CPI ' ' ;*
 
 
 Assembly Listing                                                                                                Page: 15
 ------------------------------------------------------------------------------------------------------------------------
 
-E833: 7E                  780 | DEC2:   MOV A,M ;*Step over blanks to end of block
-E834: FE 20               781 |     CPI ' ' ;*
-E836: C2 09 E6            782 |     JNZ WHAT    ;*
-E839: 23                  783 |     INX H   ;*
-E83A: 0D                  784 |     DCR C   ;*
-E83B: C2 33 E8            785 |     JNZ DEC2    ;*
-E83E: 78                  786 |     MOV A,B ;Return with binary value in (A)
-E83F: C9                  787 |     RET     ;
-                          788 | ;
-                          789 | ;   BLOCK MOVE
-                          790 | ;   Source      :: ((HL))
-                          791 | ;   Destination :: ((DE))
-                          792 | ;   Count       ::  (B)
-                          793 | ;
-E840: 06 03               794 | MOVE3:  MVI B,03H   ;3 byte move
-E842: 7E                  795 | BLKMOV: MOV A,M ;Source
-E843: 12                  796 |     STAX    D   ;Destination
-E844: 23                  797 |     INX H   ;
-E845: 13                  798 |     INX D   ;
-E846: 05                  799 |     DCR B   ;Counter
-E847: C2 42 E8            800 |     JNZ BLKMOV  ;
-E84A: C9                  801 |     RET     ;
-                          802 | ;
-                          803 | ;   SET DIRECTORY POINTER
-                          804 | ;   Point to (DDMA) + (C) + (A)
-                          805 | ;   Return with character in (A)
-                          806 | ;
-                          807 | ;   On entry (C) contains directory entry offset
-                          808 | ;   i.e. 00H, 20H, 40H, or 60H.
-                          809 | ;   Accumulator (A) contains number of the byte
-                          810 | ;   within the directory that the pointer is to
-                          811 | ;   be set to.
-                          812 | ;
-E84B: 21 80 00            813 | DIRPTR: LXI H,DDMA  ;Point to start of directory sector
-E84E: 81                  814 |     ADD C   ;Add byte number to directory offset
-E84F: CD 59 E6            815 |     CALL    ADDAH   ;  then add the result to (HL)
-E852: 7E                  816 |     MOV A,M ;  and get the byte pointed to.
-E853: C9                  817 |     RET     ;
-                          818 | ;
-                          819 | ;   SET TO TRANSIENT DISK
-                          820 | ;   Set the disk specified by (TRDISK) for
-                          821 | ;   reading or writing. If (TRDISK) = (CURDISK), you
-                          822 | ;   are already on the right disk, so no change is needed
-                          823 | ;
-E854: AF                  824 | SETTRD: XRA A   ;
-E855: 32 CD EB            825 |     STA FCB ;Set first byte of FCB to 0
-E858: 3A F0 EB            826 |     LDA TRDISK  ;
-E85B: B7                  827 |     ORA A   ;Check to see if transient disk= 0
-E85C: C8                  828 |     RZ      ;OK- no change needed
-E85D: 3D                  829 |     DCR A   ;
-E85E: 21 EF EB            830 |     LXI H,CURDSK    ;Now check current disk
-E861: BE                  831 |     CMP M   ;
-E862: C8                  832 |     RZ      ;OK- no change needed
-E863: C3 BD E4            833 |     JMP SELDSK  ;Disk different, so go get right one
-                          834 | ;
-                          835 | ;   SET CURRENT DISK
+E836: C2 09 E6            774 |     JNZ WHAT    ;*
+E839: 23                  775 |     INX H   ;*
+E83A: 0D                  776 |     DCR C   ;*
+E83B: C2 33 E8            777 |     JNZ DEC2    ;*
+E83E: 78                  778 |     MOV A,B ;Return with binary value in (A)
+E83F: C9                  779 |     RET     ;
+                          780 | ;
+                          781 | ;   BLOCK MOVE
+                          782 | ;   Source      :: ((HL))
+                          783 | ;   Destination :: ((DE))
+                          784 | ;   Count       ::  (B)
+                          785 | ;
+E840: 06 03               786 | MOVE3:  MVI B,03H   ;3 byte move
+E842: 7E                  787 | BLKMOV: MOV A,M ;Source
+E843: 12                  788 |     STAX    D   ;Destination
+E844: 23                  789 |     INX H   ;
+E845: 13                  790 |     INX D   ;
+E846: 05                  791 |     DCR B   ;Counter
+E847: C2 42 E8            792 |     JNZ BLKMOV  ;
+E84A: C9                  793 |     RET     ;
+                          794 | ;
+                          795 | ;   SET DIRECTORY POINTER
+                          796 | ;   Point to (DDMA) + (C) + (A)
+                          797 | ;   Return with character in (A)
+                          798 | ;
+                          799 | ;   On entry (C) contains directory entry offset
+                          800 | ;   i.e. 00H, 20H, 40H, or 60H.
+                          801 | ;   Accumulator (A) contains number of the byte
+                          802 | ;   within the directory that the pointer is to
+                          803 | ;   be set to.
+                          804 | ;
+E84B: 21 80 00            805 | DIRPTR: LXI H,DDMA  ;Point to start of directory sector
+E84E: 81                  806 |     ADD C   ;Add byte number to directory offset
+E84F: CD 59 E6            807 |     CALL    ADDAH   ;  then add the result to (HL)
+E852: 7E                  808 |     MOV A,M ;  and get the byte pointed to.
+E853: C9                  809 |     RET     ;
+                          810 | ;
+                          811 | ;   SET TO TRANSIENT DISK
+                          812 | ;   Set the disk specified by (TRDISK) for
+                          813 | ;   reading or writing. If (TRDISK) = (CURDISK), you
+                          814 | ;   are already on the right disk, so no change is needed
+                          815 | ;
+E854: AF                  816 | SETTRD: XRA A   ;
+E855: 32 CD EB            817 |     STA FCB ;Set first byte of FCB to 0
+E858: 3A F0 EB            818 |     LDA TRDISK  ;
+E85B: B7                  819 |     ORA A   ;Check to see if transient disk= 0
+E85C: C8                  820 |     RZ      ;OK- no change needed
+E85D: 3D                  821 |     DCR A   ;
+E85E: 21 EF EB            822 |     LXI H,CURDSK    ;Now check current disk
+E861: BE                  823 |     CMP M   ;
+E862: C8                  824 |     RZ      ;OK- no change needed
+E863: C3 BD E4            825 |     JMP SELDSK  ;Disk different, so go get right one
+                          826 | ;
+                          827 | ;   SET CURRENT DISK
+                          828 | ;   Restore the current logged-in disk as the read/write
+                          829 | ;   disk. If already on the proper disk, no action is required
 
 
 Assembly Listing                                                                                                Page: 16
 ------------------------------------------------------------------------------------------------------------------------
 
-                          836 | ;   Restore the current logged-in disk as the read/write
-                          837 | ;   disk. If already on the proper disk, no action is required
-                          838 | ;
-E866: 3A F0 EB            839 | SETCUR: LDA TRDISK  ;
-E869: B7                  840 |     ORA A   ;
-E86A: C8                  841 |     RZ      ;OK- On log-in disk, no change
-E86B: 3D                  842 |     DCR A   ;
-E86C: 21 EF EB            843 |     LXI H,CURDSK    ;
-E86F: BE                  844 |     CMP M   ;
-E870: C8                  845 |     RZ      ;OK
-E871: 3A EF EB            846 |     LDA CURDSK  ;On different disk.
-                          847 |     ;(NOTE: Change  this command to MOV  A,M and save 2 bytes)
-E874: C3 BD E4            848 |     JMP SELDSK  ;  so go make change
-                          849 | ;
-                          850 | ;   START OF INTRINSIC COMMANDS
+                          830 | ;
+E866: 3A F0 EB            831 | SETCUR: LDA TRDISK  ;
+E869: B7                  832 |     ORA A   ;
+E86A: C8                  833 |     RZ      ;OK- On log-in disk, no change
+E86B: 3D                  834 |     DCR A   ;
+E86C: 21 EF EB            835 |     LXI H,CURDSK    ;
+E86F: BE                  836 |     CMP M   ;
+E870: C8                  837 |     RZ      ;OK
+E871: 3A EF EB            838 |     LDA CURDSK  ;On different disk.
+                          839 |     ;(NOTE: Change  this command to MOV  A,M and save 2 bytes)
+E874: C3 BD E4            840 |     JMP SELDSK  ;  so go make change
+                          841 | ;
+                          842 | ;   START OF INTRINSIC COMMANDS
+                          843 | ;
+                          844 | ;   *******************************
+                          845 | ;   DIR SEARCHES FILE DIRECTORY FOR
+                          846 | ;   FILES BY FILE NAME OR FILE TYPE
+                          847 | ;        ? MATCHES ANY LETTER
+                          848 | ;   * MATCHES THE WHOLE FILENAME OR
+                          849 | ;             FILETYPE
+                          850 | ;   *******************************
                           851 | ;
-                          852 | ;   *******************************
-                          853 | ;   DIR SEARCHES FILE DIRECTORY FOR
-                          854 | ;   FILES BY FILE NAME OR FILE TYPE
-                          855 | ;        ? MATCHES ANY LETTER
-                          856 | ;   * MATCHES THE WHOLE FILENAME OR
-                          857 | ;             FILETYPE
-                          858 | ;   *******************************
-                          859 | ;
-                          860 | ;   NOTE ON SYSTEM FILES:
-                          861 | ;   'System' type files are rendered invisible to the
-                          862 | ;   DIR command because the MSB of the second byte of
-                          863 | ;   the file ext is set. A minor change in the following
-                          864 | ;   code could make these files listable in the Directory
-                          865 | ;
-E877: CD 5E E6            866 | DIR:    CALL    TRFCB   ; TRANSFER THE COMMAND LINE INTO 005CH.
-E87A: CD 54 E8            867 |     CALL    SETTRD  ; SET TO TRANSIENT DISK
-E87D: 21 CE EB            868 |     LXI H,FCB+1 ; POINT TO START OF FILE NAME
-E880: 7E                  869 |     MOV A,M ; CHECK FOR A BLANK
-E881: FE 20               870 |     CPI 20H ;' '
-E883: C2 8F E8            871 |     JNZ DIR1    ; NOT BLANK, GO FIND WHAT IS WANTED.
-                          872 | ;
-E886: 06 0B               873 |     MVI B,11    ; BLANK ::= DISPLAY ENTIRE DIRECTORY
-E888: 36 3F               874 | DIR0:   MVI M,3FH   ; FILL ENTIRE FILENAME/TYPE ARE WITH WILDCARD [?]'?'
-E88A: 23                  875 |     INX H   ;
-E88B: 05                  876 |     DCR B   ;
-E88C: C2 88 E8            877 |     JNZ DIR0    ;
-                          878 | ;
-E88F: 1E 00               879 | DIR1:   MVI E,00H   ; SEARCH FOR FILE.
-E891: D5                  880 |     PUSH    D   ;
-E892: CD E9 E4            881 |     CALL    SRCHF1  ;
-E895: CC EA E7            882 |     CZ  NFERR   ; <NOT FOUND> ERROR
-E898: CA 1B E9            883 | DIR2:   JZ  DIR10   ;
-E89B: 3A EE EB            884 |     LDA RETVAL  ;Get directory entry number
-E89E: 0F                  885 |     RRC     ;Convert to directory block pointer
-E89F: 0F                  886 |     RRC     ;by multiplying by 32 and masking off
-E8A0: 0F                  887 |     RRC     ;the excess
-E8A1: E6 60               888 |     ANI 60H ;
-E8A3: 4F                  889 |     MOV C,A ;Stash block pointer
-E8A4: 3E 0A               890 |     MVI A,10    ;
-E8A6: CD 4B E8            891 |     CALL    DIRPTR  ;Get character @ DDMA + block pointer + 10 = Second char of ext
+                          852 | ;   NOTE ON SYSTEM FILES:
+                          853 | ;   'System' type files are rendered invisible to the
+                          854 | ;   DIR command because the MSB of the second byte of
+                          855 | ;   the file ext is set. A minor change in the following
+                          856 | ;   code could make these files listable in the Directory
+                          857 | ;
+E877: CD 5E E6            858 | DIR:    CALL    TRFCB   ; TRANSFER THE COMMAND LINE INTO 005CH.
+E87A: CD 54 E8            859 |     CALL    SETTRD  ; SET TO TRANSIENT DISK
+E87D: 21 CE EB            860 |     LXI H,FCB+1 ; POINT TO START OF FILE NAME
+E880: 7E                  861 |     MOV A,M ; CHECK FOR A BLANK
+E881: FE 20               862 |     CPI 20H ;' '
+E883: C2 8F E8            863 |     JNZ DIR1    ; NOT BLANK, GO FIND WHAT IS WANTED.
+                          864 | ;
+E886: 06 0B               865 |     MVI B,11    ; BLANK ::= DISPLAY ENTIRE DIRECTORY
+E888: 36 3F               866 | DIR0:   MVI M,3FH   ; FILL ENTIRE FILENAME/TYPE ARE WITH WILDCARD [?]'?'
+E88A: 23                  867 |     INX H   ;
+E88B: 05                  868 |     DCR B   ;
+E88C: C2 88 E8            869 |     JNZ DIR0    ;
+                          870 | ;
+E88F: 1E 00               871 | DIR1:   MVI E,00H   ; SEARCH FOR FILE.
+E891: D5                  872 |     PUSH    D   ;
+E892: CD E9 E4            873 |     CALL    SRCHF1  ;
+E895: CC EA E7            874 |     CZ  NFERR   ; <NOT FOUND> ERROR
+E898: CA 1B E9            875 | DIR2:   JZ  DIR10   ;
+E89B: 3A EE EB            876 |     LDA RETVAL  ;Get directory entry number
+E89E: 0F                  877 |     RRC     ;Convert to directory block pointer
+E89F: 0F                  878 |     RRC     ;by multiplying by 32 and masking off
+E8A0: 0F                  879 |     RRC     ;the excess
+E8A1: E6 60               880 |     ANI 60H ;
+E8A3: 4F                  881 |     MOV C,A ;Stash block pointer
+E8A4: 3E 0A               882 |     MVI A,10    ;
+E8A6: CD 4B E8            883 |     CALL    DIRPTR  ;Get character @ DDMA + block pointer + 10 = Second char of ext
+E8A9: 17                  884 |     RAL     ;Check for MSB set :: SYSTEM file
+E8AA: DA 0F E9            885 |     JC  DIR9    ;Skip- System files are not listed by DIR
 
 
 Assembly Listing                                                                                                Page: 17
 ------------------------------------------------------------------------------------------------------------------------
 
-E8A9: 17                  892 |     RAL     ;Check for MSB set :: SYSTEM file
-E8AA: DA 0F E9            893 |     JC  DIR9    ;Skip- System files are not listed by DIR
-E8AD: D1                  894 |     POP D   ;
-E8AE: 7B                  895 |     MOV A,E ;
-E8AF: 1C                  896 |     INR E   ;
-E8B0: D5                  897 |     PUSH    D   ;
-E8B1: E6 03               898 |     ANI 03H ;Check for every 4th directory item
-E8B3: F5                  899 |     PUSH    PSW ;
-E8B4: C2 CC E8            900 |     JNZ DIR3    ;Not the 4th
-E8B7: CD 98 E4            901 |     CALL    PCRLF   ; 4th, so start new line and mark
-E8BA: C5                  902 |     PUSH    B   ; with disk drive letter
-E8BB: CD D0 E5            903 |     CALL    INTDSK  ;Get disk number
-E8BE: C1                  904 |     POP B   ;
-E8BF: C6 41               905 |     ADI 'A' ;Print the disk number & colon at the
-E8C1: CD 92 E4            906 |     CALL    PCHAR   ;start of each directory print line
-E8C4: 3E 3A               907 |     MVI A,':'   ;
-E8C6: CD 92 E4            908 |     CALL    PCHAR   ;
-E8C9: C3 D4 E8            909 |     JMP DIR4    ;
-                          910 | ;
-E8CC: CD A2 E4            911 | DIR3:   CALL    SPACE   ;Print a space/colon/space between
-E8CF: 3E 3A               912 |     MVI A,':'   ;directory items
-E8D1: CD 92 E4            913 |     CALL    PCHAR   ;
-E8D4: CD A2 E4            914 | DIR4:   CALL    SPACE   ;
-E8D7: 06 01               915 |     MVI B,01H   ;
-                          916 | ;
-                          917 | ;   The code in this area is somewhat tangled
-                          918 | ;   Space could be saved by redoing some of the
-                          919 | ;   ways that pointers are set up. Currently the
-                          920 | ;   pointer to the directory entry is recomputed
-                          921 | ;   for each byte. Why not just load (HL) once
-                          922 | ;   and increment?
-                          923 | ;
-E8D9: 78                  924 | DIR5:   MOV A,B ;Print the filename.ext to the console
-E8DA: CD 4B E8            925 |     CALL    DIRPTR  ;Point to byte and reurn w/ byte in (A)
-E8DD: E6 7F               926 |     ANI 7FH ;
-E8DF: FE 20               927 |     CPI ' ' ;
-E8E1: C2 F9 E8            928 |     JNZ DIR7    ;
-E8E4: F1                  929 |     POP PSW ;
-E8E5: F5                  930 |     PUSH    PSW ;
-E8E6: FE 03               931 |     CPI 03H ;Chack for file ext end
-E8E8: C2 F7 E8            932 |     JNZ DIR6    ;
-E8EB: 3E 09               933 |     MVI A,09H   ;Check for file name end
-E8ED: CD 4B E8            934 |     CALL    DIRPTR  ;
-E8F0: E6 7F               935 |     ANI 7FH ;
-E8F2: FE 20               936 |     CPI ' ' ;Check for no file ext
-E8F4: CA 0E E9            937 |     JZ  DIR8    ;
-E8F7: 3E 20               938 | DIR6:   MVI A,' '   ;Separator between filename & ext
-E8F9: CD 92 E4            939 | DIR7:   CALL    PCHAR   ;
-E8FC: 04                  940 |     INR B   ;
-E8FD: 78                  941 |     MOV A,B ;
-E8FE: FE 0C               942 |     CPI 12  ;File ext end +1
-E900: D2 0E E9            943 |     JNC DIR8    ;
-E903: FE 09               944 |     CPI 9   ;File name end +1
-E905: C2 D9 E8            945 |     JNZ DIR5    ;
-E908: CD A2 E4            946 |     CALL    SPACE   ;
-E90B: C3 D9 E8            947 |     JMP DIR5    ;
+E8AD: D1                  886 |     POP D   ;
+E8AE: 7B                  887 |     MOV A,E ;
+E8AF: 1C                  888 |     INR E   ;
+E8B0: D5                  889 |     PUSH    D   ;
+E8B1: E6 03               890 |     ANI 03H ;Check for every 4th directory item
+E8B3: F5                  891 |     PUSH    PSW ;
+E8B4: C2 CC E8            892 |     JNZ DIR3    ;Not the 4th
+E8B7: CD 98 E4            893 |     CALL    PCRLF   ; 4th, so start new line and mark
+E8BA: C5                  894 |     PUSH    B   ; with disk drive letter
+E8BB: CD D0 E5            895 |     CALL    INTDSK  ;Get disk number
+E8BE: C1                  896 |     POP B   ;
+E8BF: C6 41               897 |     ADI 'A' ;Print the disk number & colon at the
+E8C1: CD 92 E4            898 |     CALL    PCHAR   ;start of each directory print line
+E8C4: 3E 3A               899 |     MVI A,':'   ;
+E8C6: CD 92 E4            900 |     CALL    PCHAR   ;
+E8C9: C3 D4 E8            901 |     JMP DIR4    ;
+                          902 | ;
+E8CC: CD A2 E4            903 | DIR3:   CALL    SPACE   ;Print a space/colon/space between
+E8CF: 3E 3A               904 |     MVI A,':'   ;directory items
+E8D1: CD 92 E4            905 |     CALL    PCHAR   ;
+E8D4: CD A2 E4            906 | DIR4:   CALL    SPACE   ;
+E8D7: 06 01               907 |     MVI B,01H   ;
+                          908 | ;
+                          909 | ;   The code in this area is somewhat tangled
+                          910 | ;   Space could be saved by redoing some of the
+                          911 | ;   ways that pointers are set up. Currently the
+                          912 | ;   pointer to the directory entry is recomputed
+                          913 | ;   for each byte. Why not just load (HL) once
+                          914 | ;   and increment?
+                          915 | ;
+E8D9: 78                  916 | DIR5:   MOV A,B ;Print the filename.ext to the console
+E8DA: CD 4B E8            917 |     CALL    DIRPTR  ;Point to byte and reurn w/ byte in (A)
+E8DD: E6 7F               918 |     ANI 7FH ;
+E8DF: FE 20               919 |     CPI ' ' ;
+E8E1: C2 F9 E8            920 |     JNZ DIR7    ;
+E8E4: F1                  921 |     POP PSW ;
+E8E5: F5                  922 |     PUSH    PSW ;
+E8E6: FE 03               923 |     CPI 03H ;Chack for file ext end
+E8E8: C2 F7 E8            924 |     JNZ DIR6    ;
+E8EB: 3E 09               925 |     MVI A,09H   ;Check for file name end
+E8ED: CD 4B E8            926 |     CALL    DIRPTR  ;
+E8F0: E6 7F               927 |     ANI 7FH ;
+E8F2: FE 20               928 |     CPI ' ' ;Check for no file ext
+E8F4: CA 0E E9            929 |     JZ  DIR8    ;
+E8F7: 3E 20               930 | DIR6:   MVI A,' '   ;Separator between filename & ext
+E8F9: CD 92 E4            931 | DIR7:   CALL    PCHAR   ;
+E8FC: 04                  932 |     INR B   ;
+E8FD: 78                  933 |     MOV A,B ;
+E8FE: FE 0C               934 |     CPI 12  ;File ext end +1
+E900: D2 0E E9            935 |     JNC DIR8    ;
+E903: FE 09               936 |     CPI 9   ;File name end +1
+E905: C2 D9 E8            937 |     JNZ DIR5    ;
+E908: CD A2 E4            938 |     CALL    SPACE   ;
+E90B: C3 D9 E8            939 |     JMP DIR5    ;
+                          940 | ;
+E90E: F1                  941 | DIR8:   POP PSW ;
 
 
 Assembly Listing                                                                                                Page: 18
 ------------------------------------------------------------------------------------------------------------------------
 
-                          948 | ;
-E90E: F1                  949 | DIR8:   POP PSW ;
-E90F: CD C2 E5            950 | DIR9:   CALL    KSTAT   ;CHECK KEY BOARD, ANY KEY BREAKS
-E912: C2 1B E9            951 |     JNZ DIR10   ;Exit on break
-E915: CD E4 E4            952 |     CALL    SRCHNX  ;Look for another directory item
-E918: C3 98 E8            953 |     JMP DIR2    ;Loop back for more
-                          954 | ;
-E91B: D1                  955 | DIR10:  POP D   ;
-E91C: C3 86 EB            956 |     JMP COMEND  ;EXIT
-                          957 | ;
+E90F: CD C2 E5            942 | DIR9:   CALL    KSTAT   ;CHECK KEY BOARD, ANY KEY BREAKS
+E912: C2 1B E9            943 |     JNZ DIR10   ;Exit on break
+E915: CD E4 E4            944 |     CALL    SRCHNX  ;Look for another directory item
+E918: C3 98 E8            945 |     JMP DIR2    ;Loop back for more
+                          946 | ;
+E91B: D1                  947 | DIR10:  POP D   ;
+E91C: C3 86 EB            948 |     JMP COMEND  ;EXIT
+                          949 | ;
+                          950 | ;   ******************************************************
+                          951 | ;   ERASE FILES FROM DISK
+                          952 | ;
+                          953 | ;   '*' and '?' can be used the same as in 'DIR'
+                          954 | ;   Does not actually wipe out information from the disk,
+                          955 | ;   but merely has the first byte of the file control block
+                          956 | ;   set to 0E5H. This routine in CCP merely sets up the
+                          957 | ;   file names to be erased; the real work is done by BDOS
                           958 | ;   ******************************************************
-                          959 | ;   ERASE FILES FROM DISK
-                          960 | ;
-                          961 | ;   '*' and '?' can be used the same as in 'DIR'
-                          962 | ;   Does not actually wipe out information from the disk,
-                          963 | ;   but merely has the first byte of the file control block
-                          964 | ;   set to 0E5H. This routine in CCP merely sets up the
-                          965 | ;   file names to be erased; the real work is done by BDOS
-                          966 | ;   ******************************************************
-                          967 | ;
-E91F: CD 5E E6            968 | ERA:    CALL    TRFCB   ;Set up the file control block
-E922: FE 0B               969 |     CPI 11  ;If 11 '?' are in the FCB then you are
-E924: C2 42 E9            970 |     JNZ ERA1    ;asking to erase the whole disk. *.*
-E927: 01 52 E9            971 |     LXI B,MSG3  ;Ask for verification before proceeding
-E92A: CD A7 E4            972 |     CALL    CRMSG   ;
-E92D: CD 39 E5            973 |     CALL    CMNDIN  ;Get keyboard entry
-E930: 21 07 E4            974 |     LXI H,INBLEN    ;check for return without entry
-E933: 35                  975 |     DCR M   ;
-E934: C2 82 E7            976 |     JNZ NXTCMD  ;Abort on empty line
-E937: 23                  977 |     INX H   ;
-E938: 7E                  978 |     MOV A,M ;
-E939: FE 59               979 |     CPI 'Y' ;Yes, proceed with erasing everything
-E93B: C2 82 E7            980 |     JNZ NXTCMD  ;Chickened out
-E93E: 23                  981 |     INX H   ;
-E93F: 22 88 E4            982 |     SHLD    BPTR1   ;
-E942: CD 54 E8            983 | ERA1:   CALL    SETTRD  ;set the transient disk
-E945: 11 CD EB            984 |     LXI D,FCB   ;Point to the file control block
-E948: CD EF E4            985 |     CALL    DELETF  ;Call the routine that calls th e BDOS erase
-E94B: 3C                  986 |     INR A   ;Check the return parameter
-E94C: CC EA E7            987 |     CZ  NFERR   ;Warn if item not found
-E94F: C3 86 EB            988 |     JMP COMEND  ;EXIT
-                          989 | ;
-E952: 41 4C 4C 20 28...   990 | MSG3:   DB  'ALL (Y/N)?',0
-                          991 | ;
-                          992 | ;   ***********************************
-                          993 | ;   OUTPUT NAMED FILE TO THE CONSOLE
-                          994 | ;   File name.ext must be unconditional
-                          995 | ;   ***********************************
-                          996 | ;
-E95D: CD 5E E6            997 | TYPE:   CALL    TRFCB   ;Set up file name in FCB
-E960: C2 09 E6            998 |     JNZ WHAT    ;Badly formed filename: ambigous
-E963: CD 54 E8            999 |     CALL    SETTRD  ;Set the disk
-E966: CD D0 E4           1000 |     CALL    OPENF1  ;Open the file for reading
-E969: CA A7 E9           1001 |     JZ  TYPE4   ;Error on opening
-E96C: CD 98 E4           1002 |     CALL    PCRLF   ;
-E96F: 21 F1 EB           1003 |     LXI H,TYPCTR    ;Initiate counter
+                          959 | ;
+E91F: CD 5E E6            960 | ERA:    CALL    TRFCB   ;Set up the file control block
+E922: FE 0B               961 |     CPI 11  ;If 11 '?' are in the FCB then you are
+E924: C2 42 E9            962 |     JNZ ERA1    ;asking to erase the whole disk. *.*
+E927: 01 52 E9            963 |     LXI B,MSG3  ;Ask for verification before proceeding
+E92A: CD A7 E4            964 |     CALL    CRMSG   ;
+E92D: CD 39 E5            965 |     CALL    CMNDIN  ;Get keyboard entry
+E930: 21 07 E4            966 |     LXI H,INBLEN    ;check for return without entry
+E933: 35                  967 |     DCR M   ;
+E934: C2 82 E7            968 |     JNZ NXTCMD  ;Abort on empty line
+E937: 23                  969 |     INX H   ;
+E938: 7E                  970 |     MOV A,M ;
+E939: FE 59               971 |     CPI 'Y' ;Yes, proceed with erasing everything
+E93B: C2 82 E7            972 |     JNZ NXTCMD  ;Chickened out
+E93E: 23                  973 |     INX H   ;
+E93F: 22 88 E4            974 |     SHLD    BPTR1   ;
+E942: CD 54 E8            975 | ERA1:   CALL    SETTRD  ;set the transient disk
+E945: 11 CD EB            976 |     LXI D,FCB   ;Point to the file control block
+E948: CD EF E4            977 |     CALL    DELETF  ;Call the routine that calls th e BDOS erase
+E94B: 3C                  978 |     INR A   ;Check the return parameter
+E94C: CC EA E7            979 |     CZ  NFERR   ;Warn if item not found
+E94F: C3 86 EB            980 |     JMP COMEND  ;EXIT
+                          981 | ;
+E952: 41 4C 4C 20 28...   982 | MSG3:   DB  'ALL (Y/N)?',0
+                          983 | ;
+                          984 | ;   ***********************************
+                          985 | ;   OUTPUT NAMED FILE TO THE CONSOLE
+                          986 | ;   File name.ext must be unconditional
+                          987 | ;   ***********************************
+                          988 | ;
+E95D: CD 5E E6            989 | TYPE:   CALL    TRFCB   ;Set up file name in FCB
+E960: C2 09 E6            990 |     JNZ WHAT    ;Badly formed filename: ambigous
+E963: CD 54 E8            991 |     CALL    SETTRD  ;Set the disk
+E966: CD D0 E4            992 |     CALL    OPENF1  ;Open the file for reading
+E969: CA A7 E9            993 |     JZ  TYPE4   ;Error on opening
+E96C: CD 98 E4            994 |     CALL    PCRLF   ;
+E96F: 21 F1 EB            995 |     LXI H,TYPCTR    ;Initiate counter
+E972: 36 FF               996 |     MVI M,0FFH  ;
+E974: 21 F1 EB            997 | TYPE1:  LXI H,TYPCTR    ;
 
 
 Assembly Listing                                                                                                Page: 19
 ------------------------------------------------------------------------------------------------------------------------
 
-E972: 36 FF              1004 |     MVI M,0FFH  ;
-E974: 21 F1 EB           1005 | TYPE1:  LXI H,TYPCTR    ;
-E977: 7E                 1006 |     MOV A,M ;Get the buffer counter
-E978: FE 80              1007 |     CPI 80H ;Check for end of buffer
-E97A: DA 87 E9           1008 |     JC  TYPE2   ;Not at end, get character from buffer
-                         1009 | ;
-                         1010 | ;   At end of buffer- Read from disk
-                         1011 | ;
-E97D: E5                 1012 |     PUSH    H   ;Read a sector from disk to the buffer
-E97E: CD FE E4           1013 |     CALL    READ1   ;
-E981: E1                 1014 |     POP H   ;
-E982: C2 A0 E9           1015 |     JNZ TYPE3   ;RETURN VALUE <> 0. End of file or bad read
-E985: AF                 1016 |     XRA A   ;
-E986: 77                 1017 |     MOV M,A ;Zero (TYPCTR)
-E987: 34                 1018 | TYPE2:  INR M   ;
-E988: 21 80 00           1019 |     LXI H,DDMA  ;
-E98B: CD 59 E6           1020 |     CALL    ADDAH   ;Point to character
-E98E: 7E                 1021 |     MOV A,M ;Get the character
-E98F: FE 1A              1022 |     CPI 1AH ;Check for end of file
-E991: CA 86 EB           1023 |     JZ  COMEND  ;EXIT
-E994: CD 8C E4           1024 |     CALL    OUTPUT  ;Not EOF, output the byte to the console
-E997: CD C2 E5           1025 |     CALL    KSTAT   ;Check for keyboard break
-E99A: C2 86 EB           1026 |     JNZ COMEND  ;EXIT ON ANY KEY
-E99D: C3 74 E9           1027 |     JMP TYPE1   ;Back for the next letter
-                         1028 | ;
-                         1029 | ;   (A) = 1 :: End of file
-                         1030 | ;   (A) = 2 :: Read error
-                         1031 | ;
-E9A0: 3D                 1032 | TYPE3:  DCR A   ;
-E9A1: CA 86 EB           1033 |     JZ  COMEND  ;EXIT AT END OF FILE
-E9A4: CD D9 E7           1034 |     CALL    RDERR   ;
-E9A7: CD 66 E8           1035 | TYPE4:  CALL    SETCUR  ;This piece of code can be used to
-E9AA: C3 09 E6           1036 |     JMP WHAT    ;replace REN4 and TRANS8
+E977: 7E                  998 |     MOV A,M ;Get the buffer counter
+E978: FE 80               999 |     CPI 80H ;Check for end of buffer
+E97A: DA 87 E9           1000 |     JC  TYPE2   ;Not at end, get character from buffer
+                         1001 | ;
+                         1002 | ;   At end of buffer- Read from disk
+                         1003 | ;
+E97D: E5                 1004 |     PUSH    H   ;Read a sector from disk to the buffer
+E97E: CD FE E4           1005 |     CALL    READ1   ;
+E981: E1                 1006 |     POP H   ;
+E982: C2 A0 E9           1007 |     JNZ TYPE3   ;RETURN VALUE <> 0. End of file or bad read
+E985: AF                 1008 |     XRA A   ;
+E986: 77                 1009 |     MOV M,A ;Zero (TYPCTR)
+E987: 34                 1010 | TYPE2:  INR M   ;
+E988: 21 80 00           1011 |     LXI H,DDMA  ;
+E98B: CD 59 E6           1012 |     CALL    ADDAH   ;Point to character
+E98E: 7E                 1013 |     MOV A,M ;Get the character
+E98F: FE 1A              1014 |     CPI 1AH ;Check for end of file
+E991: CA 86 EB           1015 |     JZ  COMEND  ;EXIT
+E994: CD 8C E4           1016 |     CALL    OUTPUT  ;Not EOF, output the byte to the console
+E997: CD C2 E5           1017 |     CALL    KSTAT   ;Check for keyboard break
+E99A: C2 86 EB           1018 |     JNZ COMEND  ;EXIT ON ANY KEY
+E99D: C3 74 E9           1019 |     JMP TYPE1   ;Back for the next letter
+                         1020 | ;
+                         1021 | ;   (A) = 1 :: End of file
+                         1022 | ;   (A) = 2 :: Read error
+                         1023 | ;
+E9A0: 3D                 1024 | TYPE3:  DCR A   ;
+E9A1: CA 86 EB           1025 |     JZ  COMEND  ;EXIT AT END OF FILE
+E9A4: CD D9 E7           1026 |     CALL    RDERR   ;
+E9A7: CD 66 E8           1027 | TYPE4:  CALL    SETCUR  ;This piece of code can be used to
+E9AA: C3 09 E6           1028 |     JMP WHAT    ;replace REN4 and TRANS8
+                         1029 | ;
+                         1030 | ;   **********************************
+                         1031 | ;   SAVE CREATES DISK FILE FROM MEMORY
+                         1032 | ;   STARTING AT 0100H.  256 BYTE PAGES
+                         1033 | ;     FILENAME MUST BE UNCONDITIONAL
+                         1034 | ;   IF A FILE OF THE SAME NAME & TYPE
+                         1035 | ;     ALREADY EXISTS, IT IS ERASED.
+                         1036 | ;   **********************************
                          1037 | ;
-                         1038 | ;   **********************************
-                         1039 | ;   SAVE CREATES DISK FILE FROM MEMORY
-                         1040 | ;   STARTING AT 0100H.  256 BYTE PAGES
-                         1041 | ;     FILENAME MUST BE UNCONDITIONAL
-                         1042 | ;   IF A FILE OF THE SAME NAME & TYPE
-                         1043 | ;     ALREADY EXISTS, IT IS ERASED.
-                         1044 | ;   **********************************
-                         1045 | ;
-E9AD: CD F8 E7           1046 | SAVE:   CALL    DECIML  ;GET THE NUMBER OF PAGES TO BE SAVED
-E9B0: F5                 1047 |     PUSH    PSW ;
-E9B1: CD 5E E6           1048 |     CALL    TRFCB   ;SET UP THE FILE NAME
-E9B4: C2 09 E6           1049 |     JNZ WHAT    ;Cannot be ambigous file
-E9B7: CD 54 E8           1050 |     CALL    SETTRD  ;SET UP DISK
-E9BA: 11 CD EB           1051 |     LXI D,FCB   ;
-E9BD: D5                 1052 |     PUSH    D   ;
-E9BE: CD EF E4           1053 |     CALL    DELETF  ;DELETE OLD FILE OF SAME NAME
-E9C1: D1                 1054 |     POP D   ;
-E9C2: CD 09 E5           1055 |     CALL    CREATE  ;CREATE A NEW FILE IN DIRECTORY
-E9C5: CA FB E9           1056 |     JZ  SAVE3   ;
-E9C8: AF                 1057 |     XRA A   ;
-E9C9: 32 ED EB           1058 |     STA FCB+32  ;ZERO OUT SECTOR COUNTER
-E9CC: F1                 1059 |     POP PSW ;
+E9AD: CD F8 E7           1038 | SAVE:   CALL    DECIML  ;GET THE NUMBER OF PAGES TO BE SAVED
+E9B0: F5                 1039 |     PUSH    PSW ;
+E9B1: CD 5E E6           1040 |     CALL    TRFCB   ;SET UP THE FILE NAME
+E9B4: C2 09 E6           1041 |     JNZ WHAT    ;Cannot be ambigous file
+E9B7: CD 54 E8           1042 |     CALL    SETTRD  ;SET UP DISK
+E9BA: 11 CD EB           1043 |     LXI D,FCB   ;
+E9BD: D5                 1044 |     PUSH    D   ;
+E9BE: CD EF E4           1045 |     CALL    DELETF  ;DELETE OLD FILE OF SAME NAME
+E9C1: D1                 1046 |     POP D   ;
+E9C2: CD 09 E5           1047 |     CALL    CREATE  ;CREATE A NEW FILE IN DIRECTORY
+E9C5: CA FB E9           1048 |     JZ  SAVE3   ;
+E9C8: AF                 1049 |     XRA A   ;
+E9C9: 32 ED EB           1050 |     STA FCB+32  ;ZERO OUT SECTOR COUNTER
+E9CC: F1                 1051 |     POP PSW ;
+E9CD: 6F                 1052 |     MOV L,A ;
+E9CE: 26 00              1053 |     MVI H,00H   ;CHECK PAGE COUNTER
 
 
 Assembly Listing                                                                                                Page: 20
 ------------------------------------------------------------------------------------------------------------------------
 
-E9CD: 6F                 1060 |     MOV L,A ;
-E9CE: 26 00              1061 |     MVI H,00H   ;CHECK PAGE COUNTER
-E9D0: 29                 1062 |     DAD H   ;
-E9D1: 11 00 01           1063 |     LXI D,TPA   ;
-E9D4: 7C                 1064 | SAVE1:  MOV A,H ;CHECK PAGE COUNTER
-E9D5: B5                 1065 |     ORA L   ;
-E9D6: CA F1 E9           1066 |     JZ  SAVE2   ;EXIT, LAST PAGE HAS BEEN WRITTEN
-E9D9: 2B                 1067 |     DCX H   ;
-E9DA: E5                 1068 |     PUSH    H   ;SAVE COUNTER
-E9DB: 21 80 00           1069 |     LXI H,SECLEN    ;ADVANCE DMA LOCATION
-E9DE: 19                 1070 |     DAD D   ;BY ONE SECTOR
-E9DF: E5                 1071 |     PUSH    H   ;
-E9E0: CD D8 E5           1072 |     CALL    STDMA1  ;SET THE DMA ADDRESS
-E9E3: 11 CD EB           1073 |     LXI D,FCB   ;
-E9E6: CD 04 E5           1074 |     CALL    WRITEF  ;WRITE THE SECTOR TO DISK
-E9E9: D1                 1075 |     POP D   ;
-E9EA: E1                 1076 |     POP H   ;
-E9EB: C2 FB E9           1077 |     JNZ SAVE3   ;ERROR CONDITION
-E9EE: C3 D4 E9           1078 |     JMP SAVE1   ;LOOP BACK TO WRITE ANOTHER SECTOR
-                         1079 | ;
-E9F1: 11 CD EB           1080 | SAVE2:  LXI D,FCB   ;CLOSE THE FILE TO MAKE IT OFFICIAL
-E9F4: CD DA E4           1081 |     CALL    CLOSEF  ;
-E9F7: 3C                 1082 |     INR A   ;CHECK FOR GOOD CLOSING
-E9F8: C2 01 EA           1083 |     JNZ SAVE4   ;OK
-E9FB: 01 07 EA           1084 | SAVE3:  LXI B,MSG4  ;<NO SPACE> ERROR
-E9FE: CD A7 E4           1085 |     CALL    CRMSG   ;
-EA01: CD D5 E5           1086 | SAVE4:  CALL    SETDMA  ;
-EA04: C3 86 EB           1087 |     JMP COMEND  ;EXIT
+E9D0: 29                 1054 |     DAD H   ;
+E9D1: 11 00 01           1055 |     LXI D,TPA   ;
+E9D4: 7C                 1056 | SAVE1:  MOV A,H ;CHECK PAGE COUNTER
+E9D5: B5                 1057 |     ORA L   ;
+E9D6: CA F1 E9           1058 |     JZ  SAVE2   ;EXIT, LAST PAGE HAS BEEN WRITTEN
+E9D9: 2B                 1059 |     DCX H   ;
+E9DA: E5                 1060 |     PUSH    H   ;SAVE COUNTER
+E9DB: 21 80 00           1061 |     LXI H,SECLEN    ;ADVANCE DMA LOCATION
+E9DE: 19                 1062 |     DAD D   ;BY ONE SECTOR
+E9DF: E5                 1063 |     PUSH    H   ;
+E9E0: CD D8 E5           1064 |     CALL    STDMA1  ;SET THE DMA ADDRESS
+E9E3: 11 CD EB           1065 |     LXI D,FCB   ;
+E9E6: CD 04 E5           1066 |     CALL    WRITEF  ;WRITE THE SECTOR TO DISK
+E9E9: D1                 1067 |     POP D   ;
+E9EA: E1                 1068 |     POP H   ;
+E9EB: C2 FB E9           1069 |     JNZ SAVE3   ;ERROR CONDITION
+E9EE: C3 D4 E9           1070 |     JMP SAVE1   ;LOOP BACK TO WRITE ANOTHER SECTOR
+                         1071 | ;
+E9F1: 11 CD EB           1072 | SAVE2:  LXI D,FCB   ;CLOSE THE FILE TO MAKE IT OFFICIAL
+E9F4: CD DA E4           1073 |     CALL    CLOSEF  ;
+E9F7: 3C                 1074 |     INR A   ;CHECK FOR GOOD CLOSING
+E9F8: C2 01 EA           1075 |     JNZ SAVE4   ;OK
+E9FB: 01 07 EA           1076 | SAVE3:  LXI B,MSG4  ;<NO SPACE> ERROR
+E9FE: CD A7 E4           1077 |     CALL    CRMSG   ;
+EA01: CD D5 E5           1078 | SAVE4:  CALL    SETDMA  ;
+EA04: C3 86 EB           1079 |     JMP COMEND  ;EXIT
+                         1080 | ;
+EA07: 4E 4F 20 53 50...  1081 | MSG4:   DB  'NO SPACE',0
+                         1082 | ;
+                         1083 | ;   *******************************************
+                         1084 | ;   RENAME A FILE             THE FORMAT IS
+                         1085 | ;   <NEW FILENAME>.<TYPE>=<OLD FILENAME>.<TYPE>
+                         1086 | ;       A '_' may be substituted for the '='
+                         1087 | ;   *******************************************
                          1088 | ;
-EA07: 4E 4F 20 53 50...  1089 | MSG4:   DB  'NO SPACE',0
-                         1090 | ;
-                         1091 | ;   *******************************************
-                         1092 | ;   RENAME A FILE             THE FORMAT IS
-                         1093 | ;   <NEW FILENAME>.<TYPE>=<OLD FILENAME>.<TYPE>
-                         1094 | ;       A '_' may be substituted for the '='
-                         1095 | ;   *******************************************
-                         1096 | ;
-EA10: CD 5E E6           1097 | REN:    CALL    TRFCB   ;Put new filename into FCB
-EA13: C2 09 E6           1098 |     JNZ WHAT    ;Cannot be ambigous filename
-EA16: 3A F0 EB           1099 |     LDA TRDISK  ;Get the disk number
-EA19: F5                 1100 |     PUSH    PSW ;
-EA1A: CD 54 E8           1101 |     CALL    SETTRD  ;Log into the correct disk
-EA1D: CD E9 E4           1102 |     CALL    SRCHF1  ;Check to see if such a name exists
-EA20: C2 79 EA           1103 |     JNZ FEERR   ;ERROR- File name already used
-EA23: 21 CD EB           1104 |     LXI H,FCB   ;Move new filename to upper half of FCB
-EA26: 11 DD EB           1105 |     LXI D,FCB+16    ;
-EA29: 06 10              1106 |     MVI B,10H   ;
-EA2B: CD 42 E8           1107 |     CALL    BLKMOV  ;
-EA2E: 2A 88 E4           1108 |     LHLD    BPTR1   ;Back to input buffer
-EA31: EB                 1109 |     XCHG        ;
-EA32: CD 4F E6           1110 |     CALL    STEP    ;
-EA35: FE 3D              1111 |     CPI '=' ;Check for proper separator
-EA37: CA 3F EA           1112 |     JZ  REN1    ;OK
-EA3A: FE 5F              1113 |     CPI '_' ;
-EA3C: C2 73 EA           1114 |     JNZ REN4    ;NO GOOD
-EA3F: EB                 1115 | REN1:   XCHG        ;
+EA10: CD 5E E6           1089 | REN:    CALL    TRFCB   ;Put new filename into FCB
+EA13: C2 09 E6           1090 |     JNZ WHAT    ;Cannot be ambigous filename
+EA16: 3A F0 EB           1091 |     LDA TRDISK  ;Get the disk number
+EA19: F5                 1092 |     PUSH    PSW ;
+EA1A: CD 54 E8           1093 |     CALL    SETTRD  ;Log into the correct disk
+EA1D: CD E9 E4           1094 |     CALL    SRCHF1  ;Check to see if such a name exists
+EA20: C2 79 EA           1095 |     JNZ FEERR   ;ERROR- File name already used
+EA23: 21 CD EB           1096 |     LXI H,FCB   ;Move new filename to upper half of FCB
+EA26: 11 DD EB           1097 |     LXI D,FCB+16    ;
+EA29: 06 10              1098 |     MVI B,10H   ;
+EA2B: CD 42 E8           1099 |     CALL    BLKMOV  ;
+EA2E: 2A 88 E4           1100 |     LHLD    BPTR1   ;Back to input buffer
+EA31: EB                 1101 |     XCHG        ;
+EA32: CD 4F E6           1102 |     CALL    STEP    ;
+EA35: FE 3D              1103 |     CPI '=' ;Check for proper separator
+EA37: CA 3F EA           1104 |     JZ  REN1    ;OK
+EA3A: FE 5F              1105 |     CPI '_' ;
+EA3C: C2 73 EA           1106 |     JNZ REN4    ;NO GOOD
+EA3F: EB                 1107 | REN1:   XCHG        ;
+EA40: 23                 1108 |     INX H   ;Step over separartor
+EA41: 22 88 E4           1109 |     SHLD    BPTR1   ;Store pointer for TRFCB to use
 
 
 Assembly Listing                                                                                                Page: 21
 ------------------------------------------------------------------------------------------------------------------------
 
-EA40: 23                 1116 |     INX H   ;Step over separartor
-EA41: 22 88 E4           1117 |     SHLD    BPTR1   ;Store pointer for TRFCB to use
-EA44: CD 5E E6           1118 |     CALL    TRFCB   ;Move name.type of Old file into place
-EA47: C2 73 EA           1119 |     JNZ REN4    ;Error- cannot be ambigous
-EA4A: F1                 1120 |     POP PSW ;Get back disk number
-EA4B: 47                 1121 |     MOV B,A ;
-EA4C: 21 F0 EB           1122 |     LXI H,TRDISK    ;
-EA4F: 7E                 1123 |     MOV A,M ;
-EA50: B7                 1124 |     ORA A   ;
-EA51: CA 59 EA           1125 |     JZ  REN2    ;OK- current disk=transient disk
-EA54: B8                 1126 |     CMP B   ;Check disk number
-EA55: 70                 1127 |     MOV M,B ;Save back into TRDISK
-EA56: C2 73 EA           1128 |     JNZ REN4    ;Error
-EA59: 70                 1129 | REN2:   MOV M,B ;
-EA5A: AF                 1130 |     XRA A   ;
-EA5B: 32 CD EB           1131 |     STA FCB ;Zero in FCB :: Logged in disk
-EA5E: CD E9 E4           1132 |     CALL    SRCHF1  ;Does old file exist?
-EA61: CA 6D EA           1133 |     JZ  REN3    ;NO- <NO FILE> Error
-EA64: 11 CD EB           1134 |     LXI D,FCB   ;OK- Rename it
-EA67: CD 0E E5           1135 |     CALL    RENAME  ;   via call to BDOS
-EA6A: C3 86 EB           1136 |     JMP COMEND  ;EXIT
-                         1137 | ;
-EA6D: CD EA E7           1138 | REN3:   CALL    NFERR   ;<NO FILE> Error
-EA70: C3 86 EB           1139 |     JMP COMEND  ;EXIT
+EA44: CD 5E E6           1110 |     CALL    TRFCB   ;Move name.type of Old file into place
+EA47: C2 73 EA           1111 |     JNZ REN4    ;Error- cannot be ambigous
+EA4A: F1                 1112 |     POP PSW ;Get back disk number
+EA4B: 47                 1113 |     MOV B,A ;
+EA4C: 21 F0 EB           1114 |     LXI H,TRDISK    ;
+EA4F: 7E                 1115 |     MOV A,M ;
+EA50: B7                 1116 |     ORA A   ;
+EA51: CA 59 EA           1117 |     JZ  REN2    ;OK- current disk=transient disk
+EA54: B8                 1118 |     CMP B   ;Check disk number
+EA55: 70                 1119 |     MOV M,B ;Save back into TRDISK
+EA56: C2 73 EA           1120 |     JNZ REN4    ;Error
+EA59: 70                 1121 | REN2:   MOV M,B ;
+EA5A: AF                 1122 |     XRA A   ;
+EA5B: 32 CD EB           1123 |     STA FCB ;Zero in FCB :: Logged in disk
+EA5E: CD E9 E4           1124 |     CALL    SRCHF1  ;Does old file exist?
+EA61: CA 6D EA           1125 |     JZ  REN3    ;NO- <NO FILE> Error
+EA64: 11 CD EB           1126 |     LXI D,FCB   ;OK- Rename it
+EA67: CD 0E E5           1127 |     CALL    RENAME  ;   via call to BDOS
+EA6A: C3 86 EB           1128 |     JMP COMEND  ;EXIT
+                         1129 | ;
+EA6D: CD EA E7           1130 | REN3:   CALL    NFERR   ;<NO FILE> Error
+EA70: C3 86 EB           1131 |     JMP COMEND  ;EXIT
+                         1132 | ;
+                         1133 | ;   This piece of code can be deleted, and jumps
+                         1134 | ;   to it rerouted to TYPE4
+                         1135 | ;
+EA73: CD 66 E8           1136 | REN4:   CALL    SETCUR  ;Return to current disk
+EA76: C3 09 E6           1137 |     JMP WHAT    ;??????????
+                         1138 | ;
+                         1139 | ;   FILE EXISTS ERROR
                          1140 | ;
-                         1141 | ;   This piece of code can be deleted, and jumps
-                         1142 | ;   to it rerouted to TYPE4
-                         1143 | ;
-EA73: CD 66 E8           1144 | REN4:   CALL    SETCUR  ;Return to current disk
-EA76: C3 09 E6           1145 |     JMP WHAT    ;??????????
-                         1146 | ;
-                         1147 | ;   FILE EXISTS ERROR
-                         1148 | ;
-EA79: 01 82 EA           1149 | FEERR:  LXI B,MSG6  ;Load error message pointer
-EA7C: CD A7 E4           1150 |     CALL    CRMSG   ;Display maessage
-EA7F: C3 86 EB           1151 |     JMP COMEND  ;EXIT
-                         1152 | ;
-                         1153 | ;   NOTE:
-                         1154 | ;   If these error messages ended with '$' instead of
-                         1155 | ;   a null, then  the BDOS string output command could
-                         1156 | ;   be used instead of the PMSG subroutine.
-                         1157 | ;
-EA82: 46 49 4C 45 20...  1158 | MSG6:   DB  'FILE EXISTS',0
-                         1159 | ;
-                         1160 | ;   ************************************
-                         1161 | ;   SET THE USER NUMBER FROM THE CONSOLE
-                         1162 | ;     Nobody uses this in one-user CP/M
-                         1163 | ;   ************************************
-                         1164 | ;
-EA8E: CD F8 E7           1165 | USER:   CALL    DECIML  ;Convert number to binary
-EA91: FE 10              1166 |     CPI 10H ;Must be 0 to 15
-EA93: D2 09 E6           1167 |     JNC WHAT    ;Out of range
-EA96: 5F                 1168 |     MOV E,A ;Set in place for BDOS call
-EA97: 3A CE EB           1169 |     LDA FCB+1   ;Check for blank 'filename'
-EA9A: FE 20              1170 |     CPI ' ' ;
-EA9C: CA 09 E6           1171 |     JZ  WHAT    ;Error
+EA79: 01 82 EA           1141 | FEERR:  LXI B,MSG6  ;Load error message pointer
+EA7C: CD A7 E4           1142 |     CALL    CRMSG   ;Display maessage
+EA7F: C3 86 EB           1143 |     JMP COMEND  ;EXIT
+                         1144 | ;
+                         1145 | ;   NOTE:
+                         1146 | ;   If these error messages ended with '$' instead of
+                         1147 | ;   a null, then  the BDOS string output command could
+                         1148 | ;   be used instead of the PMSG subroutine.
+                         1149 | ;
+EA82: 46 49 4C 45 20...  1150 | MSG6:   DB  'FILE EXISTS',0
+                         1151 | ;
+                         1152 | ;   ************************************
+                         1153 | ;   SET THE USER NUMBER FROM THE CONSOLE
+                         1154 | ;     Nobody uses this in one-user CP/M
+                         1155 | ;   ************************************
+                         1156 | ;
+EA8E: CD F8 E7           1157 | USER:   CALL    DECIML  ;Convert number to binary
+EA91: FE 10              1158 |     CPI 10H ;Must be 0 to 15
+EA93: D2 09 E6           1159 |     JNC WHAT    ;Out of range
+EA96: 5F                 1160 |     MOV E,A ;Set in place for BDOS call
+EA97: 3A CE EB           1161 |     LDA FCB+1   ;Check for blank 'filename'
+EA9A: FE 20              1162 |     CPI ' ' ;
+EA9C: CA 09 E6           1163 |     JZ  WHAT    ;Error
+EA9F: CD 15 E5           1164 |     CALL    SETUSR  ;Set via BDOS
+EAA2: C3 89 EB           1165 |     JMP CMEND1  ;EXIT
 
 
 Assembly Listing                                                                                                Page: 22
 ------------------------------------------------------------------------------------------------------------------------
 
-EA9F: CD 15 E5           1172 |     CALL    SETUSR  ;Set via BDOS
-EAA2: C3 89 EB           1173 |     JMP CMEND1  ;EXIT
-                         1174 | ;
-                         1175 | ;   *************************************************
-                         1176 | ;   TRANS LOADS A PROGRAM INTO THE TPA IF IT IS NOT A
-                         1177 | ;   COMMAND NAME,  AND A PROPER  <FILENAME>.COM  FILE
-                         1178 | ;         EXISTS ON THE TRANSIENT DISK.
-                         1179 | ;   *************************************************
-                         1180 | ;
-EAA5: CD F5 E5           1181 | TRANS:  CALL    CMPSER  ; CHECK FOR A KOSHER SERIAL NUMBER. BOMB OUT IF NO GOOD.
-EAA8: 3A CE EB           1182 |     LDA FCB+1   ; SPACE ::= NO FILE NAME PRESENT.
-EAAB: FE 20              1183 |     CPI ' ' ;
-EAAD: C2 C4 EA           1184 |     JNZ TRANS1  ;OK- Filename present
-EAB0: 3A F0 EB           1185 |     LDA TRDISK  ;NG- Just clean things up and leave
-EAB3: B7                 1186 |     ORA A   ;
-EAB4: CA 89 EB           1187 |     JZ  CMEND1  ;EXIT IF ON THE LOGIN DISK
-EAB7: 3D                 1188 |     DCR A   ;
-EAB8: 32 EF EB           1189 |     STA CURDSK  ;OTHERWISE LOG BACK TO THE LOGIN DISK
-EABB: CD 29 E5           1190 |     CALL    LOGCUR  ;
-EABE: CD BD E4           1191 |     CALL    SELDSK  ;
-EAC1: C3 89 EB           1192 |     JMP CMEND1  ;AND GO BACK FOR ANOTHER COMMAND
-                         1193 | ;
-EAC4: 11 D6 EB           1194 | TRANS1: LXI D,FCB+9 ; CHECK THE FILE TYPE.
-EAC7: 1A                 1195 |     LDAX    D   ;
-EAC8: FE 20              1196 |     CPI ' ' ;
-EACA: C2 09 E6           1197 |     JNZ WHAT    ; YOU'RE NOT SUPPOSED TO HAVE A FILE TYPE W/ A TRANSIENT.
-EACD: D5                 1198 |     PUSH    D   ;
-EACE: CD 54 E8           1199 |     CALL    SETTRD  ; SET TO TRANSIENT DRIVE.
-EAD1: D1                 1200 |     POP D   ;
-EAD2: 21 83 EB           1201 |     LXI H,COM   ; MOVE FILE TYPE "COM" INTO FCB.
-EAD5: CD 40 E8           1202 |     CALL    MOVE3   ;
-EAD8: CD D0 E4           1203 |     CALL    OPENF1  ; OPEN FILE FOR READING.
-EADB: CA 6B EB           1204 |     JZ  TRANS8  ; ERROR CONDITION, FILE NOT FOUND.
-EADE: 21 00 01           1205 |     LXI H,TPA   ; STARTING POINT FOR PROGRAM LOADING.
-                         1206 |     ;
-EAE1: E5                 1207 | TRANS2: PUSH    H   ; MOVE PROGRAM INTO TPA SECTOR BY SECTOR.
-EAE2: EB                 1208 |     XCHG        ;
-EAE3: CD D8 E5           1209 |     CALL    STDMA1  ; POINT TO LOADING LOCATION.
-EAE6: 11 CD EB           1210 |     LXI D,FCB   ;
-EAE9: CD F9 E4           1211 |     CALL    READF   ; READ 1 SECTOR INTO MEMORY.
-EAEC: C2 01 EB           1212 |     JNZ TRANS3  ; ZFLAG RESET ::= GOOD READ, GO AROUND FOR MORE.
-EAEF: E1                 1213 |     POP H   ;
-EAF0: 11 80 00           1214 |     LXI D,SECLEN    ;
-EAF3: 19                 1215 |     DAD D   ; ADVANCE POINTER FOR NEXT SECTOR.
-EAF4: 11 00 E4           1216 |     LXI D,ORIGIN    ; CHECK FOR PROGRAM OVERLAPPING CCP AREA.
-EAF7: 7D                 1217 |     MOV A,L ;
-EAF8: 93                 1218 |     SUB E   ;
-EAF9: 7C                 1219 |     MOV A,H ;
-EAFA: 9A                 1220 |     SBB D   ;
-EAFB: D2 71 EB           1221 |     JNC LDERR   ; ERROR CONDITION, PROGRAM TOO BIG FOR MEMORY.
-EAFE: C3 E1 EA           1222 |     JMP TRANS2  ; BACK FOR NEXT SECTOR.
-                         1223 | ;
-EB01: E1                 1224 | TRANS3: POP H   ; CLEAR STACK.
-EB02: 3D                 1225 |     DCR A   ; 1 ::= END OF FILE (GOOD) OR 2 ::= READ ERROR (BAD).
-EB03: C2 71 EB           1226 |     JNZ LDERR   ; READ ERROR.
-EB06: CD 66 E8           1227 |     CALL    SETCUR  ; SET BACK TO CURRENT DRIVE.
+                         1166 | ;
+                         1167 | ;   *************************************************
+                         1168 | ;   TRANS LOADS A PROGRAM INTO THE TPA IF IT IS NOT A
+                         1169 | ;   COMMAND NAME,  AND A PROPER  <FILENAME>.COM  FILE
+                         1170 | ;         EXISTS ON THE TRANSIENT DISK.
+                         1171 | ;   *************************************************
+                         1172 | ;
+EAA5: CD F5 E5           1173 | TRANS:  CALL    CMPSER  ; CHECK FOR A KOSHER SERIAL NUMBER. BOMB OUT IF NO GOOD.
+EAA8: 3A CE EB           1174 |     LDA FCB+1   ; SPACE ::= NO FILE NAME PRESENT.
+EAAB: FE 20              1175 |     CPI ' ' ;
+EAAD: C2 C4 EA           1176 |     JNZ TRANS1  ;OK- Filename present
+EAB0: 3A F0 EB           1177 |     LDA TRDISK  ;NG- Just clean things up and leave
+EAB3: B7                 1178 |     ORA A   ;
+EAB4: CA 89 EB           1179 |     JZ  CMEND1  ;EXIT IF ON THE LOGIN DISK
+EAB7: 3D                 1180 |     DCR A   ;
+EAB8: 32 EF EB           1181 |     STA CURDSK  ;OTHERWISE LOG BACK TO THE LOGIN DISK
+EABB: CD 29 E5           1182 |     CALL    LOGCUR  ;
+EABE: CD BD E4           1183 |     CALL    SELDSK  ;
+EAC1: C3 89 EB           1184 |     JMP CMEND1  ;AND GO BACK FOR ANOTHER COMMAND
+                         1185 | ;
+EAC4: 11 D6 EB           1186 | TRANS1: LXI D,FCB+9 ; CHECK THE FILE TYPE.
+EAC7: 1A                 1187 |     LDAX    D   ;
+EAC8: FE 20              1188 |     CPI ' ' ;
+EACA: C2 09 E6           1189 |     JNZ WHAT    ; YOU'RE NOT SUPPOSED TO HAVE A FILE TYPE W/ A TRANSIENT.
+EACD: D5                 1190 |     PUSH    D   ;
+EACE: CD 54 E8           1191 |     CALL    SETTRD  ; SET TO TRANSIENT DRIVE.
+EAD1: D1                 1192 |     POP D   ;
+EAD2: 21 83 EB           1193 |     LXI H,COM   ; MOVE FILE TYPE "COM" INTO FCB.
+EAD5: CD 40 E8           1194 |     CALL    MOVE3   ;
+EAD8: CD D0 E4           1195 |     CALL    OPENF1  ; OPEN FILE FOR READING.
+EADB: CA 6B EB           1196 |     JZ  TRANS8  ; ERROR CONDITION, FILE NOT FOUND.
+EADE: 21 00 01           1197 |     LXI H,TPA   ; STARTING POINT FOR PROGRAM LOADING.
+                         1198 |     ;
+EAE1: E5                 1199 | TRANS2: PUSH    H   ; MOVE PROGRAM INTO TPA SECTOR BY SECTOR.
+EAE2: EB                 1200 |     XCHG        ;
+EAE3: CD D8 E5           1201 |     CALL    STDMA1  ; POINT TO LOADING LOCATION.
+EAE6: 11 CD EB           1202 |     LXI D,FCB   ;
+EAE9: CD F9 E4           1203 |     CALL    READF   ; READ 1 SECTOR INTO MEMORY.
+EAEC: C2 01 EB           1204 |     JNZ TRANS3  ; ZFLAG RESET ::= GOOD READ, GO AROUND FOR MORE.
+EAEF: E1                 1205 |     POP H   ;
+EAF0: 11 80 00           1206 |     LXI D,SECLEN    ;
+EAF3: 19                 1207 |     DAD D   ; ADVANCE POINTER FOR NEXT SECTOR.
+EAF4: 11 00 E4           1208 |     LXI D,ORIGIN    ; CHECK FOR PROGRAM OVERLAPPING CCP AREA.
+EAF7: 7D                 1209 |     MOV A,L ;
+EAF8: 93                 1210 |     SUB E   ;
+EAF9: 7C                 1211 |     MOV A,H ;
+EAFA: 9A                 1212 |     SBB D   ;
+EAFB: D2 71 EB           1213 |     JNC LDERR   ; ERROR CONDITION, PROGRAM TOO BIG FOR MEMORY.
+EAFE: C3 E1 EA           1214 |     JMP TRANS2  ; BACK FOR NEXT SECTOR.
+                         1215 | ;
+EB01: E1                 1216 | TRANS3: POP H   ; CLEAR STACK.
+EB02: 3D                 1217 |     DCR A   ; 1 ::= END OF FILE (GOOD) OR 2 ::= READ ERROR (BAD).
+EB03: C2 71 EB           1218 |     JNZ LDERR   ; READ ERROR.
+EB06: CD 66 E8           1219 |     CALL    SETCUR  ; SET BACK TO CURRENT DRIVE.
+EB09: CD 5E E6           1220 |     CALL    TRFCB   ; MOVE ANY FURTHER FCB'S AT 005CH AND 006CH.
+EB0C: 21 F0 EB           1221 |     LXI H,TRDISK    ;
 
 
 Assembly Listing                                                                                                Page: 23
 ------------------------------------------------------------------------------------------------------------------------
 
-EB09: CD 5E E6           1228 |     CALL    TRFCB   ; MOVE ANY FURTHER FCB'S AT 005CH AND 006CH.
-EB0C: 21 F0 EB           1229 |     LXI H,TRDISK    ;
-EB0F: E5                 1230 |     PUSH    H   ;
-EB10: 7E                 1231 |     MOV A,M ;Put transient disk number into
-EB11: 32 CD EB           1232 |     STA FCB ;  first byte of file control block.
-EB14: 3E 10              1233 |     MVI A,16    ;Set offset for TRFCB to upper half of FCB
-EB16: CD 60 E6           1234 |     CALL    TRFCB1  ;Move seconf file name into FCB + 16
-EB19: E1                 1235 |     POP H   ;
-EB1A: 7E                 1236 |     MOV A,M ;Get transient disk number of second FN
-EB1B: 32 DD EB           1237 |     STA FCB+16  ;  and insert it into FCB + 16
-EB1E: AF                 1238 |     XRA A   ;Zero out sector counter
-EB1F: 32 ED EB           1239 |     STA FCB+32  ;
-EB22: 11 5C 00           1240 |     LXI D,DFCB  ;Move filenames to default FCB
-EB25: 21 CD EB           1241 |     LXI H,FCB   ;
-EB28: 06 21              1242 |     MVI B,33    ;File control block & sector counter
-EB2A: CD 42 E8           1243 |     CALL    BLKMOV  ;
-                         1244 | ;
-EB2D: 21 08 E4           1245 |     LXI H,BUFFER    ;Start at the head of buffer
-EB30: 7E                 1246 | TRANS4: MOV A,M ;Step until blank or null found
-EB31: B7                 1247 |     ORA A   ; i.e. step over transient name
-EB32: CA 3E EB           1248 |     JZ  TRANS5  ;
-EB35: FE 20              1249 |     CPI ' ' ;
-EB37: CA 3E EB           1250 |     JZ  TRANS5  ;
-EB3A: 23                 1251 |     INX H   ;
-EB3B: C3 30 EB           1252 |     JMP TRANS4  ;Loop
-                         1253 | ;
-EB3E: 06 00              1254 | TRANS5: MVI B,00H   ;Command line byte counter
-EB40: 11 81 00           1255 |     LXI D,DDMA+1    ;
-EB43: 7E                 1256 | TRANS6: MOV A,M ;Move command line into default buffer
-EB44: 12                 1257 |     STAX    D   ;
-EB45: B7                 1258 |     ORA A   ;Exit on null
-EB46: CA 4F EB           1259 |     JZ  TRANS7  ;
-EB49: 04                 1260 |     INR B   ;Bump counter
-EB4A: 23                 1261 |     INX H   ;
-EB4B: 13                 1262 |     INX D   ;
-EB4C: C3 43 EB           1263 |     JMP TRANS6  ;
-                         1264 | ;
-EB4F: 78                 1265 | TRANS7: MOV A,B ;Put buffer counter at start
-EB50: 32 80 00           1266 |     STA DDMA    ; of default buffer
-EB53: CD 98 E4           1267 |     CALL    PCRLF   ;
-EB56: CD D5 E5           1268 |     CALL    SETDMA  ;Set DMA to default buffer
-EB59: CD 1A E5           1269 |     CALL    SETLOG  ; SET LOG-IN BYTE W/ CURRENT DRIVE & USER NUMBER
-EB5C: CD 00 01           1270 |     CALL    TPA ; GO OUT AND RUN THE PROGRAM.
-EB5F: 31 00 00           1271 |     LXI SP,STACK    ; RESTORE STACK ON RETURN.
-EB62: CD 29 E5           1272 |     CALL    LOGCUR  ;Log back to the current disk
-EB65: CD BD E4           1273 |     CALL    SELDSK  ;
-EB68: C3 82 E7           1274 |     JMP NXTCMD  ; READY FOR ANOTHER ASSIGNMENT.
-                         1275 | ;
-                         1276 | ;   Redundant code:
-                         1277 | ;           This can be deleted, and jumps to this
-                         1278 | ;           point changed to TYPE4
-                         1279 | ;
-EB6B: CD 66 E8           1280 | TRANS8: CALL    SETCUR  ;Error exit
-EB6E: C3 09 E6           1281 |     JMP WHAT    ;
-                         1282 | ;
-                         1283 | ;   LOAD ERROR
+EB0F: E5                 1222 |     PUSH    H   ;
+EB10: 7E                 1223 |     MOV A,M ;Put transient disk number into
+EB11: 32 CD EB           1224 |     STA FCB ;  first byte of file control block.
+EB14: 3E 10              1225 |     MVI A,16    ;Set offset for TRFCB to upper half of FCB
+EB16: CD 60 E6           1226 |     CALL    TRFCB1  ;Move seconf file name into FCB + 16
+EB19: E1                 1227 |     POP H   ;
+EB1A: 7E                 1228 |     MOV A,M ;Get transient disk number of second FN
+EB1B: 32 DD EB           1229 |     STA FCB+16  ;  and insert it into FCB + 16
+EB1E: AF                 1230 |     XRA A   ;Zero out sector counter
+EB1F: 32 ED EB           1231 |     STA FCB+32  ;
+EB22: 11 5C 00           1232 |     LXI D,DFCB  ;Move filenames to default FCB
+EB25: 21 CD EB           1233 |     LXI H,FCB   ;
+EB28: 06 21              1234 |     MVI B,33    ;File control block & sector counter
+EB2A: CD 42 E8           1235 |     CALL    BLKMOV  ;
+                         1236 | ;
+EB2D: 21 08 E4           1237 |     LXI H,BUFFER    ;Start at the head of buffer
+EB30: 7E                 1238 | TRANS4: MOV A,M ;Step until blank or null found
+EB31: B7                 1239 |     ORA A   ; i.e. step over transient name
+EB32: CA 3E EB           1240 |     JZ  TRANS5  ;
+EB35: FE 20              1241 |     CPI ' ' ;
+EB37: CA 3E EB           1242 |     JZ  TRANS5  ;
+EB3A: 23                 1243 |     INX H   ;
+EB3B: C3 30 EB           1244 |     JMP TRANS4  ;Loop
+                         1245 | ;
+EB3E: 06 00              1246 | TRANS5: MVI B,00H   ;Command line byte counter
+EB40: 11 81 00           1247 |     LXI D,DDMA+1    ;
+EB43: 7E                 1248 | TRANS6: MOV A,M ;Move command line into default buffer
+EB44: 12                 1249 |     STAX    D   ;
+EB45: B7                 1250 |     ORA A   ;Exit on null
+EB46: CA 4F EB           1251 |     JZ  TRANS7  ;
+EB49: 04                 1252 |     INR B   ;Bump counter
+EB4A: 23                 1253 |     INX H   ;
+EB4B: 13                 1254 |     INX D   ;
+EB4C: C3 43 EB           1255 |     JMP TRANS6  ;
+                         1256 | ;
+EB4F: 78                 1257 | TRANS7: MOV A,B ;Put buffer counter at start
+EB50: 32 80 00           1258 |     STA DDMA    ; of default buffer
+EB53: CD 98 E4           1259 |     CALL    PCRLF   ;
+EB56: CD D5 E5           1260 |     CALL    SETDMA  ;Set DMA to default buffer
+EB59: CD 1A E5           1261 |     CALL    SETLOG  ; SET LOG-IN BYTE W/ CURRENT DRIVE & USER NUMBER
+EB5C: CD 00 01           1262 |     CALL    TPA ; GO OUT AND RUN THE PROGRAM.
+EB5F: 31 AB EB           1263 |     LXI SP,STACK    ; RESTORE STACK ON RETURN.
+EB62: CD 29 E5           1264 |     CALL    LOGCUR  ;Log back to the current disk
+EB65: CD BD E4           1265 |     CALL    SELDSK  ;
+EB68: C3 82 E7           1266 |     JMP NXTCMD  ; READY FOR ANOTHER ASSIGNMENT.
+                         1267 | ;
+                         1268 | ;   Redundant code:
+                         1269 | ;           This can be deleted, and jumps to this
+                         1270 | ;           point changed to TYPE4
+                         1271 | ;
+EB6B: CD 66 E8           1272 | TRANS8: CALL    SETCUR  ;Error exit
+EB6E: C3 09 E6           1273 |     JMP WHAT    ;
+                         1274 | ;
+                         1275 | ;   LOAD ERROR
+                         1276 | ;
+EB71: 01 7A EB           1277 | LDERR:  LXI B,MSG7  ;Load the error pointer
 
 
 Assembly Listing                                                                                                Page: 24
 ------------------------------------------------------------------------------------------------------------------------
 
+EB74: CD A7 E4           1278 |     CALL    CRMSG   ;Display the message
+EB77: C3 86 EB           1279 |     JMP COMEND  ;EXIT
+                         1280 | ;
+EB7A: 42 41 44 20 4C...  1281 | MSG7:   DB  'BAD LOAD',0
+                         1282 | ;
+EB83: 43 4F 4D           1283 | COM:    DB  'COM'   ; FILE TYPE FOR TRANSIENT COMMANDS.
                          1284 | ;
-EB71: 01 7A EB           1285 | LDERR:  LXI B,MSG7  ;Load the error pointer
-EB74: CD A7 E4           1286 |     CALL    CRMSG   ;Display the message
-EB77: C3 86 EB           1287 |     JMP COMEND  ;EXIT
+                         1285 | ;   COMMAND END
+                         1286 | ;       CLEAN-UP AND EXIT POINT FOR ALL COMMANDS
+                         1287 | ;       EXCEPT TRANSIENT COMMANDS.
                          1288 | ;
-EB7A: 42 41 44 20 4C...  1289 | MSG7:   DB  'BAD LOAD',0
-                         1290 | ;
-EB83: 43 4F 4D           1291 | COM:    DB  'COM'   ; FILE TYPE FOR TRANSIENT COMMANDS.
-                         1292 | ;
-                         1293 | ;   COMMAND END
-                         1294 | ;       CLEAN-UP AND EXIT POINT FOR ALL COMMANDS
-                         1295 | ;       EXCEPT TRANSIENT COMMANDS.
-                         1296 | ;
-EB86: CD 66 E8           1297 | COMEND: CALL    SETCUR  ;PRIMARY EXIT POINT
-EB89: CD 5E E6           1298 | CMEND1: CALL    TRFCB   ;SECONDARY EXIT POINT
-EB8C: 3A CE EB           1299 |     LDA FCB+1   ; CHECK FOR FURTHER COMMANDS.
-EB8F: D6 20              1300 |     SUI ' ' ;
-EB91: 21 F0 EB           1301 |     LXI H,TRDISK    ;
-EB94: B6                 1302 |     ORA M   ;
-EB95: C2 09 E6           1303 |     JNZ WHAT    ;
-EB98: C3 82 E7           1304 |     JMP NXTCMD  ; BACK TO THE  RATRACE.
-                         1305 | ;
-                         1306 | ;   END OF THE PROGRAM AREA
-                         1307 | ;
-                         1308 | ;   START OF PARAMETER STORAGE AREA
-                         1309 | ;
-EB9B:                    1310 |     DS  16  ;STACK AREA
-                         1311 | STACK:  EQU $   ;CCP STACK
-                         1312 | ;
-EBAB:                    1313 | SUBFL:  DS  1   ; SUBMIT FLAG. FLAG SET WHEN COMMANDS COME FROM $$$.SUB FILE.
-EBAC: 00 24 24 24 20...  1314 | SUBFCB: DB  0,'$$$     SUB',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-EBCD:                    1315 | FCB:    DS  33  ;FILE CONTROL BLOCK FOR CCP READ/WRITE
-EBEE:                    1316 | RETVAL: DS  1   ; VALUE RETURNED IN (A) FROM CALLS TO BDOS.
-EBEF:                    1317 | CURDSK: DS  1   ; CURRENT LOGGED IN DISK.
-EBF0:                    1318 | TRDISK: DS  1   ; CURRENT TRANSIENT DISK.
-EBF1:                    1319 | TYPCTR: DS  1   ; INPUT BUFFER COUNTER USED BY 'TYPE' TO KEEP TRACK
-                         1320 |             ; OF INPUT DISK BUFFER.
-                         1321 | ;
-                         1322 | ;END OF SOURCE CODE
-                         1323 |     END
+EB86: CD 66 E8           1289 | COMEND: CALL    SETCUR  ;PRIMARY EXIT POINT
+EB89: CD 5E E6           1290 | CMEND1: CALL    TRFCB   ;SECONDARY EXIT POINT
+EB8C: 3A CE EB           1291 |     LDA FCB+1   ; CHECK FOR FURTHER COMMANDS.
+EB8F: D6 20              1292 |     SUI ' ' ;
+EB91: 21 F0 EB           1293 |     LXI H,TRDISK    ;
+EB94: B6                 1294 |     ORA M   ;
+EB95: C2 09 E6           1295 |     JNZ WHAT    ;
+EB98: C3 82 E7           1296 |     JMP NXTCMD  ; BACK TO THE  RATRACE.
+                         1297 | ;
+                         1298 | ;   END OF THE PROGRAM AREA
+                         1299 | ;
+                         1300 | ;   START OF PARAMETER STORAGE AREA
+                         1301 | ;
+EB9B:                    1302 |     DS  16  ;STACK AREA
+                         1303 | STACK:          ;CCP STACK
+                         1304 | ;
+EBAB:                    1305 | SUBFL:  DS  1   ; SUBMIT FLAG. FLAG SET WHEN COMMANDS COME FROM $$$.SUB FILE.
+EBAC: 00 24 24 24 20...  1306 | SUBFCB: DB  0,'$$$     SUB',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+EBCD:                    1307 | FCB:    DS  33  ;FILE CONTROL BLOCK FOR CCP READ/WRITE
+EBEE:                    1308 | RETVAL: DS  1   ; VALUE RETURNED IN (A) FROM CALLS TO BDOS.
+EBEF:                    1309 | CURDSK: DS  1   ; CURRENT LOGGED IN DISK.
+EBF0:                    1310 | TRDISK: DS  1   ; CURRENT TRANSIENT DISK.
+EBF1:                    1311 | TYPCTR: DS  1   ; INPUT BUFFER COUNTER USED BY 'TYPE' TO KEEP TRACK
+                         1312 |             ; OF INPUT DISK BUFFER.
+                         1313 | ;
+                         1314 | ;END OF SOURCE CODE
+                         1315 |     END
 

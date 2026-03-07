@@ -1,6 +1,6 @@
 cpu 8080
 ser 0xf4 com3
-fdc 0x78  disk_cpm.dsk[ro] disk_empty.dsk 
+fdc 0x78  disk_cpm.dsk disk_b.dsk disk_c.dsk disk_d.dsk
 lh CPM80_2.2/BIOS.hex
 lh CPM80_2.2/GETSYS.hex
 g 0x100

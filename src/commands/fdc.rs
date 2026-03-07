@@ -1,5 +1,3 @@
-use intelhex::file;
-
 use crate::commands::memory::Memory;
 use crate::ui::app::App;
 use crate::ui::app::AppState;
@@ -46,7 +44,7 @@ impl Fdc {
             let floppy_char = char::from_u32(floppy_char as u32 + floppy_char_index).unwrap();
             let floppy_str = format!(" {floppy_char}:{floppy_file}");
             assigned_floppies.push_str(&floppy_str);
-            let mut floppy = match Floppy::new(&file_name, ro_flag) {
+            let floppy = match Floppy::new(&file_name, ro_flag) {
                 Ok(floppy) => {
                             floppy
                 }

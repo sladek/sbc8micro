@@ -628,7 +628,7 @@ impl Cpu {
                 disasm = dbg!("{}ANA L", self.code_to_str(1));
             }
             ANA_M => {
-                let value = self.read_immediate_byte();
+                let value = self.read_m();
                 self.and(value);
                 disasm = dbg!("{}ANA M", self.code_to_str(1));
             }
@@ -704,7 +704,7 @@ impl Cpu {
                 let data = self.read_immediate_byte();
                 self.sub(data, false);
                 self.a = tmp;
-                disasm = dbg!("{}CPI {:02X}", self.code_to_str(2), data);
+                disasm = dbg!("{}CPI {:02X}H", self.code_to_str(2), data);
             }
             CALL => {
                 if self.debug {
@@ -712,7 +712,7 @@ impl Cpu {
                     self.pc = self.pc.wrapping_add(2);
                     let code = self.code_to_str(3);
                     self.pc = self.pc.wrapping_sub(2);
-                    disasm = dbg!("{}CALL {:04X}", code, addr);
+                    disasm = dbg!("{}CALL {:04X}H", code, addr);
                 }
                 self.call();
             }
@@ -723,7 +723,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        disasm = dbg!("{}CNZ {:04X}", code, addr);
+                        disasm = dbg!("{}CNZ {:04X}H", code, addr);
                     }
                     self.call();
                 } else {
@@ -737,7 +737,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        disasm = dbg!("{}CZ {:04X}", code, addr);
+                        disasm = dbg!("{}CZ {:04X}H", code, addr);
                     }
                     self.call();
                 } else {
@@ -751,7 +751,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        disasm = dbg!("{}CNC {:04X}", code, addr);
+                        disasm = dbg!("{}CNC {:04X}H", code, addr);
                     }
                     self.call();
                 } else {
@@ -765,7 +765,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        disasm = dbg!("{}CC {:04X}", code, addr);
+                        disasm = dbg!("{}CC {:04X}H", code, addr);
                     }
                     self.call();
                 } else {
@@ -779,7 +779,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        disasm = dbg!("{}CPO {:04X}", code, addr);
+                        disasm = dbg!("{}CPO {:04X}H", code, addr);
                     }
                     self.call();
                 } else {
@@ -793,7 +793,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        disasm = dbg!("{}CPE {:04X}", code, addr);
+                        disasm = dbg!("{}CPE {:04X}H", code, addr);
                     }
                     self.call();
                 } else {
@@ -807,7 +807,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        disasm = dbg!("{}CP {:04X}", code, addr);
+                        disasm = dbg!("{}CP {:04X}H", code, addr);
                     }
                     self.call();
                 } else {
@@ -821,7 +821,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        disasm = dbg!("{}CM {:04X}", code, addr);
+                        disasm = dbg!("{}CM {:04X}H", code, addr);
                     }
                     self.call();
                 } else {
@@ -846,7 +846,7 @@ impl Cpu {
             }
             DAD_SP => {
                 self.dad(self.sp);
-                disasm = dbg!("{}DAD H", self.code_to_str(1));
+                disasm = dbg!("{}DAD SP", self.code_to_str(1));
             }
             DCR_B => {
                 self.b = self.dcr(self.b);
@@ -971,7 +971,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        disasm = dbg!("{}JNZ {:04X}", code, addr);
+                        disasm = dbg!("{}JNZ {:04X}H", code, addr);
                     }
                     self.jmp();
                 } else {
@@ -985,7 +985,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        disasm = dbg!("{}JZ {:04X}", code, addr);
+                        disasm = dbg!("{}JZ {:04X}H", code, addr);
                     }
                     self.jmp();
                 } else {
@@ -999,7 +999,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        disasm = dbg!("{}JNC {:04X}", code, addr);
+                        disasm = dbg!("{}JNC {:04X}H", code, addr);
                     }
                     self.jmp();
                 } else {
@@ -1013,7 +1013,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        disasm = dbg!("{}JC {:04X}", code, addr);
+                        disasm = dbg!("{}JC {:04X}H", code, addr);
                     }
                     self.jmp();
                 } else {
@@ -1027,7 +1027,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        disasm = dbg!("{}JPO {:04X}", code, addr);
+                        disasm = dbg!("{}JPO {:04X}H", code, addr);
                     }
                     self.jmp();
                 } else {
@@ -1041,7 +1041,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        disasm = dbg!("{}JPE {:04X}", code, addr);
+                        disasm = dbg!("{}JPE {:04X}H", code, addr);
                     }
                     self.jmp();
                 } else {
@@ -1055,7 +1055,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        disasm = dbg!("{}JP {:04X}", code, addr);
+                        disasm = dbg!("{}JP {:04X}H", code, addr);
                     }
                     self.jmp();
                 } else {
@@ -1069,7 +1069,7 @@ impl Cpu {
                         self.pc = self.pc.wrapping_add(2);
                         let code = self.code_to_str(3);
                         self.pc = self.pc.wrapping_sub(2);
-                        disasm = dbg!("{}JM {:04X}", code, addr);
+                        disasm = dbg!("{}JM {:04X}H", code, addr);
                     }
                     self.jmp();
                 } else {
@@ -1082,7 +1082,7 @@ impl Cpu {
                     self.pc = self.pc.wrapping_add(2);
                     let code = self.code_to_str(3);
                     self.pc = self.pc.wrapping_sub(2);
-                    disasm = dbg!("{}JMP {:04X}", code, addr);
+                    disasm = dbg!("{}JMP {:04X}H", code, addr);
                 }
                 self.jmp();
             }

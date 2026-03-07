@@ -94,7 +94,7 @@ impl Cpu {
                                     && key.modifiers.contains(KeyModifiers::CONTROL)
                                 {
                                     app.messages
-                                        .push(format!("CTRL-C pushed: PC: 0x{:04X}", cpu.get_pc()));
+                                        .push(format!("CTRL-C pressed: PC: 0x{:04X}", cpu.get_pc()));
                                     cpu.set_debug_flag(debug);
                                     return Ok(AppState::Home);
                                 }
