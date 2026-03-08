@@ -1,4 +1,4 @@
-use crate::commands::{MIN_DISASM_RANGE, command::Command};
+use crate::commands::{command::Command};
 use crate::cpu::{Cpu, CpuUi};
 //use color_eyre::eyre::Ok;
 use crate::commands::{DEFAULT_DISASM_RANGE, cpu_not_set_error};

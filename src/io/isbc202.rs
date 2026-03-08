@@ -30,23 +30,23 @@ enum UnitRedy {
 }
 
 struct DisketteInstruction {
-    value: u8, // binary value of Diskette Instruction
+    _value: u8, // binary value of Diskette Instruction
     unit_select: u8, // bits 4,5. 0b00 - drive 0, 0b11 - drive 1 NOTE: only 2 floppy disks are supported by this controler (SBC 201)
-    data_word_length: u8, // 0 - if used in 8 - bit systems, 1 - if used in 16 bit systems
+    _data_word_length: u8, // 0 - if used in 8 - bit systems, 1 - if used in 16 bit systems
     opcode: u8, // 0b000 - no operation, 0b001 - seek, 0b010 - format trackk, 0b011 - recalibrate, 0b100 - read data, 0b101 - Verify CRC, 0b110 - write data, 0b111 - write 'deleted' data
 }
 
 impl DisketteInstruction {
     pub fn new(value: u8) -> Self {
         Self {
-            value,
+            _value: value,
             unit_select: (value & 0b11_0000) >> 4,
-            data_word_length: (value & 0b1000) >> 3,
+            _data_word_length: (value & 0b1000) >> 3,
             opcode: value & 0b0111,
         }
     } 
-    pub fn get_value(&self) -> u8 {
-        self.value
+    pub fn _get_value(&self) -> u8 {
+        self._value
     }
     pub fn get_opcode(&self) -> u8 {
         self.opcode
@@ -56,7 +56,7 @@ impl DisketteInstruction {
     }
 }
 
-struct ChannelWord {
+struct _ChannelWord {
     value: u8, // binary content of Channel Word
 // lock_override is not implemented in 8 bit CP/M
     lock_override: bool, // bit (7).  1 - "wait" bit is not set, this prevents IOPB being overwritten by the controller
@@ -68,8 +68,8 @@ struct ChannelWord {
     branch_on_wait: bool, // bit (1). It is interconnected with wait bit. check documentation (9800349B.pdf) for more details
     wait: bool, // bit (0). 
 }
-impl ChannelWord {
-    pub fn new(value: u8) -> Self {
+impl _ChannelWord {
+    pub fn _new(value: u8) -> Self {
         Self {
             value,
             lock_override: value & 0b1000_0000 != 0,
@@ -81,7 +81,7 @@ impl ChannelWord {
             wait: value & 0b0000_0001 != 0, // Not implemented in 8 bit CP/M
         }
     }
-    pub fn get_value(&self) -> u8 {
+    pub fn _get_value(&self) -> u8 {
         self.value
     }
 }
@@ -226,7 +226,7 @@ impl Isbc202 {
     /// Get interrupt pending flag
     /// 
     /// Gets a status of interrupt pending flag
-    fn is_interrupt_pending(&self) -> bool {
+    fn _is_interrupt_pending(&self) -> bool {
         if self.dstat & Dstat::InterruptPending as u8 != 0 {
             return true;
         }

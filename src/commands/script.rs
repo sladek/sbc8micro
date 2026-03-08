@@ -15,7 +15,7 @@ impl Script {
         }
         let mut path = command[1].to_string();
         if !path.ends_with(".scr") {
-            path = path + ".scr";
+            path += ".scr";
         }
         match read_to_string(&path){
             Ok(content) => {

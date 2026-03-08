@@ -51,7 +51,7 @@ pub struct OpcodeViewer<'a, T> {
 
 impl<'a, T> OpcodeViewer<'a, T> {
     pub fn table_state(&self) -> TableState {
-        self.table_state.clone()
+        self.table_state
     }
 
     pub fn scroll_state(&self) -> ScrollbarState {
