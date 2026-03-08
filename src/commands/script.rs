@@ -13,10 +13,16 @@ impl Script {
             );
             return Ok(AppState::Home);
         }
-        let path = command[1].to_string();
+        let mut path = command[1].to_string();
+        if !path.ends_with(".scr") {
+            path = path + ".scr";
+        }
         match read_to_string(&path){
             Ok(content) => {
                 for line in content.lines() {
+                    if line.trim().starts_with("#") || line.trim().starts_with(";") {
+                        continue;
+                    };
                     let characters = line.as_bytes();
                     for character in characters {
                         app.enter_char(*character as char);

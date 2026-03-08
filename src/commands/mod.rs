@@ -18,8 +18,9 @@ pub mod script;
 pub mod io;
 
 pub const CPU_LIST: &str = "i8080 | 8080 | mos6502 | 6502";
-pub const MIN_MEMORY_RANGE: u16 = 16;
-pub const MIN_DISASM_RANGE: u16 = 16;
+pub const MIN_MEMORY_RANGE: u16 = 1;
+pub const MIN_DISASM_RANGE: u16 = 1;
+pub const DEFAULT_DISASM_RANGE: u16 = 10;
 pub const MIN_OUTPUT_HISTORY_LENGTH: u16 = 64;
 pub const MIN_COMMAND_HISTORY_LENGTH: u16 = 5;
 

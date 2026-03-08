@@ -1,7 +1,7 @@
 pub mod i8251a;
 pub mod memory;
 pub mod serial;
-pub mod isbc201;
+pub mod isbc202;
 use crate::disk::sssd8fd::ErrorIndicators;
 use crate::memory::{MemCell};
 use crate::memory::dma::Dma;

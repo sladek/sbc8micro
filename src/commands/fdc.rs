@@ -1,7 +1,7 @@
 use crate::commands::memory::Memory;
 use crate::ui::app::App;
 use crate::ui::app::AppState;
-use crate::io::isbc201::Isbc201;
+use crate::io::isbc202::Isbc202;
 use crate::disk::sssd8fd::Floppy;
 
 pub struct Fdc;
@@ -36,7 +36,7 @@ impl Fdc {
         let floppy_char = 'A';
         let mut assigned_floppies = String::new();
         let mut floppy_char_index = 0;
-        let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
+        let mut fdc = Box::new(Isbc202::new(cpu.get_memory_ref())); // Base address 0x78
         let mut floppu_number = 0;
         while floppy_index < command.len() {
             let floppy_file = command[floppy_index].to_string();

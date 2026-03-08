@@ -1,7 +1,7 @@
 use crate::commands::{MIN_DISASM_RANGE, command::Command};
 use crate::cpu::{Cpu, CpuUi};
 //use color_eyre::eyre::Ok;
-use crate::commands::cpu_not_set_error;
+use crate::commands::{DEFAULT_DISASM_RANGE, cpu_not_set_error};
 use crate::ui::{COMMAND_HISTORY_SIZE, COMMAND_HISTORY_SIZE_INIT_INDEX, OUTPUT_HISTORY_SIZE};
 use ratatui::crossterm::event::KeyModifiers;
 use ratatui::widgets::{Scrollbar, ScrollbarOrientation, ScrollbarState};
@@ -137,9 +137,9 @@ pub enum AppState {
 }
 #[derive(Default, Clone)]
 pub struct Dump {
-    pub start: u16,
-    pub end: u16,
-    pub range: u16,
+    start: u16,
+    end: u16,
+    range: u16,
 }
 #[derive(Default, Clone)]
 pub struct Disasm {
@@ -152,8 +152,7 @@ impl Disasm {
     pub fn new() -> Self {
         Self {
             start: 0u16,
-            //            end: 63u16,
-            range: MIN_DISASM_RANGE,
+            range: DEFAULT_DISASM_RANGE,
         }
     }
     /// Set start address of the dump range
@@ -184,15 +183,27 @@ impl Dump {
             range: 128,
         }
     }
+    /// Get start address of the dump range
+    pub fn get_start_address(&mut self) -> u16 {
+        self.start
+    }
     /// Set start address of the dump range
     pub fn set_start_address(&mut self, start_addr: u16) {
         self.start = start_addr;
     }
     /// Set end address of the dump range
+    pub fn get_end_address(&mut self) -> u16{
+        self.end
+    }
+    /// Set end address of the dump range
     pub fn set_end_address(&mut self, end_addr: u16) {
         self.end = end_addr;
     }
-    /// Set end address of the dump range
+    /// Get range of the dump range
+    pub fn get_range(&mut self) -> u16 {
+        self.range
+    }
+    /// Set range of the dump range
     pub fn set_range(&mut self, range: u16) {
         self.range = range;
     }

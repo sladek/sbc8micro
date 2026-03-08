@@ -6,16 +6,18 @@ pub struct Disasm;
 impl Disasm {
     pub fn disasm(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
         app.is_cpu_set()?; // Check if cpu is defined
-        let start_address: u16;
+        let mut start_address = 0u16;
         let end_address: u16;
         match command.len() {
             1 => {
-                start_address = app.disasm.start;
+                if let Some(cpu) = &mut app.cpu_ui {
+                    start_address = cpu.get_pc();
+                }
                 end_address =
                     if start_address as usize + app.disasm.range as usize > u16::MAX as usize {
                         u16::MAX
                     } else {
-                        start_address + app.disasm.range
+                        start_address + app.disasm.range - 1
                     };
             }
             2 => {
@@ -23,7 +25,7 @@ impl Disasm {
                 end_address = if start_address as u32 + app.disasm.range as u32 > u16::MAX.into() {
                     u16::MAX
                 } else {
-                    start_address + app.disasm.range
+                    start_address + app.disasm.range - 1
                 };
             }
             3 => {
@@ -36,7 +38,7 @@ impl Disasm {
                     return Ok(AppState::Home);
                 }
                 app.disasm.set_start_address(start_address);
-                app.disasm.set_range(end_address - start_address);
+                app.disasm.set_range(end_address - start_address + 1);
             }
             _ => {
                 return Err(
@@ -64,7 +66,7 @@ impl Disasm {
             1 => {
                 let range = app.disasm.range;
                 app.messages
-                    .push(format!(" Disasembler range: {:04x}H [{range}]", range));
+                    .push(format!("Disasembler range: {:04x}H [{range}]", range));
             }
             2 => {
                 let range = Memory::from_hex_string(command[1].to_string())?;

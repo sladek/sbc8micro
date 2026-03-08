@@ -1,7 +1,13 @@
+# Set cpu to Intel 8080
 cpu 8080
+# Set serial port to COM3 and default setting 9600,8,n,1
 ser 0xf4 com3
+# Instantiate floppy disk controller and mount disks
+# If disk imaged don't exist they are created and formated
 fdc 0x78  disk_cpm.dsk disk_b.dsk disk_c.dsk disk_d.dsk
+# Load BIOS
 lh CPM80_2.2/BIOS.hex
+# Load CCP and BDOS loader
 lh CPM80_2.2/GETSYS.hex
+# Start loader and go to CPM
 g 0x100
-

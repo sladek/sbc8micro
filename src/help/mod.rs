@@ -75,22 +75,28 @@ pub static HELP: &str = r#"
     "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    dump\\n    dump 0xff\\n    dump 0 127\\n    d 0h 0ffh\\n    d $0 $ff\\n    d 0x0 0xff\\n Note: When <start address> and <end address> are defined they are stored internally and next usage of dump command without address range will use these value.\\n       When only \"dump <start address>\" is defined then end address is calculated as <start + dump_range> where dump_range is by default 128 and can be changed by \"set dump_range <value>\" command."
   },
   {
+    "command": "dr | dump_range",
+    "description": "Shows or sets range of default addresses for dump command.",
+    "usage": "dr [range] dump_range [range]",
+    "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    dr\\n    dump_range\\n    dr 100\\n    dr 0ffh\\n    dump_range 0x00ff\\n    dump_range $00ff\\n Note: If only dr or dump_range is used, then the dump memory range is displayed; otherwise, the range is set to the value provided as a parameter."
+  },
+  {
     "command": "da | disasm",
     "description": "Shows a disassembled code of a specific memory region.",
     "usage": "da or disasm or da <start address> or disasm <start address> or da <start address> <end address> or disasm <start address> <end address>",
     "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    da\\n    disasm\\n    da 0ffh\\n    disasm $ff\\n    da 0 255\\n    disasm 0x0000 0x00ff\\n Note: When <start address> and <end address> are defined they are stored internally and next usage of disasm command without address range will use these value.\\n       When only \"disasm <start address>\" is defined then <end address> is calculated as <start address> + <disasm_range> where disasm_range is by default 16 and can be changed\\n       by disasm_range <value> command or dr <value>."
   },
   {
+    "command": "dar | disasm_range",
+    "description": "Shows or sets range of default addresses for disasembler.",
+    "usage": "dar [range] or disasm_range [range]",
+    "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    dar\\n    disasm_range\\n    dar 100\\n    dar 0ffh\\n    disasm_range 0x00ff\\n    disasm_range $00ff\\n Note: If only dar or disasm_range is used, then the disassembler range is displayed; otherwise, the range is set to the value provided as a parameter.\\n       End address of disassembler is calculated as start adrress + range."
+  },
+  {
     "command": "dev",
     "description": "Shows devices (serial, floppy disk controllers, ...) currently attached to the CPU.",
     "usage": "dev",
     "examples": "dev"
-  },
-  {
-    "command": "dr | disasm_range",
-    "description": "Shows or sets range of default addresses for disasembler.",
-    "usage": "dr [range] or disasm_range [range]",
-    "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    dr\\n    disasm_range\\n    dr 100\\n    dr 0ffh\\n    disasm_range 0x00ff\\n    disasm_range $00ff\\n Note: If only dr or disasm_range is used, then the disassembler range is displayed; otherwise, the range is set to the value provided as a parameter.\\n       End address of disassembler is calculated as start adrress + range."
   },
   {
     "command": "fdc | floppy",
@@ -147,12 +153,6 @@ pub static HELP: &str = r#"
     "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    m 0ffh 0ffh 12h 55h 0aah\\n    mem $fff $ff $12 $55 $aa\\n Note: address is 16 bit and data 8 bit."
   },
   {
-    "command": "mr | memory_range",
-    "description": "Shows or sets range of default addresses for dump command.",
-    "usage": "mr [range] memory_range [range]",
-    "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    mr\\n    memory_range\\n    mr 100\\n    mr 0ffh\\n    memory_range 0x00ff\\n    memory_range $00ff\\n Note: If only mr or memory_range is used, then the dump memory range is displayed; otherwise, the range is set to the value provided as a parameter."
-  },
-  {
     "command": "oh | output_history_length",
     "description": "Shows or sets length of output window history.",
     "usage": "oh [length] output_history_length [length]",
@@ -185,8 +185,8 @@ pub static HELP: &str = r#"
   {
     "command": "scr | script",
     "description": "Reads commands from script file and executes them one by one.",
-    "usage": "scr <script name>",
-    "examples": "\\n    scr cpm80.scr\\n    script scripts/plm80.scr"
+    "usage": "scr <script name> or script <script name>",
+    "examples": "\\n    scr cpm80.scr\\n    scr cpm80\\n    script scripts/plm80.scr\\n    script scripts/plm80"
   }
 ]
 "#;

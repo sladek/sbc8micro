@@ -17,32 +17,34 @@ impl Memory {
         let cpu = &mut app.cpu_ui;
         match cpu {
             Some(cpu) => {
-                let dump_range = &app.dump;
                 let dump: Vec<String>;
                 let start_addr;
                 let end_addr;
                 match command.len() {
                     1 => {
-                        dump = cpu.memory_dump(dump_range.start, dump_range.end);
+                        dump = cpu.memory_dump(app.dump.get_start_address(), app.dump.get_end_address());
                     }
                     2 => {
-                        let temp_range = app.dump.range - 1;
                         start_addr = Self::from_hex_string(command[1].to_string())?;
+                        app.dump.set_start_address(start_addr);
+                        let temp_range = app.dump.get_range();
                         if (start_addr as u32 + temp_range as u32) > 0xffff {
                             end_addr = 0xffffu16;
                         } else {
-                            end_addr = start_addr + temp_range;
+                            end_addr = start_addr + temp_range - 1;
                         }
+                        app.dump.set_end_address(end_addr);
                         dump = cpu.memory_dump(start_addr, end_addr);
                     }
                     3 => {
                         start_addr = Self::from_hex_string(command[1].to_string())?;
                         end_addr = Self::from_hex_string(command[2].to_string())?;
-                        if start_addr >= end_addr {
+                        if start_addr > end_addr {
                             return Err("ERROR - Start address must be lower than end address.".to_string());
                         }
                         app.dump.set_start_address(start_addr);
                         app.dump.set_end_address(end_addr);
+                        app.dump.set_range(end_addr - start_addr + 1);
                         dump = cpu.memory_dump(start_addr, end_addr);
                     }
                     _ => {
@@ -149,27 +151,26 @@ impl Memory {
     ///   memory_range 0ffh
     ///   mr $ff
     ///   mr 0xff
-    pub fn memory_range(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
+    pub fn dump_range(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
         match command.len() {
             1 => {
-                let range = app.dump.range + 1;
+                let range = app.dump.get_range();
                 app.messages
-                    .push(format!("Memory range: 0x{:04x} [{range}]", range));
+                    .push(format!("Dump range: 0x{:04x} [{range}]", range));
             }
             2 => {
-                let mut range = Memory::from_hex_string(command[1].to_string())?;
+                let range = Memory::from_hex_string(command[1].to_string())?;
                 if range < MIN_MEMORY_RANGE {
                     return Err(format!(
                         "ERROR - Minimum allowed memory range is {MIN_MEMORY_RANGE}"
                     ));
                 }
-                range -= 1;
                 app.dump.set_range(range);
-                let start_address = app.dump.start;
-                if (start_address as u32 + range as u32) > 0xff {
-                    app.dump.set_end_address(0xffu16);
+                let start_address = app.dump.get_start_address();
+                if (start_address as u32 + range as u32) > 0xffff {
+                    app.dump.set_end_address(0xffffu16);
                 }
-                app.dump.set_end_address(start_address + range);
+                app.dump.set_end_address(start_address + range - 1);
             }
             _ => {
                 app.messages
@@ -185,7 +186,7 @@ impl Memory {
     ///   m 0x1234 0xc3 0x34 0x12 "string" 'c'
     pub fn set_memory(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
         app.is_cpu_set()?; // Check if cpu is defined
-        if command.len() == 1 {
+        if command.len() < 3 {
             return Err("ERROR - Invalid number of parameters. Usage: m <address> <data> <data> <data> ... or mem <address> <data> <data> <data> ...".to_string());
         }
         let mut addr = Memory::from_hex_string(command[1].to_string())?;

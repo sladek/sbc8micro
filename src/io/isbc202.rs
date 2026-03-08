@@ -96,7 +96,7 @@ enum Dstat {
     Drive2Ready = 0b0010_0000, // Drive 2 ready
     Drive3Ready = 0b0100_0000, // Drive 3 ready
 }
-pub struct Isbc201 {
+pub struct Isbc202 {
     dstat: u8,
     dstat_address: u8,
     dstat_memory_address: u16,
@@ -123,9 +123,9 @@ pub struct Isbc201 {
     cpu_memory: Option<Rc<RefCell<memory::Memory>>>,
 }
 
-impl Default for Isbc201 {
+impl Default for Isbc202 {
     fn default() -> Self {
-        Isbc201 {
+        Isbc202 {
             dstat: 0,
             dstat_address: BASE,
             dstat_memory_address: MEMORY_BASE,
@@ -154,9 +154,9 @@ impl Default for Isbc201 {
     }
 }
 
-impl Isbc201 {
+impl Isbc202 {
     pub fn new(cpu_memory: Rc<RefCell<memory::Memory>>) -> Self {
-        Isbc201 {
+        Isbc202 {
             dstat: Dstat::ControllerPresent as u8,
             cpu_memory: Some(cpu_memory),
             ..Default::default()
@@ -487,7 +487,7 @@ impl Isbc201 {
     }
 }
 
-impl IoPort for Isbc201 {
+impl IoPort for Isbc202 {
     fn get_base_address(&self) -> Option<u8> {
         self.base_address
     }
@@ -661,7 +661,7 @@ mod tests {
     use crate::disk::sssd8fd::{DataDeletedData, Floppy};
     use crate::disk::sssd8fd::Sector;
     use crate::io::memory::IoMemory;
-    use crate::io::{IoPort, isbc201::Isbc201};
+    use crate::io::{IoPort, isbc202::Isbc202};
     use std::fs;
     use std::rc::Rc;
 
@@ -678,7 +678,7 @@ mod tests {
         let mut cpu = i8080::Cpu::new();
         let memory = Rc::clone(&cpu.memory);
         let _ = memory.borrow_mut().write_byte(0x55aa, 0x55);
-        let mut fdc = Isbc201::new(cpu.get_memory_ref()); // Base address 0x78
+        let mut fdc = Isbc202::new(cpu.get_memory_ref()); // Base address 0x78
         fdc.set_base_address(0x78);
         println!("Name: {:?}", fdc.get_name());
         println!("{}", fdc.get_io_port_info());
@@ -691,7 +691,7 @@ mod tests {
         let mut cpu = i8080::Cpu::new();
         let memory = Rc::clone(&cpu.memory);
         let _ = memory.borrow_mut().write_byte(0x55aa, 0x55);
-        let mut fdc = Isbc201::new(cpu.get_memory_ref()); // Base address 0x78
+        let mut fdc = Isbc202::new(cpu.get_memory_ref()); // Base address 0x78
         fdc.set_memory_base_address(0x1000);
         println!("Name: {:?}", fdc.get_name());
         println!("{}", fdc.get_io_port_info());
@@ -716,7 +716,7 @@ mod tests {
         let program_address = 0x1000;
         let ilow = 0x79u8;
         let ihigh = 0x7au8;
-        let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
+        let mut fdc = Box::new(Isbc202::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
         let _ = fdc.set_floppy(floppy, 0);
         fdc.set_base_address(0x78);
@@ -787,7 +787,7 @@ mod tests {
         let program_address = 0x1000;
         let ilow = 0x79u8;
         let ihigh = 0x7au8;
-        let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
+        let mut fdc = Box::new(Isbc202::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
         let _ = fdc.set_floppy(floppy, 0);
         fdc.set_base_address(0x78);
@@ -875,7 +875,7 @@ mod tests {
         let program_address = 0x1000;
         let ilow = 0x79u8;
         let ihigh = 0x7au8;
-        let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
+        let mut fdc = Box::new(Isbc202::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
         let _ = fdc.set_floppy(floppy, 0);
         fdc.set_base_address(0x78);
@@ -943,7 +943,7 @@ mod tests {
         let program_address = 0x1000;
         let ilow = 0x79u8;
         let ihigh = 0x7au8;
-        let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
+        let mut fdc = Box::new(Isbc202::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
         let _ = fdc.set_floppy(floppy, 0);
         fdc.set_base_address(0x78);
@@ -1003,7 +1003,7 @@ mod tests {
         let program_address = 0x1000;
         let ilow = 0x79u8;
         let ihigh = 0x7au8;
-        let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
+        let mut fdc = Box::new(Isbc202::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
         let _ = fdc.set_floppy(floppy, 0);
         fdc.set_base_address(0x78);
@@ -1065,7 +1065,7 @@ mod tests {
         let program_address = 0x1000;
         let ilow = 0x79u8;
         let ihigh = 0x7au8;
-        let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
+        let mut fdc = Box::new(Isbc202::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
         let _ = fdc.set_floppy(floppy, 0);
         fdc.set_base_address(0x78);
@@ -1127,7 +1127,7 @@ mod tests {
         let program_address = 0x1000;
         let ilow = 0x79u8;
         let ihigh = 0x7au8;
-        let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
+        let mut fdc = Box::new(Isbc202::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
         let _ = fdc.set_floppy(floppy, 0);
         fdc.set_base_address(0x78);
@@ -1190,7 +1190,7 @@ mod tests {
         let base_addr = 0x1000u16; // base address of fdc = 0x1000;
         let ilow = base_addr + 1 ; 
         let ihigh = base_addr + 2;
-        let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
+        let mut fdc = Box::new(Isbc202::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
         let _ = fdc.set_floppy(floppy, 0);
         fdc.set_memory_base_address(base_addr);
@@ -1260,7 +1260,7 @@ mod tests {
         let base_addr = 0x1000u16; // base address of fdc = 0x1000;
         let ilow = base_addr + 1 ; 
         let ihigh = base_addr + 2;
-        let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
+        let mut fdc = Box::new(Isbc202::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
         let _ = fdc.set_floppy(floppy, 0);
         fdc.set_memory_base_address(base_addr);
@@ -1332,7 +1332,7 @@ mod tests {
         let program_address = 0x1000;
         let ilow = 0x79u8;
         let ihigh = 0x7au8;
-        let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
+        let mut fdc = Box::new(Isbc202::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
         let _ = fdc.set_floppy(floppy, 0);
         fdc.set_base_address(0x78);
@@ -1419,7 +1419,7 @@ mod tests {
         let program_address = 0x1000;
         let ilow = 0x79u8;
         let ihigh = 0x7au8;
-        let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
+        let mut fdc = Box::new(Isbc202::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
         let _ = fdc.set_floppy(floppy, 0);
         fdc.set_base_address(0x78);
@@ -1523,7 +1523,7 @@ mod tests {
         let program_address = 0x1000;
         let ilow = 0x79u8;
         let ihigh = 0x7au8;
-        let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
+        let mut fdc = Box::new(Isbc202::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
         let _ = fdc.set_floppy(floppy, 0);
         fdc.set_base_address(0x78);
@@ -1590,7 +1590,7 @@ mod tests {
         let program_address = 0x1000;
         let ilow = 0x79u8;
         let ihigh = 0x7au8;
-        let mut fdc = Box::new(Isbc201::new(cpu.get_memory_ref())); // Base address 0x78
+        let mut fdc = Box::new(Isbc202::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
         let _ = fdc.set_floppy(floppy, 0);
         fdc.set_base_address(0x78);

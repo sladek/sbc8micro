@@ -4,7 +4,7 @@
 //! First the empty disk is created and formated, then data array with content [0, 1, 2 .. 0x7e, 0x7f] is stored in the track(0) sector(1)
 //! and then the data from that sector is read back and stored in memory
 use sbc8micro::disk::sssd8fd::{Floppy, Sector};
-    use sbc8micro::io::isbc201::Isbc201;
+    use sbc8micro::io::isbc202::Isbc202;
     use sbc8micro::cpu::{i8080, CpuUi};
     use std::rc::Rc;
     use sbc8micro::disassembler::i8080_opcode_consts::*;
@@ -30,7 +30,7 @@ use sbc8micro::disk::sssd8fd::{Floppy, Sector};
         let program_address = 0x1000;
         let ilow = 0x79u8;
         let ihigh = 0x7au8;
-        let mut fdc = Box::new(Isbc201::new(Rc::clone(&cpu.memory))); // Base address 0x78
+        let mut fdc = Box::new(Isbc202::new(Rc::clone(&cpu.memory))); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
         let _ = fdc.set_floppy(floppy, 0);
         fdc.set_base_address(0x78);
