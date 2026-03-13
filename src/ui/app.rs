@@ -19,6 +19,8 @@ use ratatui::{
     widgets::{Block, List, ListItem, Paragraph},
 };
 use std::io::Result;
+use std::path;
+use glob::glob;
 
 /// App holds the state of the application
 pub struct App {
@@ -42,6 +44,7 @@ pub struct App {
     pub cpu_ui: Option<Box<dyn CpuUi>>,
     pub dump: Dump,
     pub disasm: Disasm,
+    auto_complete: AutoComplete,
 }
 impl Default for App {
     fn default() -> Self {
@@ -224,6 +227,7 @@ impl App {
             cpu_ui: None,
             dump: Dump::new(),
             disasm: Disasm::new(),
+            auto_complete: AutoComplete::new(),
         }
     }
     pub fn get_command_history_size(&self) -> usize {
@@ -262,7 +266,52 @@ impl App {
         self.input.insert(index, new_char);
         self.move_cursor_right();
     }
-
+    /// Autocomplete command on TAB key
+    /// 
+    /// Autocompletes a command similarly to linux systems
+    pub fn autocomplete(&mut self) {
+        if self.character_index != self.input.len() {
+            // Return here because we autocomplete only if 
+            // we are at the end of the input buffer
+            return;
+        }
+        // Pointer is at the end of the buffer
+        let key = self.find_autocoplete_key();
+        if let Some(value) =  self.auto_complete.next_offer(key) {
+            while self.character_index != self.auto_complete.search_key_index {
+                self.delete_char();
+            }
+            let chars = value.chars();
+            for new_char in chars {
+                self.enter_char(new_char);
+            }
+        }
+    }
+    /// Find a key for autocomplete
+    /// 
+    /// It looks back from the current position in input buffer and it ends either
+    /// when it find a space ar the beginning of the buffer. It then returns the substring
+    /// limited by those two positions
+    fn find_autocoplete_key(&mut self) -> String {
+        let mut ch_index = self.character_index;
+        let chars: Vec<char> = self.input.chars().collect();
+        // Lets find either next ' ' or the beginning of the buffer
+        while ch_index != 0 {
+            ch_index -= 1;
+            if chars[ch_index] == ' ' { break };
+        };        
+        if ch_index == 0 {
+            self.auto_complete.search_key_index = ch_index;
+            // Beginning of the input buffer reached
+            if self.character_index == 0 {
+                // In this case the input buffer is empty so we return '*'
+                return "". to_string();
+            }
+            return chars[ch_index..self.character_index].iter().collect()
+        }
+        self.auto_complete.search_key_index = ch_index + 1;
+        chars[ch_index + 1..self.character_index].iter().collect()
+    }
     /// Returns the byte index based on the character position.
     ///
     /// Since each character in a string can be contain multiple bytes, it's necessary to calculate
@@ -274,7 +323,7 @@ impl App {
             .nth(self.character_index)
             .unwrap_or(self.input.len())
     }
-
+    /// Delet char in input buffer
     fn delete_char(&mut self) {
         let is_not_cursor_leftmost = self.character_index != 0;
         if is_not_cursor_leftmost {
@@ -415,15 +464,26 @@ impl App {
                 },
                 InputMode::Editing if key.kind == KeyEventKind::Press => match key.code {
                     KeyCode::Enter => {
+                        // If enter is pushed we clean autocomplete status
+                        self.auto_complete.clean();
                         return Some(Ok(self.submit_message()));
                     }
-                    KeyCode::Char(to_insert) => self.enter_char(to_insert),
-                    KeyCode::Backspace => self.delete_char(),
+                    KeyCode::Char(to_insert) => {
+                        // If char is enterred we clean autocomplete status
+                        self.auto_complete.clean();
+                        self.enter_char(to_insert)
+                    },
+                    KeyCode::Backspace => {
+                        self.auto_complete.clean();
+                        self.delete_char()
+                    },
                     KeyCode::Left => self.move_cursor_left(),
                     KeyCode::Right => self.move_cursor_right(),
+                    KeyCode::Tab => self.autocomplete(),
                     KeyCode::Esc => self.input_mode = InputMode::Normal,
                     KeyCode::Up => {
                         if key.modifiers.contains(KeyModifiers::CONTROL) {
+                            self.auto_complete.clean();
                             self.move_command_history_up()
                         } else {
                             self.move_output_up_line()
@@ -431,6 +491,7 @@ impl App {
                     }
                     KeyCode::Down => {
                         if key.modifiers.contains(KeyModifiers::CONTROL) {
+                            self.auto_complete.clean();
                             self.move_command_history_down()
                         } else {
                             self.move_output_down_line()
@@ -562,5 +623,61 @@ impl App {
             output_area,
             &mut scrollbar_state,
         );
+    }
+}
+
+struct AutoComplete {
+    index: usize,
+    search_key_index: usize,
+    search_key: String,
+    last_offer: String,
+    offer_buffer: Option<Vec<String>>,
+}
+
+impl AutoComplete {
+    pub fn new () -> Self {
+        Self { index: 0, search_key_index: 0, search_key: "".to_string(), last_offer: "".to_string(), offer_buffer: None }
+    }
+    pub fn clean(&mut self) {
+        self.offer_buffer = None;
+        self.index = 0;
+        self.search_key_index = 0;
+        self.last_offer = String::new();
+    }
+    pub fn next_offer(&mut self, mut search_key: String) -> Option<String> {
+        if self.offer_buffer == None {
+            let mut offers :Vec<String> = Vec::new();
+            search_key.push('*');
+            match glob(&search_key) {
+                Ok(glob) => {
+                    for entry in glob {
+                        match entry {
+                            Ok(path) => {
+                                offers.push(path.display().to_string());
+                            }
+                            Err(_) => {
+                                // Do nothing
+                            }
+                        }
+                    }
+                }
+                Err(_) => {
+                    // Do nothing
+                }
+            }
+            if offers.is_empty() {
+                return None
+            }
+            self.offer_buffer = Some(offers);
+            self.search_key = search_key;
+        }
+        let buffer = self.offer_buffer.clone().unwrap();
+        if self.index == buffer.len() {
+            self.index = 0;
+        } 
+        let idx = self.index;
+        self.index += 1;
+        self.last_offer = buffer[idx].clone();
+        return Some(buffer[idx].clone())
     }
 }

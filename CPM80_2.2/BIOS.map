@@ -4,7 +4,7 @@ SEGMENT LIST                                                           Page: 1
 
 SEGMENT              FROM TO   LENX  LEND ATTRIBUTES
 -------------------- ---- ---- ---- ----- ------------------------------------
-CSEG                 FA00 FD5F 0360   864 Fixed, Read/write, Initialised
+CSEG                 FA00 FD67 0368   872 Fixed, Read/write, Initialised
 
 FIXUP LIST                                                             Page: 2
 ------------------------------------------------------------------------------
@@ -18,47 +18,47 @@ SYMBOL NAME                                                            Page: 3
 
 HEX    DEC SEGMENT              SOURCE    SCOPE     NAME
 ---- ----- -------------------- --------- --------- ----
-FC9D 64669 CSEG                 Address F Local     ALL00
-FCBC 64700 CSEG                 Address F Local     ALL01
-FCDB 64731 CSEG                 Address F Local     ALL02
-FCFA 64762 CSEG                 Address F Local     ALL03
+FCA5 64677 CSEG                 Address F Local     ALL00
+FCC4 64708 CSEG                 Address F Local     ALL01
+FCE3 64739 CSEG                 Address F Local     ALL02
+FD02 64770 CSEG                 Address F Local     ALL03
 0078   120 <unknown>            Const Int Local     BASE
 EC06 60422 <unknown>            Const Int Local     BDOS
-FC1D 64541 <unknown>            Const Int Local     BEGDAT
+FC25 64549 <unknown>            Const Int Local     BEGDAT
 B000 45056 <unknown>            Const Int Local     BIAS
 FA00 64000 <unknown>            Const Int Local     BIOS
 FAB3 64179 CSEG                 Address F Local     BOOT
 0080   128 <unknown>            Const Int Local     BUFF
 E400 58368 <unknown>            Const Int Local     CCP
 0004     4 <unknown>            Const Int Local     CDISK
-FD19 64793 CSEG                 Address F Local     CHK00
-FD29 64809 CSEG                 Address F Local     CHK01
-FD39 64825 CSEG                 Address F Local     CHK02
-FD49 64841 CSEG                 Address F Local     CHK03
+FD21 64801 CSEG                 Address F Local     CHK00
+FD31 64817 CSEG                 Address F Local     CHK01
+FD41 64833 CSEG                 Address F Local     CHK02
+FD51 64849 CSEG                 Address F Local     CHK03
 FB51 64337 CSEG                 Address F Local     CONIN
 FB5D 64349 CSEG                 Address F Local     CONOUT
 FB49 64329 CSEG                 Address F Local     CONST
 000D    13 <unknown>            Const Int Local     CR
 013C   316 <unknown>            Const Int Local    *DATSIZ
-FC1D 64541 CSEG                 Address F Local     DIRBF
-FC1C 64540 CSEG                 Address F Local     DISKNO
+FC25 64549 CSEG                 Address F Local     DIRBF
+FC24 64548 CSEG                 Address F Local     DISKNO
 FA33 64051 CSEG                 Address F Local     DPBASE
 FA8D 64141 CSEG                 Address F Local     DPBLK
 0078   120 <unknown>            Const Int Local     DSTAT
-FD59 64857 <unknown>            Const Int Local    *ENDDAT
+FD61 64865 <unknown>            Const Int Local    *ENDDAT
 FB12 64274 CSEG                 Address F Local     GOCPM
 FB73 64371 CSEG                 Address F Local     HOME
 007A   122 <unknown>            Const Int Local     IHIGH
 0079   121 <unknown>            Const Int Local     ILOW
 FB34 64308 CSEG                 Address F Local     INIT_CONSOLE
 0003     3 <unknown>            Const Int Local     IOBYTE
-FD5E 64862 CSEG                 Address F Local     IOD
-FD5A 64858 CSEG                 Address F Local     IOF
-FD5B 64859 CSEG                 Address F Local    *ION
-FD59 64857 CSEG                 Address F Local     IOPB
+FD66 64870 CSEG                 Address F Local     IOD
+FD62 64866 CSEG                 Address F Local     IOF
+FD63 64867 CSEG                 Address F Local    *ION
+FD61 64865 CSEG                 Address F Local     IOPB
 0004     4 <unknown>            Const Int Local     IORDY
-FD5D 64861 CSEG                 Address F Local     IOS
-FD5C 64860 CSEG                 Address F Local     IOT
+FD65 64869 CSEG                 Address F Local     IOS
+FD64 64868 CSEG                 Address F Local     IOT
 000A    10 <unknown>            Const Int Local     LF
 FB68 64360 CSEG                 Address F Local     LIST
 FB6A 64362 CSEG                 Address F Local     LISTST
@@ -66,10 +66,10 @@ FADD 64221 CSEG                 Address F Local     LOAD1
 0040    64 <unknown>            Const Int Local     MSIZE
 002C    44 <unknown>            Const Int Local     NSECTS
 0002     2 <unknown>            Const Int Local     OFFSET
-FBCC 64460 CSEG                 Address F Local     PRMSG
+FBD6 64470 CSEG                 Address F Local     PRMSG
 FB6C 64364 CSEG                 Address F Local     PUNCH
 007B   123 <unknown>            Const Int Local     RBYTE
-FBBA 64442 CSEG                 Address F Local     READ
+FBC4 64452 CSEG                 Address F Local     READ
 FB6E 64366 CSEG                 Address F Local     READER
 
 SYMBOL NAME                                                            Page: 4
@@ -82,30 +82,32 @@ HEX    DEC SEGMENT              SOURCE    SCOPE     NAME
 0002     2 <unknown>            Const Int Local    *REL
 000A    10 <unknown>            Const Int Local     RETRY
 0000     0 <unknown>            Const Int Local    *REV
-FBE4 64484 CSEG                 Address F Local     REWAIT
+FBEE 64494 CSEG                 Address F Local     REWAIT
 0079   121 <unknown>            Const Int Local     RTYPE
 FBAA 64426 CSEG                 Address F Local     SECTRAN
+FBB4 64436 CSEG                 Address F Local     SECTRAN1
+FBB9 64441 CSEG                 Address F Local     SECTRAN2
 FB79 64377 CSEG                 Address F Local     SELDSK
-FBB4 64436 CSEG                 Address F Local     SETDMA
-FBD9 64473 CSEG                 Address F Local     SETFUNC
+FBBE 64446 CSEG                 Address F Local     SETDMA
+FBE3 64483 CSEG                 Address F Local     SETFUNC
 FBA5 64421 CSEG                 Address F Local     SETSEC
 FBA0 64416 CSEG                 Address F Local     SETTRK
 FA9C 64156 CSEG                 Address F Local     SIGNON
 0000     0 <unknown>            Const Int Local    *SNH
 0000     0 <unknown>            Const Int Local    *SNL
-FA73 64115 CSEG                 Address F Local     TRANS
-FC15 64533 CSEG                 Address F Local     TRYCOUNT
+FA73 64115 CSEG                 Address F Local    *TRANS
+FC1F 64543 CSEG                 Address F Local     TRYCOUNT
 00F5   245 <unknown>            Const Int Local     USART_CMD
 00F4   244 <unknown>            Const Int Local     USART_DATA
 0002     2 <unknown>            Const Int Local    *VER
 0016    22 <unknown>            Const Int Local     VERS
-FBF1 64497 CSEG                 Address F Local     WAIT0
-FBE2 64482 CSEG                 Address F Local     WAITIO
+FBFB 64507 CSEG                 Address F Local     WAIT0
+FBEC 64492 CSEG                 Address F Local     WAITIO
 FAC9 64201 CSEG                 Address F Local     WBOOT
 FA03 64003 CSEG                 Address F Local     WBOOTE
-FC15 64533 CSEG                 Address F Local     WERROR
-FC10 64528 CSEG                 Address F Local     WREADY
-FBC3 64451 CSEG                 Address F Local     WRITE
+FC1F 64543 CSEG                 Address F Local     WERROR
+FC1A 64538 CSEG                 Address F Local     WREADY
+FBCD 64461 CSEG                 Address F Local     WRITE
 0006     6 <unknown>            Const Int Local     WRITF
 
 SYMBOL ADDR                                                            Page: 5
@@ -145,11 +147,11 @@ B000 45056 <unknown>            Const Int Local     BIAS
 E400 58368 <unknown>            Const Int Local     CCP
 EC06 60422 <unknown>            Const Int Local     BDOS
 FA00 64000 <unknown>            Const Int Local     BIOS
-FC1D 64541 <unknown>            Const Int Local     BEGDAT
-FD59 64857 <unknown>            Const Int Local    *ENDDAT
+FC25 64549 <unknown>            Const Int Local     BEGDAT
+FD61 64865 <unknown>            Const Int Local    *ENDDAT
 FA03 64003 CSEG                 Address F Local     WBOOTE
 FA33 64051 CSEG                 Address F Local     DPBASE
-FA73 64115 CSEG                 Address F Local     TRANS
+FA73 64115 CSEG                 Address F Local    *TRANS
 FA8D 64141 CSEG                 Address F Local     DPBLK
 FA9C 64156 CSEG                 Address F Local     SIGNON
 FAB3 64179 CSEG                 Address F Local     BOOT
@@ -175,31 +177,33 @@ HEX    DEC SEGMENT              SOURCE    SCOPE     NAME
 FBA0 64416 CSEG                 Address F Local     SETTRK
 FBA5 64421 CSEG                 Address F Local     SETSEC
 FBAA 64426 CSEG                 Address F Local     SECTRAN
-FBB4 64436 CSEG                 Address F Local     SETDMA
-FBBA 64442 CSEG                 Address F Local     READ
-FBC3 64451 CSEG                 Address F Local     WRITE
-FBCC 64460 CSEG                 Address F Local     PRMSG
-FBD9 64473 CSEG                 Address F Local     SETFUNC
-FBE2 64482 CSEG                 Address F Local     WAITIO
-FBE4 64484 CSEG                 Address F Local     REWAIT
-FBF1 64497 CSEG                 Address F Local     WAIT0
-FC10 64528 CSEG                 Address F Local     WREADY
-FC15 64533 CSEG                 Address F Local     TRYCOUNT
-FC15 64533 CSEG                 Address F Local     WERROR
-FC1C 64540 CSEG                 Address F Local     DISKNO
-FC1D 64541 CSEG                 Address F Local     DIRBF
-FC9D 64669 CSEG                 Address F Local     ALL00
-FCBC 64700 CSEG                 Address F Local     ALL01
-FCDB 64731 CSEG                 Address F Local     ALL02
-FCFA 64762 CSEG                 Address F Local     ALL03
-FD19 64793 CSEG                 Address F Local     CHK00
-FD29 64809 CSEG                 Address F Local     CHK01
-FD39 64825 CSEG                 Address F Local     CHK02
-FD49 64841 CSEG                 Address F Local     CHK03
-FD59 64857 CSEG                 Address F Local     IOPB
-FD5A 64858 CSEG                 Address F Local     IOF
-FD5B 64859 CSEG                 Address F Local    *ION
-FD5C 64860 CSEG                 Address F Local     IOT
-FD5D 64861 CSEG                 Address F Local     IOS
-FD5E 64862 CSEG                 Address F Local     IOD
+FBB4 64436 CSEG                 Address F Local     SECTRAN1
+FBB9 64441 CSEG                 Address F Local     SECTRAN2
+FBBE 64446 CSEG                 Address F Local     SETDMA
+FBC4 64452 CSEG                 Address F Local     READ
+FBCD 64461 CSEG                 Address F Local     WRITE
+FBD6 64470 CSEG                 Address F Local     PRMSG
+FBE3 64483 CSEG                 Address F Local     SETFUNC
+FBEC 64492 CSEG                 Address F Local     WAITIO
+FBEE 64494 CSEG                 Address F Local     REWAIT
+FBFB 64507 CSEG                 Address F Local     WAIT0
+FC1A 64538 CSEG                 Address F Local     WREADY
+FC1F 64543 CSEG                 Address F Local     TRYCOUNT
+FC1F 64543 CSEG                 Address F Local     WERROR
+FC24 64548 CSEG                 Address F Local     DISKNO
+FC25 64549 CSEG                 Address F Local     DIRBF
+FCA5 64677 CSEG                 Address F Local     ALL00
+FCC4 64708 CSEG                 Address F Local     ALL01
+FCE3 64739 CSEG                 Address F Local     ALL02
+FD02 64770 CSEG                 Address F Local     ALL03
+FD21 64801 CSEG                 Address F Local     CHK00
+FD31 64817 CSEG                 Address F Local     CHK01
+FD41 64833 CSEG                 Address F Local     CHK02
+FD51 64849 CSEG                 Address F Local     CHK03
+FD61 64865 CSEG                 Address F Local     IOPB
+FD62 64866 CSEG                 Address F Local     IOF
+FD63 64867 CSEG                 Address F Local    *ION
+FD64 64868 CSEG                 Address F Local     IOT
+FD65 64869 CSEG                 Address F Local     IOS
+FD66 64870 CSEG                 Address F Local     IOD
 

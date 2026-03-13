@@ -39,8 +39,8 @@ Assembly Listing                                                                
 0102: CD 1B FA             24 |     CALL    BIOS+27         ;SELDSK
 0105: 21 00 E4             25 |     LXI H,CCP           ;CONVENIENT PLACE
 0108: 06 00                26 |     MVI B,0         ;START ON TRACK 0
-010A: 0E 02                27 |     MVI C,2         ;SECTOR 2 ON TRACK 1
-                           28 |     ; WE WILL START ON SECTOR 2 AS SECTOR 1 IS RESERVED FOR BOOT LOADER
+                           27 |     ; WE WILL START ON SECTOR 2 AS SECTOR 1 IS RESERVED FOR BOOT LOADER
+010A: 0E 02                28 |     MVI C,2         ;SECTOR 2 ON TRACK 1
 010C: C3 11 01             29 |     JMP RD_SEC
                            30 | RD_TRK:
 010F: 0E 01                31 |     MVI C,1         ;SECTOR 1 ON OTHER TRACKS

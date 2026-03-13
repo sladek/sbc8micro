@@ -4,6 +4,7 @@
 use crc::CRC_16_IBM_3740;
 use std::fs::File;
 use std::io::{ErrorKind, Seek, Write};
+use std::io;
 use std::os::windows::fs::FileExt;
 
 const NUM_OF_SECTORS_PER_TRACK: u8 = 26; // Valid number of sector is 1 - 26
@@ -136,14 +137,7 @@ pub enum ErrorIndicators {
 }
 impl Floppy {
     pub fn new(name: &str, read_only: bool) -> Result<Self> {
-        let file: std::io::Result<File> = if read_only {
-            std::fs::OpenOptions::new().read(true).open(name)
-        } else {
-            std::fs::OpenOptions::new()
-                .write(true)
-                .read(true)
-                .open(name)
-        };
+        let file = Self::open_file_image(name, read_only);
         let mut is_new = false;
         let floppy = match file {
             Ok(file) => file,
@@ -156,7 +150,18 @@ impl Floppy {
                             if file.write_all(&[0x55u8; FLOPPY_CAPACITY]).is_err() {
                                 return Err(ErrorIndicators::WriteError);
                             };
-                            file
+                            // We need to reopen a file as RO or RW based on input parameters so we drop now
+                            // the freshly created file
+                            drop(file);
+                            // And reopen it again
+                            match Self::open_file_image(name, read_only) {
+                                Ok(file) => {
+                                    file
+                                }
+                                Err(_) => {
+                                    return Err(ErrorIndicators::NotReady);
+                                }
+                            }
                         }
                         Err(_) => {
                             return Err(ErrorIndicators::NotReady);
@@ -181,6 +186,18 @@ impl Floppy {
 
         };
         Ok(floppy)
+    }
+
+    fn open_file_image(name: &str, read_only: bool) -> io::Result<File> {
+        let file: std::io::Result<File> = if read_only {
+            std::fs::OpenOptions::new().read(true).open(name)
+        } else {
+            std::fs::OpenOptions::new()
+                .write(true)
+                .read(true)
+                .open(name)
+        };
+        file
     }
     /// Format floppy disk.
     ///

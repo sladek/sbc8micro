@@ -241,7 +241,7 @@ impl Isbc202 {
     }
     /// Assign floppy disk
     /// 
-    /// Assignes floppy disk to bay 1 or bay 2
+    /// Assignes floppy disk to bay 1, 2, 3 or 4
     pub fn set_floppy(&mut self, floppy: Floppy, number: u8) -> Result<()> {
         if number <= NUMBER_OF_DISKS as u8 {
             let file_name = floppy.get_name();
@@ -350,20 +350,21 @@ impl Isbc202 {
                         return Err(ErrorIndicators::SeekError)
                     }
                 }
-//                self.set_interrupt_pending();
                 return Ok(None);
             }
             opcode if opcode == Opcode::FormatTrack as u8 => {
                 let track = iopb.track_address;
                 match &mut self.floppies[unit as usize] {
                     Some(floppy) => {
+                        if floppy.is_read_only() {
+                            return Err(ErrorIndicators::WriteProtect);
+                        }
                         floppy.format_track(track)?;
                     }
                     None => {
                         return Err(ErrorIndicators::SeekError)
                     }
                 }
-//                self.set_interrupt_pending();
                 return Ok(None);
             }
             opcode if opcode == Opcode::Recalibrate as u8 => {
@@ -375,14 +376,12 @@ impl Isbc202 {
                         return Err(ErrorIndicators::SeekError)
                     }
                 }
-//                self.set_interrupt_pending();
                 return Ok(None);
             }
             opcode if opcode == Opcode::ReadData as u8 => {
                 let data = self.read_data(iopb)?;
                 let address: u16 = (iopb.buffer_address_high as u16) << 8 | iopb.buffer_address_low as u16;
                 let dma = DmaRequest::new(address, data);
-//                self.set_interrupt_pending();
                 return Ok(Some(Dma::new(dma)));
             }
             opcode if opcode == Opcode::VerifyCrc as u8 => {
@@ -398,7 +397,6 @@ impl Isbc202 {
                 // Do nothing, for now.
             }
         }
-//        self.set_interrupt_pending();
         Ok(None)
     }
     /// Read data from floppy disk
@@ -434,6 +432,9 @@ impl Isbc202 {
         let unit = discette_instruction.get_unit_select();
         match &mut self.floppies[unit as usize] {
             Some(floppy) => {
+                if floppy.is_read_only() {
+                    return Err(ErrorIndicators::WriteProtect);
+                }
                 let mut sectors_to_read = iopb.number_of_records;
                 let mut sector_num = iopb.sector_address;
                 let mut sector_data: [u8; 128] = [0; 128];

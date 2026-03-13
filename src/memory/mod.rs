@@ -316,7 +316,7 @@ impl Memory {
     }
     /// Process Dma requests
     /// 
-    /// Tak as a parameter a Dma and if there are DmaRequests process them. (Puts them unto CPU's RAM)
+    /// Takes the Dma as a parameter and if there are DmaRequests process them. (Puts them unto CPU's RAM)
     pub fn process_dma(&mut self, dma: Option<Dma>) -> Result<(), String> {
         if let Some(dma) = dma  {
             for data in dma.get_requests() {

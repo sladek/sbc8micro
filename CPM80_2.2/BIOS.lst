@@ -67,9 +67,9 @@ FA18: C3 73 FB             46 |     JMP HOME        ;MOVE HEAD TO HOME POSITION
 FA1B: C3 79 FB             47 |     JMP SELDSK      ;SELECT DISK
 FA1E: C3 A0 FB             48 |     JMP SETTRK      ;SET TRACK NUMBER
 FA21: C3 A5 FB             49 |     JMP SETSEC      ;SET SECTOR NUMBER
-FA24: C3 B4 FB             50 |     JMP SETDMA      ;SET DMA ADDRESS
-FA27: C3 BA FB             51 |     JMP READ        ;READ DISK
-FA2A: C3 C3 FB             52 |     JMP WRITE       ;WRITE DISK
+FA24: C3 BE FB             50 |     JMP SETDMA      ;SET DMA ADDRESS
+FA27: C3 C4 FB             51 |     JMP READ        ;READ DISK
+FA2A: C3 CD FB             52 |     JMP WRITE       ;WRITE DISK
 FA2D: C3 6A FB             53 |     JMP LISTST      ;RETURN LIST STATUS
 FA30: C3 AA FB             54 |     JMP SECTRAN     ;SECTOR TRANSLATE
                            55 | ;
@@ -77,175 +77,179 @@ FA30: C3 AA FB             54 |     JMP SECTRAN     ;SECTOR TRANSLATE
                            57 | ;   IBM-COMPATIBLE 8" DISKS
                            58 | ;   DISK PARAMETER HEADER FOR DISK 00
                            59 | DPBASE: 
-FA33: 73 FA 00 00          60 |     DW  TRANS,0000H
-FA37: 00 00 00 00          61 |     DW  0000H,0000H
-FA3B: 1D FC 8D FA          62 |     DW  DIRBF,DPBLK
-FA3F: 19 FD 9D FC          63 |     DW  CHK00,ALL00
-                           64 | ;   DISK PARAMETER HEADER FOR DISK 01
-FA43: 73 FA 00 00          65 |     DW  TRANS,0000H
-FA47: 00 00 00 00          66 |     DW  0000H,0000H
-FA4B: 1D FC 8D FA          67 |     DW  DIRBF,DPBLK
-FA4F: 29 FD BC FC          68 |     DW  CHK01,ALL01
-                           69 | ;   DISK PARAMETER HEADER FOR DISK 02
-FA53: 73 FA 00 00          70 |     DW  TRANS,0000H
-FA57: 00 00 00 00          71 |     DW  0000H,0000H
-FA5B: 1D FC 8D FA          72 |     DW  DIRBF,DPBLK
-FA5F: 39 FD DB FC          73 |     DW  CHK02,ALL02
-                           74 | ;   DISK PARAMETER HEADER FOR DISK 03
-FA63: 73 FA 00 00          75 |     DW  TRANS,0000H
-FA67: 00 00 00 00          76 |     DW  0000H,0000H
-FA6B: 1D FC 8D FA          77 |     DW  DIRBF,DPBLK
-FA6F: 49 FD FA FC          78 |     DW  CHK03,ALL03
-                           79 | ;
-                           80 | ;   SECTOR TRANSLATE VECTOR
-                           81 | TRANS:  
-FA73: 01 07 0D 13          82 |     DB  1,7,13,19   ;SECTORS 1,2,3,4
-FA77: 19 05 0B 11          83 |     DB  25,5,11,17  ;SECTORS 5,6,7,8
-FA7B: 17 03 09 0F          84 |     DB  23,3,9,15   ;SECTORS 9,10,11,12
-FA7F: 15 02 08 0E          85 |     DB  21,2,8,14   ;SECTORS 13,14,15,16
-FA83: 14 1A 06 0C          86 |     DB  20,26,6,12  ;SECTORS 17,18,19,20
-FA87: 12 18 04 0A          87 |     DB  18,24,4,10  ;SECTORS 21,22,23,24
-FA8B: 10 16                88 |     DB  16,22       ;SECTORS 25,26
-                           89 | ;
-                           90 | DPBLK:  ;DISK PARAMETER BLOCK, COMMON TO ALL DISKS
-FA8D: 1A 00                91 |     DW  26      ;SECTORS PER TRACK
-FA8F: 03                   92 |     DB  3       ;BLOCK SHIFT FACTOR (3 = 1K BLOCKS)
-FA90: 07                   93 |     DB  7       ;BLOCK MASK (7 = 1K BLOCK MASK)
-FA91: 00                   94 |     DB  0       ;NULL MASK
-FA92: F2 00                95 |     DW  242     ;DISK SIZE-1
-FA94: 3F 00                96 |     DW  63      ;DIRECTORY MAX
-FA96: C0                   97 |     DB  192     ;ALLOC 0
-FA97: 00                   98 |     DB  0       ;ALLOC 1
-FA98: 10 00                99 |     DW  16      ;CHECK SIZE
-FA9A: 02 00               100 |     DW  2       ;TRACK OFFSET
-                          101 | ;
+                           60 | ;   DW  TRANS,0000H
+FA33: 00 00 00 00          61 |     DW  0000H,0000H ; NO TRANSLATION SO XLT IS SET TO 0000H
+FA37: 00 00 00 00          62 |     DW  0000H,0000H
+FA3B: 25 FC 8D FA          63 |     DW  DIRBF,DPBLK
+FA3F: 21 FD A5 FC          64 |     DW  CHK00,ALL00
+                           65 | ;   DISK PARAMETER HEADER FOR DISK 01
+                           66 | ;   DW  TRANS,0000H
+FA43: 00 00 00 00          67 |     DW  0000H,0000H
+FA47: 00 00 00 00          68 |     DW  0000H,0000H
+FA4B: 25 FC 8D FA          69 |     DW  DIRBF,DPBLK
+FA4F: 31 FD C4 FC          70 |     DW  CHK01,ALL01
+                           71 | ;   DISK PARAMETER HEADER FOR DISK 02
+                           72 | ;   DW  TRANS,0000H
+FA53: 00 00 00 00          73 |     DW  0000H,0000H
+FA57: 00 00 00 00          74 |     DW  0000H,0000H
+FA5B: 25 FC 8D FA          75 |     DW  DIRBF,DPBLK
+FA5F: 41 FD E3 FC          76 |     DW  CHK02,ALL02
+                           77 | ;   DISK PARAMETER HEADER FOR DISK 03
+                           78 | ;   DW  TRANS,0000H
+FA63: 00 00 00 00          79 |     DW  0000H,0000H
+FA67: 00 00 00 00          80 |     DW  0000H,0000H
+FA6B: 25 FC 8D FA          81 |     DW  DIRBF,DPBLK
+FA6F: 51 FD 02 FD          82 |     DW  CHK03,ALL03
+                           83 | ;
+                           84 | ;   SECTOR TRANSLATE VECTOR
+                           85 | TRANS:  
+FA73: 01 07 0D 13          86 |     DB  1,7,13,19   ;SECTORS 1,2,3,4
+FA77: 19 05 0B 11          87 |     DB  25,5,11,17  ;SECTORS 5,6,7,8
+FA7B: 17 03 09 0F          88 |     DB  23,3,9,15   ;SECTORS 9,10,11,12
+FA7F: 15 02 08 0E          89 |     DB  21,2,8,14   ;SECTORS 13,14,15,16
+FA83: 14 1A 06 0C          90 |     DB  20,26,6,12  ;SECTORS 17,18,19,20
+FA87: 12 18 04 0A          91 |     DB  18,24,4,10  ;SECTORS 21,22,23,24
+FA8B: 10 16                92 |     DB  16,22       ;SECTORS 25,26
+                           93 | ;
+                           94 | DPBLK:  ;DISK PARAMETER BLOCK, COMMON TO ALL DISKS
+FA8D: 1A 00                95 |     DW  26      ;SECTORS PER TRACK
+FA8F: 03                   96 |     DB  3       ;BLOCK SHIFT FACTOR (3 = 1K BLOCKS)
+FA90: 07                   97 |     DB  7       ;BLOCK MASK (7 = 1K BLOCK MASK)
+FA91: 00                   98 |     DB  0       ;NULL MASK
+FA92: F2 00                99 |     DW  242     ;DISK SIZE-1
+FA94: 3F 00               100 |     DW  63      ;DIRECTORY MAX
+FA96: C0                  101 |     DB  192     ;ALLOC 0
 
 
 Assembly Listing                                                                                                 Page: 3
 ------------------------------------------------------------------------------------------------------------------------
 
-                          102 | ;   END OF FIXED TABLES
-                          103 | ;
-                          104 | SIGNON: ;SIGNON MESSAGE: XXK CP/M VERS Y.Y
-FA9C: 0D 0A 0A            105 |     DB  CR,LF,LF
-                          106 |     IF  TEST
-                          107 :     DB  '32'    ;32K EXAMPLE BIOS
-                          108 :     ENDIF
-                          109 |     IF  !TEST
-FA9F: 36 34               110 |     DB  MSIZE/10+'0',MSIZE MOD 10+'0'   ;MEMORY SIZE
-                          111 |     ENDIF
-FAA1: 4B 20 43 50 2F...   112 |     DB  'K CP/M VERS '
-FAAD: 32 2E 32            113 |     DB  VERS/10+'0','.',VERS MOD 10+'0'
-FAB0: 0D 0A 00            114 |     DB  CR,LF,0
-                          115 | ;
-                          116 | ;   INDIVIDUAL SUBROUTINES TO PERFORM EACH FUNCTION
-                          117 | BOOT:   ;PRINT SIGNON MESSAGE AND GO TO CCP
-                          118 | ;   (NOTE: MDS BOOT INITIALIZED IOBYTE AT 0003H)
-FAB3: 31 00 01            119 |     LXI SP,BUFF+80H
-FAB6: CD 34 FB            120 |     CALL    INIT_CONSOLE
-FAB9: 21 9C FA            121 |     LXI H,SIGNON
-FABC: CD CC FB            122 |     CALL    PRMSG   ;PRINT MESSAGE
-FABF: AF                  123 |     XRA A   ;CLEAR ACCUMULATOR
-FAC0: 32 03 00            124 |     STA IOBYTE  ;CLEAR THE IOBYTE
-FAC3: 32 04 00            125 |     STA CDISK   ;SET INITIALLY TO DISK A
-FAC6: C3 12 FB            126 |     JMP GOCPM   ;GO TO CP/M
-                          127 | ;
-                          128 | WBOOT:  ;SIMPLEST CASE IS TO READ THE DISK UNTIL ALL SECTORS LOADED
-FAC9: 31 80 00            129 |     LXI SP,BUFF     ;USE SPACE BELOW BUFFER FOR STACK
-FACC: 0E 00               130 |     MVI C,0     ;SELECT DISK 0
-FACE: CD 79 FB            131 |     CALL    SELDSK
-FAD1: CD 73 FB            132 |     CALL    HOME        ;GO TO TRACK 00
-                          133 | ;
-FAD4: 06 2C               134 |     MVI B,NSECTS    ;B COUNTS # OF SECTORS TO LOAD
-FAD6: 0E 00               135 |     MVI C,0     ;C HAS THE CURRENT TRACK NUMBER
-FAD8: 16 02               136 |     MVI D,2     ;D HAS THE NEXT SECTOR TO READ
-                          137 | ;   NOTE THAT WE BEGIN BY READING TRACK 0, SECTOR 2 SINCE SECTOR 1
-                          138 | ;   CONTAINS THE COLD START LOADER, WHICH IS SKIPPED IN A WARM START
-FADA: 21 00 E4            139 |     LXI H,CCP       ;BASE OF CP/M (INITIAL LOAD POINT)
-                          140 | LOAD1:  ;LOAD ONE MORE SECTOR
-FADD: C5                  141 |     PUSH    B   ;SAVE SECTOR COUNT, CURRENT TRACK
-FADE: D5                  142 |     PUSH    D   ;SAVE NEXT SECTOR TO READ
-FADF: E5                  143 |     PUSH    H   ;SAVE DMA ADDRESS
-FAE0: 4A                  144 |     MOV C,D ;GET SECTOR ADDRESS TO REGISTER C
-FAE1: CD A5 FB            145 |     CALL    SETSEC  ;SET SECTOR ADDRESS FROM REGISTER C
-FAE4: C1                  146 |     POP B   ;RECALL DMA ADDRESS TO B,C
-FAE5: C5                  147 |     PUSH    B   ;REPLACE ON STACK FOR LATER RECALL
-FAE6: CD B4 FB            148 |     CALL    SETDMA  ;SET DMA ADDRESS FROM B,C
-                          149 | ;
-                          150 | ;   DRIVE SET TO 0, TRACK SET, SECTOR SET, DMA ADDRESS SET
-FAE9: CD BA FB            151 |     CALL    READ
-FAEC: FE 00               152 |     CPI 00H ;ANY ERRORS?
-FAEE: C2 C9 FA            153 |     JNZ WBOOT   ;RETRY THE ENTIRE BOOT IF AN ERROR OCCURS
-                          154 | ;
-                          155 | ;   NO ERROR, MOVE TO NEXT SECTOR
-FAF1: E1                  156 |     POP H   ;RECALL DMA ADDRESS
-FAF2: 11 80 00            157 |     LXI D,128   ;DMA=DMA+128
+FA97: 00                  102 |     DB  0       ;ALLOC 1
+FA98: 10 00               103 |     DW  16      ;CHECK SIZE
+FA9A: 02 00               104 |     DW  2       ;TRACK OFFSET
+                          105 | ;
+                          106 | ;   END OF FIXED TABLES
+                          107 | ;
+                          108 | SIGNON: ;SIGNON MESSAGE: XXK CP/M VERS Y.Y
+FA9C: 0D 0A 0A            109 |     DB  CR,LF,LF
+                          110 |     IF  TEST
+                          111 :     DB  '32'    ;32K EXAMPLE BIOS
+                          112 :     ENDIF
+                          113 |     IF  !TEST
+FA9F: 36 34               114 |     DB  MSIZE/10+'0',MSIZE MOD 10+'0'   ;MEMORY SIZE
+                          115 |     ENDIF
+FAA1: 4B 20 43 50 2F...   116 |     DB  'K CP/M VERS '
+FAAD: 32 2E 32            117 |     DB  VERS/10+'0','.',VERS MOD 10+'0'
+FAB0: 0D 0A 00            118 |     DB  CR,LF,0
+                          119 | ;
+                          120 | ;   INDIVIDUAL SUBROUTINES TO PERFORM EACH FUNCTION
+                          121 | BOOT:   ;PRINT SIGNON MESSAGE AND GO TO CCP
+                          122 | ;   (NOTE: MDS BOOT INITIALIZED IOBYTE AT 0003H)
+FAB3: 31 00 01            123 |     LXI SP,BUFF+80H
+FAB6: CD 34 FB            124 |     CALL    INIT_CONSOLE
+FAB9: 21 9C FA            125 |     LXI H,SIGNON
+FABC: CD D6 FB            126 |     CALL    PRMSG   ;PRINT MESSAGE
+FABF: AF                  127 |     XRA A   ;CLEAR ACCUMULATOR
+FAC0: 32 03 00            128 |     STA IOBYTE  ;CLEAR THE IOBYTE
+FAC3: 32 04 00            129 |     STA CDISK   ;SET INITIALLY TO DISK A
+FAC6: C3 12 FB            130 |     JMP GOCPM   ;GO TO CP/M
+                          131 | ;
+                          132 | WBOOT:  ;SIMPLEST CASE IS TO READ THE DISK UNTIL ALL SECTORS LOADED
+FAC9: 31 80 00            133 |     LXI SP,BUFF     ;USE SPACE BELOW BUFFER FOR STACK
+FACC: 0E 00               134 |     MVI C,0     ;SELECT DISK 0
+FACE: CD 79 FB            135 |     CALL    SELDSK
+FAD1: CD 73 FB            136 |     CALL    HOME        ;GO TO TRACK 00
+                          137 | ;
+FAD4: 06 2C               138 |     MVI B,NSECTS    ;B COUNTS # OF SECTORS TO LOAD
+FAD6: 0E 00               139 |     MVI C,0     ;C HAS THE CURRENT TRACK NUMBER
+FAD8: 16 02               140 |     MVI D,2     ;D HAS THE NEXT SECTOR TO READ
+                          141 | ;   NOTE THAT WE BEGIN BY READING TRACK 0, SECTOR 2 SINCE SECTOR 1
+                          142 | ;   CONTAINS THE COLD START LOADER, WHICH IS SKIPPED IN A WARM START
+FADA: 21 00 E4            143 |     LXI H,CCP       ;BASE OF CP/M (INITIAL LOAD POINT)
+                          144 | LOAD1:  ;LOAD ONE MORE SECTOR
+FADD: C5                  145 |     PUSH    B   ;SAVE SECTOR COUNT, CURRENT TRACK
+FADE: D5                  146 |     PUSH    D   ;SAVE NEXT SECTOR TO READ
+FADF: E5                  147 |     PUSH    H   ;SAVE DMA ADDRESS
+FAE0: 4A                  148 |     MOV C,D ;GET SECTOR ADDRESS TO REGISTER C
+FAE1: CD A5 FB            149 |     CALL    SETSEC  ;SET SECTOR ADDRESS FROM REGISTER C
+FAE4: C1                  150 |     POP B   ;RECALL DMA ADDRESS TO B,C
+FAE5: C5                  151 |     PUSH    B   ;REPLACE ON STACK FOR LATER RECALL
+FAE6: CD BE FB            152 |     CALL    SETDMA  ;SET DMA ADDRESS FROM B,C
+                          153 | ;
+                          154 | ;   DRIVE SET TO 0, TRACK SET, SECTOR SET, DMA ADDRESS SET
+FAE9: CD C4 FB            155 |     CALL    READ
+FAEC: FE 00               156 |     CPI 00H ;ANY ERRORS?
+FAEE: C2 C9 FA            157 |     JNZ WBOOT   ;RETRY THE ENTIRE BOOT IF AN ERROR OCCURS
 
 
 Assembly Listing                                                                                                 Page: 4
 ------------------------------------------------------------------------------------------------------------------------
 
-FAF5: 19                  158 |     DAD D   ;NEW DMA ADDRESS IS IN H,L
-FAF6: D1                  159 |     POP D   ;RECALL SECTOR ADDRESS
-FAF7: C1                  160 |     POP B   ;RECALL NUMBER OF SECTORS REMAINING, AND CURRENT TRK
-FAF8: 05                  161 |     DCR B   ;SECTORS=SECTORS-1
-FAF9: CA 12 FB            162 |     JZ  GOCPM   ;TRANSFER TO CP/M IF ALL HAVE BEEN LOADED
-                          163 | ;
-                          164 | ;   MORE SECTORS REMAIN TO LOAD, CHECK FOR TRACK CHANGE
-FAFC: 14                  165 |     INR D
-FAFD: 7A                  166 |     MOV A,D ;SECTOR=27?, IF SO, CHANGE TRACKS
-FAFE: FE 1B               167 |     CPI 27
-FB00: DA DD FA            168 |     JC  LOAD1   ;CARRY GENERATED IF SECTOR<27
-                          169 | ;
-                          170 | ;   END OF CURRENT TRACK, GO TO NEXT TRACK
-FB03: 16 01               171 |     MVI D,1 ;BEGIN WITH FIRST SECTOR OF NEXT TRACK
-FB05: 0C                  172 |     INR C   ;TRACK=TRACK+1
+                          158 | ;
+                          159 | ;   NO ERROR, MOVE TO NEXT SECTOR
+FAF1: E1                  160 |     POP H   ;RECALL DMA ADDRESS
+FAF2: 11 80 00            161 |     LXI D,128   ;DMA=DMA+128
+FAF5: 19                  162 |     DAD D   ;NEW DMA ADDRESS IS IN H,L
+FAF6: D1                  163 |     POP D   ;RECALL SECTOR ADDRESS
+FAF7: C1                  164 |     POP B   ;RECALL NUMBER OF SECTORS REMAINING, AND CURRENT TRK
+FAF8: 05                  165 |     DCR B   ;SECTORS=SECTORS-1
+FAF9: CA 12 FB            166 |     JZ  GOCPM   ;TRANSFER TO CP/M IF ALL HAVE BEEN LOADED
+                          167 | ;
+                          168 | ;   MORE SECTORS REMAIN TO LOAD, CHECK FOR TRACK CHANGE
+FAFC: 14                  169 |     INR D
+FAFD: 7A                  170 |     MOV A,D ;SECTOR=27?, IF SO, CHANGE TRACKS
+FAFE: FE 1B               171 |     CPI 27
+FB00: DA DD FA            172 |     JC  LOAD1   ;CARRY GENERATED IF SECTOR<27
                           173 | ;
-                          174 | ;   SAVE REGISTER STATE, AND CHANGE TRACKS
-FB06: C5                  175 |     PUSH    B
-FB07: D5                  176 |     PUSH    D
-FB08: E5                  177 |     PUSH    H
-FB09: CD A0 FB            178 |     CALL    SETTRK  ;TRACK ADDRESS SET FROM REGISTER C
-FB0C: E1                  179 |     POP H
-FB0D: D1                  180 |     POP D
-FB0E: C1                  181 |     POP B
-FB0F: C3 DD FA            182 |     JMP LOAD1   ;FOR ANOTHER SECTOR
-                          183 | ;
-                          184 | ;   END OF LOAD OPERATION, SET PARAMETERS AND GO TO CP/M
-                          185 | GOCPM:
-FB12: 3E C3               186 |     MVI A,0C3H  ;C3 IS A JMP INSTRUCTION
-FB14: 32 00 00            187 |     STA 0   ;FOR JMP TO WBOOT
-FB17: 21 03 FA            188 |     LXI H,WBOOTE    ;WBOOT ENTRY POINT
-FB1A: 22 01 00            189 |     SHLD    1   ;SET ADDRESS FIELD FOR JMP AT 0
-                          190 | ;
-FB1D: 32 05 00            191 |     STA 5   ;FOR JMP TO BDOS
-FB20: 21 06 EC            192 |     LXI H,BDOS  ;BDOS ENTRY POINT
-FB23: 22 06 00            193 |     SHLD    6   ;ADDRESS FIELD OF JUMP AT 5 TO BDOS
+                          174 | ;   END OF CURRENT TRACK, GO TO NEXT TRACK
+FB03: 16 01               175 |     MVI D,1 ;BEGIN WITH FIRST SECTOR OF NEXT TRACK
+FB05: 0C                  176 |     INR C   ;TRACK=TRACK+1
+                          177 | ;
+                          178 | ;   SAVE REGISTER STATE, AND CHANGE TRACKS
+FB06: C5                  179 |     PUSH    B
+FB07: D5                  180 |     PUSH    D
+FB08: E5                  181 |     PUSH    H
+FB09: CD A0 FB            182 |     CALL    SETTRK  ;TRACK ADDRESS SET FROM REGISTER C
+FB0C: E1                  183 |     POP H
+FB0D: D1                  184 |     POP D
+FB0E: C1                  185 |     POP B
+FB0F: C3 DD FA            186 |     JMP LOAD1   ;FOR ANOTHER SECTOR
+                          187 | ;
+                          188 | ;   END OF LOAD OPERATION, SET PARAMETERS AND GO TO CP/M
+                          189 | GOCPM:
+FB12: 3E C3               190 |     MVI A,0C3H  ;C3 IS A JMP INSTRUCTION
+FB14: 32 00 00            191 |     STA 0   ;FOR JMP TO WBOOT
+FB17: 21 03 FA            192 |     LXI H,WBOOTE    ;WBOOT ENTRY POINT
+FB1A: 22 01 00            193 |     SHLD    1   ;SET ADDRESS FIELD FOR JMP AT 0
                           194 | ;
-FB26: 01 80 00            195 |     LXI B,80H   ;DEFAULT DMA ADDRESS IS 80H
-FB29: CD B4 FB            196 |     CALL    SETDMA  ;SET IOD in IOPB
-                          197 | ;
-FB2C: FB                  198 |     EI      ;ENABLE THE INTERRUPT SYSTEM
-FB2D: 3A 04 00            199 |     LDA CDISK   ;GET CURRENT DISK NUMBER
-FB30: 4F                  200 |     MOV C,A ;SEND TO THE CCP
-FB31: C3 00 E4            201 |     JMP CCP ;GO TO CP/M FOR FURTHER PROCESSING
-                          202 | ;
-                          203 | ;
-                          204 | ;   SIMPLE I/O HANDLERS (MUST BE FILLED IN BY USER)
-                          205 | ;   IN EACH CASE, THE ENTRY POINT IS PROVIDED, WITH SPACE RESERVED
-                          206 | ;   TO INSERT YOUR OWN CODE
+FB1D: 32 05 00            195 |     STA 5   ;FOR JMP TO BDOS
+FB20: 21 06 EC            196 |     LXI H,BDOS  ;BDOS ENTRY POINT
+FB23: 22 06 00            197 |     SHLD    6   ;ADDRESS FIELD OF JUMP AT 5 TO BDOS
+                          198 | ;
+FB26: 01 80 00            199 |     LXI B,80H   ;DEFAULT DMA ADDRESS IS 80H
+FB29: CD BE FB            200 |     CALL    SETDMA  ;SET IOD in IOPB
+                          201 | ;
+FB2C: FB                  202 |     EI      ;ENABLE THE INTERRUPT SYSTEM
+FB2D: 3A 04 00            203 |     LDA CDISK   ;GET CURRENT DISK NUMBER
+FB30: 4F                  204 |     MOV C,A ;SEND TO THE CCP
+FB31: C3 00 E4            205 |     JMP CCP ;GO TO CP/M FOR FURTHER PROCESSING
+                          206 | ;
                           207 | ;
-                          208 | 
-                          209 |     .INCLUDE "I8251_INIT.LIB"
-                            1 | ; ASSUMING 8251 DATA PORT = 0F4H, COMMAND/STATUS PORT = 0F5H
-                            2 | ; CONSTANTS
-                            3 | USART_DATA  EQU 0F4H    ; DATA PORT
-                            4 | USART_CMD   EQU 0F5H    ; COMMAND/STATUS PORT
+                          208 | ;   SIMPLE I/O HANDLERS (MUST BE FILLED IN BY USER)
+                          209 | ;   IN EACH CASE, THE ENTRY POINT IS PROVIDED, WITH SPACE RESERVED
+                          210 | ;   TO INSERT YOUR OWN CODE
+                          211 | ;
+                          212 | 
+                          213 |     .INCLUDE "I8251_INIT.LIB"
 
 
 Assembly Listing                                                                                                 Page: 5
 ------------------------------------------------------------------------------------------------------------------------
 
+                            1 | ; ASSUMING 8251 DATA PORT = 0F4H, COMMAND/STATUS PORT = 0F5H
+                            2 | ; CONSTANTS
+                            3 | USART_DATA  EQU 0F4H    ; DATA PORT
+                            4 | USART_CMD   EQU 0F5H    ; COMMAND/STATUS PORT
                             5 | 
                             6 | INIT_CONSOLE:
 FB34: 3E 00                 7 |         MVI A, 00H          ; 1. SEND AT LEAST 3 NULLS TO ENSURE
@@ -268,279 +272,294 @@ FB42: D3 F5                20 |         OUT USART_CMD
 FB44: 3E 37                24 |         MVI A, 37H          ; 0011 0111 -> TXEN, RXE, DTR, RTS
 FB46: D3 F5                25 |         OUT USART_CMD
 FB48: C9                   26 |         RET
-                          210 | 
-                          211 | CONST:  ;CONSOLE STATUS, RETURN 0FFH IF CHARACTER READY, 00H IF NOT
-FB49: DB F5               212 |     IN  USART_CMD
-FB4B: E6 02               213 |     ANI 02H
-FB4D: C8                  214 |     RZ      ; NO CHARACTER READY
-FB4E: 3E FF               215 |     MVI A, 0FFH ; CHARACTER READY
-FB50: C9                  216 |     RET
-                          217 | ;
-                          218 | CONIN:  ;CONSOLE CHARACTER INTO REGISTER A, NO ECHO
-FB51: DB F5               219 |     IN  USART_CMD
-FB53: E6 02               220 |     ANI 02H
-FB55: CA 51 FB            221 |     JZ  CONIN
-FB58: DB F4               222 |     IN  USART_DATA
-FB5A: E6 7F               223 |     ANI 7FH ;STRIP PARITY BIT
-FB5C: C9                  224 |     RET
-                          225 | ;
-                          226 | CONOUT: ;CONSOLE CHARACTER OUTPUT FROM REGISTER C
-FB5D: DB F5               227 |     IN  USART_CMD
-FB5F: E6 01               228 |     ANI 01H
-FB61: CA 5D FB            229 |     JZ  CONOUT
-FB64: 79                  230 |     MOV A, C
-FB65: D3 F4               231 |     OUT USART_DATA
-FB67: C9                  232 |     RET
-                          233 | ;
-                          234 | LIST:   ;LIST CHARACTER FROM REGISTER C
-FB68: 79                  235 |     MOV A,C ;CHARACTER TO REGISTER A
-FB69: C9                  236 |     RET     ;NULL SUBROUTINE
+                          214 | 
+                          215 | CONST:  ;CONSOLE STATUS, RETURN 0FFH IF CHARACTER READY, 00H IF NOT
+FB49: DB F5               216 |     IN  USART_CMD
+FB4B: E6 02               217 |     ANI 02H
+FB4D: C8                  218 |     RZ      ; NO CHARACTER READY
+FB4E: 3E FF               219 |     MVI A, 0FFH ; CHARACTER READY
+FB50: C9                  220 |     RET
+                          221 | ;
+                          222 | CONIN:  ;CONSOLE CHARACTER INTO REGISTER A, NO ECHO
+FB51: DB F5               223 |     IN  USART_CMD
+FB53: E6 02               224 |     ANI 02H
+FB55: CA 51 FB            225 |     JZ  CONIN
+FB58: DB F4               226 |     IN  USART_DATA
+FB5A: E6 7F               227 |     ANI 7FH ;STRIP PARITY BIT
+FB5C: C9                  228 |     RET
+                          229 | ;
+                          230 | CONOUT: ;CONSOLE CHARACTER OUTPUT FROM REGISTER C
+FB5D: DB F5               231 |     IN  USART_CMD
+FB5F: E6 01               232 |     ANI 01H
+FB61: CA 5D FB            233 |     JZ  CONOUT
+FB64: 79                  234 |     MOV A, C
+FB65: D3 F4               235 |     OUT USART_DATA
+FB67: C9                  236 |     RET
                           237 | ;
-                          238 | LISTST: ;RETURN LIST STATUS (0 IF NOT READY, 1 IF READY)
-FB6A: AF                  239 |     XRA A   ;0 IS ALWAYS OK TO RETURN
-FB6B: C9                  240 |     RET
+                          238 | LIST:   ;LIST CHARACTER FROM REGISTER C
+FB68: 79                  239 |     MOV A,C ;CHARACTER TO REGISTER A
+FB69: C9                  240 |     RET     ;NULL SUBROUTINE
                           241 | ;
-                          242 | PUNCH:  ;PUNCH CHARACTER FROM REGISTER C
-FB6C: 79                  243 |     MOV A,C ;CHARACTER TO REGISTER A
+                          242 | LISTST: ;RETURN LIST STATUS (0 IF NOT READY, 1 IF READY)
+FB6A: AF                  243 |     XRA A   ;0 IS ALWAYS OK TO RETURN
 
 
 Assembly Listing                                                                                                 Page: 6
 ------------------------------------------------------------------------------------------------------------------------
 
-FB6D: C9                  244 |     RET     ;NULL SUBROUTINE
+FB6B: C9                  244 |     RET
                           245 | ;
-                          246 | ;
-                          247 | READER: ;READ CHARACTER INTO REGISTER A FROM READER DEVICE
-FB6E: 3E 1A               248 |     MVI A,1AH   ;ENTER END OF FILE FOR NOW (REPLACE LATER)
-FB70: E6 7F               249 |     ANI 7FH ;REMEMBER TO STRIP PARITY BIT
-FB72: C9                  250 |     RET
-                          251 | ;
-                          252 | ;
-                          253 | ;   I/O DRIVERS FOR THE DISK FOLLOW
-                          254 | ;   FOR NOW, WE WILL SIMPLY STORE THE PARAMETERS AWAY FOR USE
-                          255 | ;   IN THE READ AND WRITE SUBROUTINES
+                          246 | PUNCH:  ;PUNCH CHARACTER FROM REGISTER C
+FB6C: 79                  247 |     MOV A,C ;CHARACTER TO REGISTER A
+FB6D: C9                  248 |     RET     ;NULL SUBROUTINE
+                          249 | ;
+                          250 | ;
+                          251 | READER: ;READ CHARACTER INTO REGISTER A FROM READER DEVICE
+FB6E: 3E 1A               252 |     MVI A,1AH   ;ENTER END OF FILE FOR NOW (REPLACE LATER)
+FB70: E6 7F               253 |     ANI 7FH ;REMEMBER TO STRIP PARITY BIT
+FB72: C9                  254 |     RET
+                          255 | ;
                           256 | ;
-                          257 | HOME:   ;MOVE TO THE TRACK 00 POSITION OF CURRENT DRIVE
-                          258 | ;   TRANSLATE THIS CALL INTO A SETTRK CALL WITH PARAMETER 00
-FB73: 0E 00               259 |     MVI C,0 ;SELECT TRACK 0
-FB75: CD A0 FB            260 |     CALL    SETTRK
-FB78: C9                  261 |     RET     ;WE WILL MOVE TO 00 ON FIRST READ/WRITE
-                          262 | ;
-                          263 | SELDSK: ;SELECT DISK GIVEN BY REGISTER C
-FB79: 21 00 00            264 |     LXI H,0000H ;ERROR RETURN CODE
-FB7C: 79                  265 |     MOV A,C
-FB7D: 32 1C FC            266 |     STA DISKNO
-FB80: FE 04               267 |     CPI 4   ;MUST BE BETWEEN 0 AND 3
-FB82: D0                  268 |     RNC     ;NO CARRY IF 4,5,...
-                          269 | ;   DISK NUMBER IS IN THE PROPER RANGE
-FB83: 79                  270 |     MOV A,C 
-FB84: 87                  271 |     ADD A   ;*2
-FB85: 87                  272 |     ADD A   ;*4
-FB86: 87                  273 |     ADD A   ;*8
-FB87: 87                  274 |     ADD A   ;*16
-FB88: 47                  275 |     MOV B,A ;NEW DISK NUMBER TO B
-FB89: 21 5A FD            276 |     LXI H,IOF   ;IO FUNCTION IN IOPB
-FB8C: 7E                  277 |     MOV A,M
-FB8D: E6 CF               278 |     ANI 11001111B   ;MASK OUT DISK NUMBER
-FB8F: B0                  279 |     ORA B   ;MASK IN NEW DISK NUMBER
-FB90: 77                  280 |     MOV M,A ;SAVE IT IN IOPB
-                          281 | ;   COMPUTE PROPER DISK PARAMETER HEADER ADDRESS
-FB91: 3A 1C FC            282 |     LDA DISKNO
-FB94: 6F                  283 |     MOV L,A ;L=DISK NUMBER 0,1,2,3
-FB95: 26 00               284 |     MVI H,0 ;HIGH ORDER ZERO
-FB97: 29                  285 |     DAD H   ;*2
-FB98: 29                  286 |     DAD H   ;*4
-FB99: 29                  287 |     DAD H   ;*8
-FB9A: 29                  288 |     DAD H   ;*16 (SIZE OF EACH HEADER)
-FB9B: 11 33 FA            289 |     LXI D,DPBASE
-FB9E: 19                  290 |     DAD D   ;HL=.DPBASE(DISKNO*16)
-FB9F: C9                  291 |     RET
-                          292 | ;
-                          293 | SETTRK: ;SET TRACK GIVEN BY REGISTER C
-FBA0: 21 5C FD            294 |     LXI H,IOT
-FBA3: 71                  295 |     MOV M,C
-FBA4: C9                  296 |     RET
-                          297 | ;
-                          298 | SETSEC: ;SET SECTOR GIVEN BY REGISTER C
-FBA5: 21 5D FD            299 |     LXI H,IOS
+                          257 | ;   I/O DRIVERS FOR THE DISK FOLLOW
+                          258 | ;   FOR NOW, WE WILL SIMPLY STORE THE PARAMETERS AWAY FOR USE
+                          259 | ;   IN THE READ AND WRITE SUBROUTINES
+                          260 | ;
+                          261 | HOME:   ;MOVE TO THE TRACK 00 POSITION OF CURRENT DRIVE
+                          262 | ;   TRANSLATE THIS CALL INTO A SETTRK CALL WITH PARAMETER 00
+FB73: 0E 00               263 |     MVI C,0 ;SELECT TRACK 0
+FB75: CD A0 FB            264 |     CALL    SETTRK
+FB78: C9                  265 |     RET     ;WE WILL MOVE TO 00 ON FIRST READ/WRITE
+                          266 | ;
+                          267 | SELDSK: ;SELECT DISK GIVEN BY REGISTER C
+FB79: 21 00 00            268 |     LXI H,0000H ;ERROR RETURN CODE
+FB7C: 79                  269 |     MOV A,C
+FB7D: 32 24 FC            270 |     STA DISKNO
+FB80: FE 04               271 |     CPI 4   ;MUST BE BETWEEN 0 AND 3
+FB82: D0                  272 |     RNC     ;NO CARRY IF 4,5,...
+                          273 | ;   DISK NUMBER IS IN THE PROPER RANGE
+FB83: 79                  274 |     MOV A,C 
+FB84: 87                  275 |     ADD A   ;*2
+FB85: 87                  276 |     ADD A   ;*4
+FB86: 87                  277 |     ADD A   ;*8
+FB87: 87                  278 |     ADD A   ;*16
+FB88: 47                  279 |     MOV B,A ;NEW DISK NUMBER TO B
+FB89: 21 62 FD            280 |     LXI H,IOF   ;IO FUNCTION IN IOPB
+FB8C: 7E                  281 |     MOV A,M
+FB8D: E6 CF               282 |     ANI 11001111B   ;MASK OUT DISK NUMBER
+FB8F: B0                  283 |     ORA B   ;MASK IN NEW DISK NUMBER
+FB90: 77                  284 |     MOV M,A ;SAVE IT IN IOPB
+                          285 | ;   COMPUTE PROPER DISK PARAMETER HEADER ADDRESS
+FB91: 3A 24 FC            286 |     LDA DISKNO
+FB94: 6F                  287 |     MOV L,A ;L=DISK NUMBER 0,1,2,3
+FB95: 26 00               288 |     MVI H,0 ;HIGH ORDER ZERO
+FB97: 29                  289 |     DAD H   ;*2
+FB98: 29                  290 |     DAD H   ;*4
+FB99: 29                  291 |     DAD H   ;*8
+FB9A: 29                  292 |     DAD H   ;*16 (SIZE OF EACH HEADER)
+FB9B: 11 33 FA            293 |     LXI D,DPBASE
+FB9E: 19                  294 |     DAD D   ;HL=.DPBASE(DISKNO*16)
+FB9F: C9                  295 |     RET
+                          296 | ;
+                          297 | SETTRK: ;SET TRACK GIVEN BY REGISTER C
+FBA0: 21 64 FD            298 |     LXI H,IOT
+FBA3: 71                  299 |     MOV M,C
 
 
 Assembly Listing                                                                                                 Page: 7
 ------------------------------------------------------------------------------------------------------------------------
 
-FBA8: 71                  300 |     MOV M,C
-FBA9: C9                  301 |     RET
-                          302 | ;
-                          303 | SECTRAN:
-                          304 |     ;TRANSLATE SECTOR BC USING TABLE AT DE
-FBAA: 06 00               305 |     MVI B,0 ;DOUBLE PRECISION SECTOR NUMBER IN BC
-FBAC: EB                  306 |     XCHG        ;TRANSLATE TABLE ADDRESS TO HL
-FBAD: 09                  307 |     DAD B   ;TRANSLATE(SECTOR) ADDRESS
-FBAE: 7E                  308 |     MOV A,M ;TRANSLATED SECTOR NUMBER TO A
-FBAF: 32 5D FD            309 |     STA IOS
-FBB2: 6F                  310 |     MOV L,A ;RETURN SECTOR NUMBER IN L
-FBB3: C9                  311 |     RET
-                          312 | ;
-                          313 | SETDMA: ;SET DMA ADDRESS GIVEN BY REGISTERS B AND C
-FBB4: 69                  314 |     MOV L,C ;LOW ORDER ADDRESS
-FBB5: 60                  315 |     MOV H,B ;HIGH ORDER ADDRESS
-FBB6: 22 5E FD            316 |     SHLD    IOD ;SAVE THE ADDRESS
-FBB9: C9                  317 |     RET
-                          318 | ;
-                          319 | READ:   ;READ NEXT DISK RECORD (ASSUMING DISK/TRK/SEC/DMA SET)
-FBBA: 0E 04               320 |     MVI C,READF ;SET TO READ FUNCTION
-FBBC: CD D9 FB            321 |     CALL    SETFUNC
-FBBF: CD E2 FB            322 |     CALL    WAITIO  ;PERFORM READ FUNCTION
-FBC2: C9                  323 |     RET     ;MAY HAVE ERROR SET IN REG-A
+FBA4: C9                  300 |     RET
+                          301 | ;
+                          302 | SETSEC: ;SET SECTOR GIVEN BY REGISTER C
+FBA5: 21 65 FD            303 |     LXI H,IOS
+FBA8: 71                  304 |     MOV M,C
+FBA9: C9                  305 |     RET
+                          306 | ;
+                          307 | SECTRAN:
+                          308 |     ;TRANSLATE SECTOR BC USING TABLE AT DE
+FBAA: 7A                  309 |     MOV A,D ;CHECK IF TRANSLATION NEEDED
+FBAB: B3                  310 |     ORA E   ;IF NEEDED DE != 0
+FBAC: C2 B4 FB            311 |     JNZ SECTRAN1
+FBAF: 79                  312 |     MOV A,C ;NO TRANSLATION SO JUST
+FBB0: 3C                  313 |     INR A   ;+1 AS BC STARTS WITH 0 END SECNR WITH 1
+FBB1: C3 B9 FB            314 |     JMP SECTRAN2;RETURN ORIGINAL SECTOR NUMBER
+                          315 | SECTRAN1:
+FBB4: 06 00               316 |     MVI B,0 ;DOUBLE PRECISION SECTOR NUMBER IN BC
+FBB6: EB                  317 |     XCHG        ;TRANSLATE TABLE ADDRESS TO HL
+FBB7: 09                  318 |     DAD B   ;TRANSLATE(SECTOR) ADDRESS
+FBB8: 7E                  319 |     MOV A,M ;TRANSLATED SECTOR NUMBER TO A
+                          320 | SECTRAN2:
+FBB9: 32 65 FD            321 |     STA IOS
+FBBC: 6F                  322 |     MOV L,A ;RETURN SECTOR NUMBER IN L
+FBBD: C9                  323 |     RET
                           324 | ;
-                          325 | ;
-                          326 | WRITE:  ;DISK WRITE FUNCTION
-FBC3: 0E 06               327 |     MVI C,WRITF
-FBC5: CD D9 FB            328 |     CALL    SETFUNC ;SET TO WRITE FUNCTION
-FBC8: CD E2 FB            329 |     CALL    WAITIO
-FBCB: C9                  330 |     RET     ;MAY HAVE ERROR SET
-                          331 | ;
-                          332 | ;   UTILITY SUBROUTINES
-                          333 | PRMSG:  ;PRINT MESSAGE AT H,L TO 0
-FBCC: 7E                  334 |     MOV A,M
-FBCD: B7                  335 |     ORA A   ;ZERO?
-FBCE: C8                  336 |     RZ
-                          337 | ;   MORE TO PRINT
-FBCF: E5                  338 |     PUSH    H
-FBD0: 4F                  339 |     MOV C,A
-FBD1: CD 5D FB            340 |     CALL    CONOUT
-FBD4: E1                  341 |     POP H
-FBD5: 23                  342 |     INX H
-FBD6: C3 CC FB            343 |     JMP PRMSG
-                          344 | ;
-                          345 | SETFUNC:
-                          346 | ;   SET FUNCTION FOR NEXT I/O (COMMAND IN REG-C)
-FBD9: 21 5A FD            347 |     LXI H,IOF   ;IO FUNCTION ADDRESS
-FBDC: 7E                  348 |     MOV A,M ;GET IT TO ACCUMULATOR FOR MASKING
-FBDD: E6 F8               349 |     ANI 11111000B   ;REMOVE PREVIOUS COMMAND
-FBDF: B1                  350 |     ORA C   ;SET TO NEW COMMAND
-FBE0: 77                  351 |     MOV M,A ;REPLACED IN IOPB
-                          352 | ;   THE MDS-800 CONTROLLER REQUIRES DISK BANK BIT IN SECTOR BYTE
-                          353 | ;   MASK THE BIT FROM THE CURRENT I/O FUNCTION
-                          354 | ;   ANI 00100000B   ;MASK THE DISK SELECT BIT
-                          355 | ;   LXI H,IOS       ;ADDRESS THE SECTOR SELECT BYTE
+                          325 | SETDMA: ;SET DMA ADDRESS GIVEN BY REGISTERS B AND C
+FBBE: 69                  326 |     MOV L,C ;LOW ORDER ADDRESS
+FBBF: 60                  327 |     MOV H,B ;HIGH ORDER ADDRESS
+FBC0: 22 66 FD            328 |     SHLD    IOD ;SAVE THE ADDRESS
+FBC3: C9                  329 |     RET
+                          330 | ;
+                          331 | READ:   ;READ NEXT DISK RECORD (ASSUMING DISK/TRK/SEC/DMA SET)
+FBC4: 0E 04               332 |     MVI C,READF ;SET TO READ FUNCTION
+FBC6: CD E3 FB            333 |     CALL    SETFUNC
+FBC9: CD EC FB            334 |     CALL    WAITIO  ;PERFORM READ FUNCTION
+FBCC: C9                  335 |     RET     ;MAY HAVE ERROR SET IN REG-A
+                          336 | ;
+                          337 | ;
+                          338 | WRITE:  ;DISK WRITE FUNCTION
+FBCD: 0E 06               339 |     MVI C,WRITF
+FBCF: CD E3 FB            340 |     CALL    SETFUNC ;SET TO WRITE FUNCTION
+FBD2: CD EC FB            341 |     CALL    WAITIO
+FBD5: C9                  342 |     RET     ;MAY HAVE ERROR SET
+                          343 | ;
+                          344 | ;   UTILITY SUBROUTINES
+                          345 | PRMSG:  ;PRINT MESSAGE AT H,L TO 0
+FBD6: 7E                  346 |     MOV A,M
+FBD7: B7                  347 |     ORA A   ;ZERO?
+FBD8: C8                  348 |     RZ
+                          349 | ;   MORE TO PRINT
+FBD9: E5                  350 |     PUSH    H
+FBDA: 4F                  351 |     MOV C,A
+FBDB: CD 5D FB            352 |     CALL    CONOUT
+FBDE: E1                  353 |     POP H
+FBDF: 23                  354 |     INX H
+FBE0: C3 D6 FB            355 |     JMP PRMSG
 
 
 Assembly Listing                                                                                                 Page: 8
 ------------------------------------------------------------------------------------------------------------------------
 
-                          356 | ;   ORA M       ;SELECT PROPER DISK BANK
-                          357 | ;   MOV M,A     ;SET DISK SELECT BIT ON/OFF
-                          358 | ;   FOR MDS-800 CONTROLLER UNCOMMENT ABOVE CODE FOR DISK MASKING
-                          359 | ;   IF NECESSARY. MAKE SURE YOU UNDERSTAND WHAT YOU ARE DOING
-FBE1: C9                  360 |     RET
-                          361 | 
-                          362 | ;
-                          363 | WAITIO:
-FBE2: 0E 0A               364 |     MVI C,RETRY ;MAX RETRIES BEFORE PERM ERROR
-                          365 | REWAIT:
-                          366 | ;   START THE I/O FUNCTION AND WAIT FOR COMPLETION
-FBE4: DB 79               367 |     IN  RTYPE   ;IN RTYPE
-FBE6: DB 7B               368 |     IN  RBYTE   ;CLEARS THE CONTROLLER
-                          369 | ;
-FBE8: 3E 59               370 |     MVI A,IOPB & 0FFH   ;LOW ADDRESS FOR IOPB
-FBEA: 06 FD               371 |     MVI B,IOPB SHR 8    ;HIGH ADDRESS FOR IOPB
-FBEC: D3 79               372 |     OUT ILOW        ;LOW ADDRESS TO CONTROLLER
-FBEE: 78                  373 |     MOV A,B
-FBEF: D3 7A               374 |     OUT IHIGH   ;HIGH ADDRESS
-                          375 | ;
-                          376 | WAIT0:  
-FBF1: DB 78               377 |     IN  DSTAT
-                          378 |         ;WAIT FOR COMPLETION
-FBF3: E6 04               379 |     ANI IORDY       ;READY?
-FBF5: CA F1 FB            380 |     JZ  WAIT0
+                          356 | ;
+                          357 | SETFUNC:
+                          358 | ;   SET FUNCTION FOR NEXT I/O (COMMAND IN REG-C)
+FBE3: 21 62 FD            359 |     LXI H,IOF   ;IO FUNCTION ADDRESS
+FBE6: 7E                  360 |     MOV A,M ;GET IT TO ACCUMULATOR FOR MASKING
+FBE7: E6 F8               361 |     ANI 11111000B   ;REMOVE PREVIOUS COMMAND
+FBE9: B1                  362 |     ORA C   ;SET TO NEW COMMAND
+FBEA: 77                  363 |     MOV M,A ;REPLACED IN IOPB
+                          364 | ;   THE MDS-800 CONTROLLER REQUIRES DISK BANK BIT IN SECTOR BYTE
+                          365 | ;   MASK THE BIT FROM THE CURRENT I/O FUNCTION
+                          366 | ;   ANI 00100000B   ;MASK THE DISK SELECT BIT
+                          367 | ;   LXI H,IOS       ;ADDRESS THE SECTOR SELECT BYTE
+                          368 | ;   ORA M       ;SELECT PROPER DISK BANK
+                          369 | ;   MOV M,A     ;SET DISK SELECT BIT ON/OFF
+                          370 | ;   FOR MDS-800 CONTROLLER UNCOMMENT ABOVE CODE FOR DISK MASKING
+                          371 | ;   IF NECESSARY. MAKE SURE YOU UNDERSTAND WHAT YOU ARE DOING
+FBEB: C9                  372 |     RET
+                          373 | 
+                          374 | ;
+                          375 | WAITIO:
+FBEC: 0E 0A               376 |     MVI C,RETRY ;MAX RETRIES BEFORE PERM ERROR
+                          377 | REWAIT:
+                          378 | ;   START THE I/O FUNCTION AND WAIT FOR COMPLETION
+FBEE: DB 79               379 |     IN  RTYPE   ;IN RTYPE
+FBF0: DB 7B               380 |     IN  RBYTE   ;CLEARS THE CONTROLLER
                           381 | ;
-                          382 | ;   CHECK IO COMPLETION OK
-FBF8: DB 79               383 |     IN  RTYPE       ;MUST BE IO COMPLETE (00) UNLINKED
-                          384 | ;   00 UNLINKED I/O COMPLETE,    01 LINKED I/O COMPLETE (NOT USED)
-                          385 | ;   10 DISK STATUS CHANGED       11 (NOT USED)
-FBFA: FE 02               386 |     CPI 10B     ;READY STATUS CHANGE?
-FBFC: CA 10 FC            387 |     JZ  WREADY
-                          388 | ;
-                          389 | ;   MUST BE 00 IN THE ACCUMULATOR
-FBFF: B7                  390 |     ORA A
-FC00: C2 15 FC            391 |     JNZ WERROR      ;SOME OTHER CONDITION, RETRY
-                          392 | ;
-                          393 | ;   CHECK I/O ERROR BITS
-FC03: DB 7B               394 |     IN  RBYTE
-FC05: 17                  395 |     RAL
-FC06: DA 10 FC            396 |     JC  WREADY      ;UNIT NOT READY
-FC09: 1F                  397 |     RAR
-FC0A: E6 FE               398 |     ANI 11111110B   ;ANY OTHER ERRORS?  (DELETED DATA OK)
-FC0C: C2 15 FC            399 |     JNZ WERROR
+FBF2: 3E 61               382 |     MVI A,IOPB & 0FFH   ;LOW ADDRESS FOR IOPB
+FBF4: 06 FD               383 |     MVI B,IOPB SHR 8    ;HIGH ADDRESS FOR IOPB
+FBF6: D3 79               384 |     OUT ILOW        ;LOW ADDRESS TO CONTROLLER
+FBF8: 78                  385 |     MOV A,B
+FBF9: D3 7A               386 |     OUT IHIGH   ;HIGH ADDRESS
+                          387 | ;
+                          388 | WAIT0:  
+FBFB: DB 78               389 |     IN  DSTAT
+                          390 |         ;WAIT FOR COMPLETION
+FBFD: E6 04               391 |     ANI IORDY       ;READY?
+FBFF: CA FB FB            392 |     JZ  WAIT0
+                          393 | ;
+                          394 | ;   CHECK IO COMPLETION OK
+FC02: DB 79               395 |     IN  RTYPE       ;MUST BE IO COMPLETE (00) UNLINKED
+                          396 | ;   00 UNLINKED I/O COMPLETE,    01 LINKED I/O COMPLETE (NOT USED)
+                          397 | ;   10 DISK STATUS CHANGED       11 (NOT USED)
+FC04: FE 02               398 |     CPI 10B     ;READY STATUS CHANGE?
+FC06: CA 1A FC            399 |     JZ  WREADY
                           400 | ;
-                          401 | ;   READ OR WRITE IS OK, ACCUMULATOR CONTAINS ZERO
-FC0F: C9                  402 |     RET
-                          403 | ;
-                          404 | WREADY: ;NOT READY, TREAT AS ERROR FOR NOW
-FC10: DB 7B               405 |     IN  RBYTE       ;CLEAR RESULT BYTE
-FC12: C3 15 FC            406 |     JMP TRYCOUNT
-                          407 | ;
-                          408 | WERROR: ;RETURN HARDWARE MALFUNCTION (CRC, TRACK, SEEK, ETC.)
-                          409 | ;   THE MDS CONTROLLER HAS RETURNED A BIT IN EACH POSITION
-                          410 | ;   OF THE ACCUMULATOR, CORRESPONDING TO THE CONDITIONS:
-                          411 | ;   0   - DELETED DATA (ACCEPTED AS OK ABOVE)
+                          401 | ;   MUST BE 00 IN THE ACCUMULATOR
+FC09: B7                  402 |     ORA A
+FC0A: C2 1F FC            403 |     JNZ WERROR      ;SOME OTHER CONDITION, RETRY
+                          404 | ;
+                          405 | ;   CHECK I/O ERROR BITS
+FC0D: DB 7B               406 |     IN  RBYTE
+FC0F: 17                  407 |     RAL
+FC10: DA 1A FC            408 |     JC  WREADY      ;UNIT NOT READY
+FC13: 1F                  409 |     RAR
+FC14: E6 FE               410 |     ANI 11111110B   ;ANY OTHER ERRORS?  (DELETED DATA OK)
+FC16: C2 1F FC            411 |     JNZ WERROR
 
 
 Assembly Listing                                                                                                 Page: 9
 ------------------------------------------------------------------------------------------------------------------------
 
-                          412 | ;   1   - CRC ERROR
-                          413 | ;   2   - SEEK ERROR
-                          414 | ;   3   - ADDRESS ERROR (HARDWARE MALFUNCTION)
-                          415 | ;   4   - DATA OVER/UNDER FLOW (HARDWARE MALFUNCTION)
-                          416 | ;   5   - WRITE PROTECT (TREATED AS NOT READY)
-                          417 | ;   6   - WRITE ERROR (HARDWARE MALFUNCTION)
-                          418 | ;   7   - NOT READY
-                          419 | ;   (ACCUMULATOR BITS ARE NUMBERED 7 6 5 4 3 2 1 0)
-                          420 | ;
-                          421 | ;   IT MAY BE USEFUL TO FILTER OUT THE VARIOUS CONDITIONS,
-                          422 | ;   BUT WE WILL GET A PERMANENT ERROR MESSAGE IF IT IS NOT
-                          423 | ;   RECOVERABLE.  IN ANY CASE, THE NOT READY CONDITION IS
-                          424 | ;   TREATED AS A SEPARATE CONDITION FOR LATER IMPROVEMENT
-                          425 | TRYCOUNT:
-                          426 | ;   REGISTER C CONTAINS RETRY COUNT, DECREMENT 'TIL ZERO
-FC15: 0D                  427 |     DCR C
-FC16: C2 E4 FB            428 |     JNZ REWAIT  ;FOR ANOTHER TRY
-                          429 | ;
-                          430 | ;   CANNOT RECOVER FROM ERROR
-FC19: 3E 01               431 |     MVI A,1 ;ERROR CODE
-FC1B: C9                  432 |     RET
-                          433 | ;
-FC1C:                     434 | DISKNO: DS  1   ;DISK NUMBER 0-15
-                          435 | ;
-                          436 | ;   SCRATCH RAM AREA FOR BDOS USE
-                          437 | BEGDAT  EQU $   ;BEGINNING OF DATA AREA
-FC1D:                     438 | DIRBF:  DS  128 ;SCRATCH DIRECTORY AREA
-FC9D:                     439 | ALL00:  DS  31  ;ALLOCATION VECTOR 0
-FCBC:                     440 | ALL01:  DS  31  ;ALLOCATION VECTOR 1
-FCDB:                     441 | ALL02:  DS  31  ;ALLOCATION VECTOR 2
-FCFA:                     442 | ALL03:  DS  31  ;ALLOCATION VECTOR 3
-FD19:                     443 | CHK00:  DS  16  ;CHECK VECTOR 0
-FD29:                     444 | CHK01:  DS  16  ;CHECK VECTOR 1
-FD39:                     445 | CHK02:  DS  16  ;CHECK VECTOR 2
-FD49:                     446 | CHK03:  DS  16  ;CHECK VECTOR 3
+                          412 | ;
+                          413 | ;   READ OR WRITE IS OK, ACCUMULATOR CONTAINS ZERO
+FC19: C9                  414 |     RET
+                          415 | ;
+                          416 | WREADY: ;NOT READY, TREAT AS ERROR FOR NOW
+FC1A: DB 7B               417 |     IN  RBYTE       ;CLEAR RESULT BYTE
+FC1C: C3 1F FC            418 |     JMP TRYCOUNT
+                          419 | ;
+                          420 | WERROR: ;RETURN HARDWARE MALFUNCTION (CRC, TRACK, SEEK, ETC.)
+                          421 | ;   THE MDS CONTROLLER HAS RETURNED A BIT IN EACH POSITION
+                          422 | ;   OF THE ACCUMULATOR, CORRESPONDING TO THE CONDITIONS:
+                          423 | ;   0   - DELETED DATA (ACCEPTED AS OK ABOVE)
+                          424 | ;   1   - CRC ERROR
+                          425 | ;   2   - SEEK ERROR
+                          426 | ;   3   - ADDRESS ERROR (HARDWARE MALFUNCTION)
+                          427 | ;   4   - DATA OVER/UNDER FLOW (HARDWARE MALFUNCTION)
+                          428 | ;   5   - WRITE PROTECT (TREATED AS NOT READY)
+                          429 | ;   6   - WRITE ERROR (HARDWARE MALFUNCTION)
+                          430 | ;   7   - NOT READY
+                          431 | ;   (ACCUMULATOR BITS ARE NUMBERED 7 6 5 4 3 2 1 0)
+                          432 | ;
+                          433 | ;   IT MAY BE USEFUL TO FILTER OUT THE VARIOUS CONDITIONS,
+                          434 | ;   BUT WE WILL GET A PERMANENT ERROR MESSAGE IF IT IS NOT
+                          435 | ;   RECOVERABLE.  IN ANY CASE, THE NOT READY CONDITION IS
+                          436 | ;   TREATED AS A SEPARATE CONDITION FOR LATER IMPROVEMENT
+                          437 | TRYCOUNT:
+                          438 | ;   REGISTER C CONTAINS RETRY COUNT, DECREMENT 'TIL ZERO
+FC1F: 0D                  439 |     DCR C
+FC20: C2 EE FB            440 |     JNZ REWAIT  ;FOR ANOTHER TRY
+                          441 | ;
+                          442 | ;   CANNOT RECOVER FROM ERROR
+                          443 | ;   MVI A,1 ;ERROR CODE ORIGINALLY SET JUST TO 1
+                          444 | ;   BUT WE WANT TO DISTINGUISH ALSO OTHER ERRORS LIKE R/O 
+                          445 | ;   ERROR CODE IS IN A REGISTER
+FC23: C9                  446 |     RET
                           447 | ;
-                          448 | ENDDAT  EQU $   ;END OF DATA AREA
-                          449 | DATSIZ  EQU $-BEGDAT;SIZE OF DATA AREA
-                          450 | ;
-                          451 | ;
-                          452 | ;
-                          453 | ;   DATA AREAS (MUST BE IN RAM)
-                          454 | IOPB:   ;IO PARAMETER BLOCK
-FD59: 80                  455 |     DB  80H ;NORMAL I/O OPERATION
-FD5A: 04                  456 | IOF:    DB  READF   ;IO FUNCTION, INITIAL READ
-FD5B: 01                  457 | ION:    DB  1   ;NUMBER OF SECTORS TO READ
-FD5C: 02                  458 | IOT:    DB  OFFSET  ;TRACK NUMBER
-FD5D: 01                  459 | IOS:    DB  1   ;SECTOR NUMBER
-FD5E: 80 00               460 | IOD:    DW  BUFF    ;IO ADDRESS
+FC24:                     448 | DISKNO: DS  1   ;DISK NUMBER 0-15
+                          449 | ;
+                          450 | ;   SCRATCH RAM AREA FOR BDOS USE
+                          451 | BEGDAT  EQU $   ;BEGINNING OF DATA AREA
+FC25:                     452 | DIRBF:  DS  128 ;SCRATCH DIRECTORY AREA
+FCA5:                     453 | ALL00:  DS  31  ;ALLOCATION VECTOR 0
+FCC4:                     454 | ALL01:  DS  31  ;ALLOCATION VECTOR 1
+FCE3:                     455 | ALL02:  DS  31  ;ALLOCATION VECTOR 2
+FD02:                     456 | ALL03:  DS  31  ;ALLOCATION VECTOR 3
+FD21:                     457 | CHK00:  DS  16  ;CHECK VECTOR 0
+FD31:                     458 | CHK01:  DS  16  ;CHECK VECTOR 1
+FD41:                     459 | CHK02:  DS  16  ;CHECK VECTOR 2
+FD51:                     460 | CHK03:  DS  16  ;CHECK VECTOR 3
                           461 | ;
-                          462 | ;
-                          463 | ;   DEFINE RAM AREAS FOR BDOS OPERATION
-                          464 |     END
+                          462 | ENDDAT  EQU $   ;END OF DATA AREA
+                          463 | DATSIZ  EQU $-BEGDAT;SIZE OF DATA AREA
+                          464 | ;
+                          465 | ;
+                          466 | ;
+                          467 | ;   DATA AREAS (MUST BE IN RAM)
+
+
+Assembly Listing                                                                                                Page: 10
+------------------------------------------------------------------------------------------------------------------------
+
+                          468 | IOPB:   ;IO PARAMETER BLOCK
+FD61: 80                  469 |     DB  80H ;NORMAL I/O OPERATION
+FD62: 04                  470 | IOF:    DB  READF   ;IO FUNCTION, INITIAL READ
+FD63: 01                  471 | ION:    DB  1   ;NUMBER OF SECTORS TO READ
+FD64: 02                  472 | IOT:    DB  OFFSET  ;TRACK NUMBER
+FD65: 01                  473 | IOS:    DB  1   ;SECTOR NUMBER
+FD66: 80 00               474 | IOD:    DW  BUFF    ;IO ADDRESS
+                          475 | ;
+                          476 | ;
+                          477 | ;   DEFINE RAM AREAS FOR BDOS OPERATION
+                          478 |     END
 

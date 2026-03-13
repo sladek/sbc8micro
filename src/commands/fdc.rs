@@ -85,9 +85,6 @@ impl Fdc {
                 }
             }
         }
-
-
-
         Ok(AppState::Home)
     }
 }

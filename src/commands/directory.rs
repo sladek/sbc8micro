@@ -75,7 +75,7 @@ impl Directory {
     /// List a content of directory as ls or dir
     pub fn ls(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
         let filename = Self::concat(&command[1..]);
-        if command.len() != 1 && filename.contains("*") {
+        if command.len() != 1 {
             let glob = glob(&filename);
             match glob {
                 Ok(glob) => {
@@ -96,11 +96,8 @@ impl Directory {
             }
             return Ok(AppState::Home);
         }
-        let paths: io::Result<ReadDir> = if command.len() == 1 {
-            fs::read_dir(".")
-        } else {
-            fs::read_dir(&filename)
-        };
+
+        let paths: io::Result<ReadDir> = fs::read_dir(".");
         match paths {
             Ok(paths) => {
                 for path in paths {

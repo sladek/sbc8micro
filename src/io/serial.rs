@@ -14,7 +14,7 @@ use std::time::Duration;
 /// This defines a short interval for receiver's thread, that improves the performance rapidly
 ///
 ///  Check description in start function
-const THREAD_SLEEP_IN_MILIS: u64 = 10;
+const THREAD_SLEEP_IN_MILIS: u64 = 50;
 
 /// An error type for serial port operations
 #[derive(Debug, Clone, PartialEq)]
@@ -124,6 +124,9 @@ impl Serial {
                     let mut buf = [0u8; 1];
                     // Main loop of the thread. It reads data from serial port and send it to the main thread via channel.
                     loop {
+                        // short sleep before the next iteration. It improves the performance of receiving and sending the data at the same time.
+                        // Without this, the sending was a lot slower and visible on the serial terminal when sending out some longer text after
+                        // receiving command from terminal. This "trick" probably releases the thread allowing for faster sending.
                         thread::sleep(Duration::from_millis(THREAD_SLEEP_IN_MILIS));
                         if let Ok(mut u) = port.read(&mut buf) {
                             while u != 0 {
@@ -131,9 +134,6 @@ impl Serial {
                                 _ = reply_tx.send(t);
                                 u -= 1;
                             }
-                            // short sleep before the next iteration. It improves the performance of receiving and sending the data at the same time.
-                            // Without this, the sending was a lot slower and visible on the serial terminal when sending out some longer text after
-                            // receiving command from terminal. This "trick" probably releases the thread allowing for faster sending.
                         };
                     }
                 }))
