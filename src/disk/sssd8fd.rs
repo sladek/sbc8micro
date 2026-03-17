@@ -6,6 +6,7 @@ use std::fs::File;
 use std::io::{ErrorKind, Seek, Write};
 use std::io;
 use std::os::windows::fs::FileExt;
+use crate::io::ErrorIndicators;
 
 const NUM_OF_SECTORS_PER_TRACK: u8 = 26; // Valid number of sector is 1 - 26
 const NUM_OF_TRACKS: u8 = 77; // Valid number of track is 0 - 76
@@ -120,7 +121,7 @@ impl Floppy {
         self.read_only
     }
 }
-
+/*
 #[derive(Debug, PartialEq, Clone)]
 pub enum ErrorIndicators {
     NotReady = 0x80,                           // Disk is not ready
@@ -135,6 +136,7 @@ pub enum ErrorIndicators {
     NoAddressMark = 0x08 | 0x04 | 0x02, // AddressError | SeekError | CrcError. No address mark was encountered for a full revolution of the diskette.
     DataMarkError = 0x08 | 0x04 | 0x02 | 0x01, // // AddressError | SeekError | CrcError | Deleted Record. It indicates that the data field wos not preceded by eitherdata mark or a delete data mark.
 }
+*/
 impl Floppy {
     pub fn new(name: &str, read_only: bool) -> Result<Self> {
         let file = Self::open_file_image(name, read_only);
@@ -416,7 +418,7 @@ mod tests {
     }
     #[test]
     fn test_read_invalid_track_77() {
-        let file_name = "test_3.img";
+        let file_name = "test_9.img";
         init_disk(file_name);
         let floppy = Floppy::new(file_name, true).unwrap();
         remove_disk(file_name);

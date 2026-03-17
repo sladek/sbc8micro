@@ -177,6 +177,12 @@ pub static HELP: &str = r#"
     "examples": "\\n    r\\n    reg\\n    reg a\\n    reg a 0ffh\\n    r x\\n    r x $ff\\n    reg sp 0fffh\\n    r pc $ffff\\n Note: If value is defined, it is set, otherwise only the content of the register is displayed. If no register is provided it will display all registers."
   },
   {
+    "command": "rdr | pun | rdr_pun",
+    "description": "Sets tape reader's/puncher's io or memory address.",
+    "usage": "rdr <address> or pun <address> or rdr_pun <address>",
+    "examples": "\\n    rdr 0x40\\n    pun 0x40\\n    rdr_pun M0x1234\\n Note: Address can be defined as <address 8bit> if mapped to io memory or as M<address 16bit> if mapped to cpu's memory."
+  },
+  {
     "command": "ser | serial",
     "description": "Sets serial port's address, name, clock frequency and default parameters.",
     "usage": "ser <address> <port name> [clock] or serial <address> <port name> [clock]",

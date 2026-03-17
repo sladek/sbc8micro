@@ -14,6 +14,7 @@ use crate::commands::opcodes::Opcodes;
 use crate::commands::registers::Registers;
 use crate::commands::script::Script;
 use crate::commands::serial::Serial;
+use crate::commands::rdr_pun::RdrPun;
 use crate::commands::io::Io;
 use crate::commands::{MIN_COMMAND_HISTORY_LENGTH, MIN_OUTPUT_HISTORY_LENGTH};
 use crate::help;
@@ -58,6 +59,7 @@ impl Command {
             "op" | "opcodes" => Opcodes::list_opcodes(app, command),
             "pwd" => Directory::pwd(app, command),
             "r" | "reg" => Registers::set_get_reg(app, command),
+            "rdr" | "pun" | "rdr_pun" => RdrPun::rdr_pun(app, command),
             "s" | "step" => Cpu::step(app, command),
             "scr" | "script" => Script::script(app, command),
             "ser" | "serial" => Serial::serial(app, command),

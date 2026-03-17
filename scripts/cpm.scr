@@ -2,6 +2,8 @@
 cpu 8080
 # Set serial port to COM3 and default setting 9600,8,n,1
 ser 0xf4 com3
+# Instantiate User Defined Device
+rdr_pun 0xf0
 # Instantiate floppy disk controller and mount disks
 # If disk images don't exist they are created and formated
 fdc 0x78  disk_cpm.dsk disk_b.dsk disk_c.dsk disk_d.dsk

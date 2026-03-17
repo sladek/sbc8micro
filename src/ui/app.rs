@@ -19,7 +19,6 @@ use ratatui::{
     widgets::{Block, List, ListItem, Paragraph},
 };
 use std::io::Result;
-use std::path;
 use glob::glob;
 
 /// App holds the state of the application
@@ -645,7 +644,7 @@ impl AutoComplete {
         self.last_offer = String::new();
     }
     pub fn next_offer(&mut self, mut search_key: String) -> Option<String> {
-        if self.offer_buffer == None {
+        if self.offer_buffer.is_none() {
             let mut offers :Vec<String> = Vec::new();
             search_key.push('*');
             match glob(&search_key) {
@@ -678,6 +677,6 @@ impl AutoComplete {
         let idx = self.index;
         self.index += 1;
         self.last_offer = buffer[idx].clone();
-        return Some(buffer[idx].clone())
+        Some(buffer[idx].clone())
     }
 }

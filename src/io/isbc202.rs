@@ -1,6 +1,6 @@
-use crate::disk::sssd8fd::{DataDeletedData, ErrorIndicators, Floppy, Sector};
+use crate::disk::sssd8fd::{DataDeletedData, Floppy, Sector};
 use crate::memory::{self, MemCell};
-use crate::io::IoPort;
+use crate::io::{IoPort, ErrorIndicators};
 use crate::disk::sssd8fd::Result;
 use crate::memory::dma::DmaRequest;
 use memory::dma::Dma;
@@ -56,14 +56,16 @@ impl DisketteInstruction {
     }
 }
 
+// This structure reflects channel word as defined by isbc202 documentation
+// But is it currently not used ad the definition is kept here for possible later usage.
 struct _ChannelWord {
     value: u8, // binary content of Channel Word
-// lock_override is not implemented in 8 bit CP/M
+    // lock_override is not implemented in 8 bit CP/M
     lock_override: bool, // bit (7).  1 - "wait" bit is not set, this prevents IOPB being overwritten by the controller
     random_format_sequence: bool, // bit (6). 0 - sector addresses are assigned in sequential order, 1 - sectr addresses are assigned randomly based on pattern listed in 52 byte memory buffer.
     interrupt_control: u8, // bits (4 and 5). Enable or disable Diskette Channel interrupts 
     data_word_length: bool,       // bit (3). 0 - for 8 bit systems, 1 - for 16 bit systems
-// Following field are not implemented in 8 bit CP/M
+    // Following field are not implemented in 8 bit CP/M
     successor_bit: bool, // bit (2). will be reset (logical 0) if the current IOPB is the last (or only) IOPB to be executed.
     branch_on_wait: bool, // bit (1). It is interconnected with wait bit. check documentation (9800349B.pdf) for more details
     wait: bool, // bit (0). 
@@ -1573,7 +1575,7 @@ mod tests {
         remove_disk(file_name);
         assert_eq!(0x0D, cpu.c); // assert dstat
         assert_eq!(0x00, cpu.b); // assert rtype - IO complete
-        assert_eq!(0x04, cpu.a);  // assert rbyte - Seek errors
+        assert_eq!(0x04, cpu.a); // assert rbyte - Seek errors
     }
     #[test]
     fn test_iopb_write_sector_deleted_data() {

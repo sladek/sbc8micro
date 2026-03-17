@@ -11,7 +11,7 @@ impl Serial {
         let cpu = app.cpu_ui.as_mut().unwrap();
         if command.len() > 4 || command.len() < 3 {
             app.messages.push(
-                "ERROR - Invalid number of parameters. Usage: serial <port name> [clock frequency]"
+                "ERROR - Invalid number of parameters. Usage: serial <port address> <port name> [clock frequency]"
                     .to_string(),
             );
             return Ok(AppState::Home);
