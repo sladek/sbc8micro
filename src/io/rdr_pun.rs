@@ -1,5 +1,5 @@
 use std::collections::VecDeque;
-use std::{fs, fs::File};
+use std::{fs::File};
 use std::io::{Read, Write};
 
 use crate::io::IoPort;
@@ -10,7 +10,6 @@ const _MEMORY_BASE: u16 = 0x1000;
 const FILENAME_DATA_RDR: &str = "data/data.rdr";
 const RDR_BUFFER_LENGTH: usize = 128;
 const FILENAME_DATA_PUN: &str = "data/data.pun";
-const PUN_BUFFER_LENGTH: usize = 128;
 const NAME: &str = "RDR/PUN User Defined Device";
 const EOF: u8 = 26;
 
@@ -28,8 +27,6 @@ pub struct RdrPun {
     reader_current_buffer_index: usize,
     puncher_data_filename: Option<String>,
     puncher_data_file: Option<File>,
-    puncher_data_buffer: Vec<u8>,
-    puncher_current_buffer_index: usize,
 }
 impl Default for RdrPun {
     fn default() -> Self {
@@ -44,8 +41,6 @@ impl Default for RdrPun {
             reader_current_buffer_index: 0,
             puncher_data_filename: Some(FILENAME_DATA_PUN.to_string()),
             puncher_data_file: None,
-            puncher_data_buffer: Vec::new(),
-            puncher_current_buffer_index: 0,
         }
     }
 }
@@ -108,7 +103,7 @@ impl RdrPun {
                     FILENAME_DATA_RDR
                 }
             };
-            match Self::open_rdr_pun_file(&filename, true) {
+            match Self::open_rdr_pun_file(filename, true) {
                 Ok(file) => {
                     self.reader_current_buffer_index = 0;
                     self.reader_data_buffer.clear();
@@ -228,14 +223,14 @@ impl IoPort for RdrPun {
         }
         Some(self.read_next_byte())
     }
-    fn write_to_address(&mut self, memory: &mut [crate::memory::MemCell], address: u8, data: u8) -> Result<Option<crate::memory::dma::Dma>, ErrorIndicators> {
+    fn write_to_address(&mut self, _memory: &mut [crate::memory::MemCell], address: u8, data: u8) -> Result<Option<crate::memory::dma::Dma>, ErrorIndicators> {
         if address != self.base_address.unwrap() {
             return Ok(None);
         };
         self.write_byte(data);
         Ok(None)
     }
-    fn write_to_memory_address(&mut self, memory: &mut [crate::memory::MemCell], address: u16, data: u8) -> Result<Option<crate::memory::dma::Dma>, ErrorIndicators> {
+    fn write_to_memory_address(&mut self, _memory: &mut [crate::memory::MemCell], address: u16, data: u8) -> Result<Option<crate::memory::dma::Dma>, ErrorIndicators> {
         if address != self.memory_base_address.unwrap() {
             return Ok(None);
         }
