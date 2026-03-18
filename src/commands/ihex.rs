@@ -28,10 +28,10 @@ impl Ihex {
             4 => {
                 source_filename = command[2].to_string();
                 destination_filename = command[3].to_string();
-                if !destination_filename.to_lowercase().ends_with(".rdr") {
-                    if !destination_filename.ends_with(".hex") {
+                if !destination_filename.to_lowercase().ends_with(".rdr") 
+                    && !destination_filename.ends_with(".hex") {
                         destination_filename.push_str(".hex");
-                    }                
+
                 }
             }
             // Here it can be only 2
@@ -67,7 +67,7 @@ impl Ihex {
                         break;
                     }
                     let data = Vec::from(&buff[..bytes]);
-                    records.push(Record::Data {offset: offset, value: data});
+                    records.push(Record::Data {offset, value: data});
                     offset += RECORD_LENGTH as u16;
                 }
                 Err(err) => {
@@ -80,15 +80,15 @@ impl Ihex {
             Ok(value) => {
                 match destination_file.write_all(value.as_bytes()) {
                     Ok(()) => {
-                        return Ok(AppState::Home);
+                        Ok(AppState::Home)
                     }
                     Err(err) => {
-                        return Err(err.to_string());
+                        Err(err.to_string())
                     }
                 }
             }
             Err(err) => {
-                return Err(err.to_string());
+                Err(err.to_string())
             }
         }
     }
