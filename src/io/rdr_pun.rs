@@ -5,8 +5,6 @@ use std::io::{Read, Write};
 use crate::io::IoPort;
 use crate::io::ErrorIndicators;
 
-const _BASE: u8 = 0xF0;
-const _MEMORY_BASE: u16 = 0x1000;
 const FILENAME_DATA_RDR: &str = "data/data.rdr";
 const RDR_BUFFER_LENGTH: usize = 128;
 const FILENAME_DATA_PUN: &str = "data/data.pun";
@@ -244,12 +242,13 @@ mod tests {
     use std::{fs, io::Write};
     use ihex::Record;
     use crate::cpu::CpuUi;
-    use crate::io::{rdr_pun::{EOF, _BASE}};
+    use crate::io::{rdr_pun::{EOF, FILENAME_DATA_RDR, RdrPun}};
     use crate::cpu::i8080::{self};
     use crate::disassembler::i8080_opcode_consts::*;
     use glob::glob;
 
-    use crate::io::rdr_pun::{_MEMORY_BASE, FILENAME_DATA_RDR, RdrPun};
+    const BASE: u8 = 0xF0;
+    const MEMORY_BASE: u16 = 0x1000;
 
     /// Initialize test file
     /// 
@@ -303,14 +302,14 @@ mod tests {
         // Let's read from cpu
         let mut cpu = i8080::Cpu::new();
         let mut rdr_pun = Box::new(RdrPun::new());
-        rdr_pun.set_base_address(_BASE);
+        rdr_pun.set_base_address(BASE);
         let io_memory = cpu.get_io_memory().unwrap();
         let res = io_memory.map_port(rdr_pun);
         assert_eq!(Ok(()), res);
         cpu.set_debug_flag(false);
         let program_address = 0x100;
         let data_address = 0x1000u16;
-        let io_address = _BASE;
+        let io_address = BASE;
         // let read data 
         let program: &[u8] = &[
             LXI_H, (data_address & 0xff) as u8, ((data_address & 0xff00) >> 8) as u8,  
@@ -354,13 +353,13 @@ mod tests {
         // Let's read from cpu
         let mut cpu = i8080::Cpu::new();
         let mut rdr_pun = Box::new(RdrPun::new());
-        rdr_pun.set_memory_base_address(_MEMORY_BASE);
+        rdr_pun.set_memory_base_address(MEMORY_BASE);
         let res = cpu.get_memory().map_port(rdr_pun);
         assert_eq!(Ok(()), res);
         cpu.set_debug_flag(false);
         let program_address = 0x100;
         let data_address = 0x2000u16;
-        let io_address = _MEMORY_BASE;
+        let io_address = MEMORY_BASE;
         // let read data 
         let program: &[u8] = &[
             LXI_D, (data_address & 0xff) as u8, ((data_address & 0xff00) >> 8) as u8, 
@@ -422,13 +421,13 @@ mod tests {
         // Let's read from cpu
         let mut cpu = i8080::Cpu::new();
         let mut rdr_pun = Box::new(RdrPun::new());
-        rdr_pun.set_base_address(_BASE);
+        rdr_pun.set_base_address(BASE);
         let io_memory = cpu.get_io_memory().unwrap();
         let res = io_memory.map_port(rdr_pun);
         assert_eq!(Ok(()), res);
         cpu.set_debug_flag(false);
         let program_address = 0x100;
-        let io_address = _BASE;
+        let io_address = BASE;
         // let read data 
         let program: &[u8] = &[
             MVI_A, ' ' as u8,  
@@ -464,12 +463,12 @@ mod tests {
         // Let's read from cpu
         let mut cpu = i8080::Cpu::new();
         let mut rdr_pun = Box::new(RdrPun::new());
-        rdr_pun.set_memory_base_address(_MEMORY_BASE);
+        rdr_pun.set_memory_base_address(MEMORY_BASE);
         let res = cpu.get_memory().map_port(rdr_pun);
         assert_eq!(Ok(()), res);
         cpu.set_debug_flag(false);
         let program_address = 0x100;
-        let io_address = _MEMORY_BASE;
+        let io_address = MEMORY_BASE;
         // let read data 
         let program: &[u8] = &[
             LXI_H, (io_address & 0xff) as u8, ((io_address & 0xff00) >> 8) as u8,

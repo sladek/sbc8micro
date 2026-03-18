@@ -16,6 +16,7 @@ use crate::commands::script::Script;
 use crate::commands::serial::Serial;
 use crate::commands::rdr_pun::RdrPun;
 use crate::commands::io::Io;
+use crate::commands::ihex::Ihex;
 use crate::commands::{MIN_COMMAND_HISTORY_LENGTH, MIN_OUTPUT_HISTORY_LENGTH};
 use crate::help;
 use crate::ui::app::{App, AppState};
@@ -50,6 +51,7 @@ impl Command {
             "g" | "go" => Cpu::go(app, command),
             "h" | "help" | "?" => Help::help(app, command),
             "io" => Io::io(app, command),
+            "ih" | "ihex" => Ihex::ihex(app, command),
             "l" | "load" => Load::load_file(app, command),
             "la" | "loada" => Load::load_acme_file(app, command),
             "lh" | "loadh" => Load::load_hex_file(app, command),

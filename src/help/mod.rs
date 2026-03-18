@@ -123,6 +123,12 @@ pub static HELP: &str = r#"
     "examples": "\\n    io 0x78\\n    io 0x79 0x55\\n Note: If data is not defined it reads data from io address.\\n       If data is defined it writes data to io address."
   },
   {
+    "command": "ih | ihex",
+    "description": "Converts a file to INTELHEX format",
+    "usage": "ih <offset> <input file> [output file] or ihex <offset> <input file> [output file]",
+    "examples": "\\n    ihex 0x100 asm.com asm.hex\\n    ih 0x100 asm.com\\n Note: If output file name is not defined it is created with .hex suffix.\\n       If output file name is 'data.rdr' no suffix is added. File name 'data.rdr' is a special file name for CP/M 2.2 pip transfer."
+  },
+  {
     "command": "l | load",
     "description": "Loads a content of specified binary file into memory.",
     "usage": "load <start address> <file name> or l <start address> <file name>",
