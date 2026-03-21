@@ -6,7 +6,7 @@ ser 0xf4 com3
 rdr_pun 0xf0
 # Instantiate floppy disk controller and mount disks
 # If disk images don't exist they are created and formated
-fdc 0x78  disk_cpm.dsk disk_b.dsk disk_c.dsk disk_d.dsk
+fdc 0x78  disk_cpm.dsk[ro] disk_b.dsk disk_c.dsk disk_d.dsk
 # Load BIOS
 lh CPM80_2.2/BIOS.hex
 # Load CCP and BDOS loader

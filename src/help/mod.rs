@@ -27,7 +27,7 @@ impl Help<HelpItem> {
             .into_iter()
             .find(|item| Self::find_command(item.command.clone(), name))
     }
-    /// Finds command
+    /// Find command
     ///
     /// Finds command in "command" json member. command can contain multiple values like "help | ?" or "registers | regs"
     /// and both are valid commands
@@ -39,6 +39,18 @@ impl Help<HelpItem> {
             }
         }
         false
+    }
+    /// Return list of all commands
+    /// 
+    /// Parses the help yaml file and returns list of all commands
+    pub fn items_list() -> Vec<String> {
+      let help_items:Vec<HelpItem> = serde_json::from_str(HELP).unwrap();
+      let mut list:Vec<String> = Vec::new();
+      for item in help_items {
+        let mut it:Vec<String> = item.command.split('|').map(|item| { item.trim().to_string()}).collect();
+        list.append(&mut it);
+      }
+      list
     }
 }
 

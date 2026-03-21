@@ -20,6 +20,7 @@ use ratatui::{
 };
 use std::io::Result;
 use glob::glob;
+use crate::help::Help;
 
 /// App holds the state of the application
 pub struct App {
@@ -275,8 +276,13 @@ impl App {
             return;
         }
         // Pointer is at the end of the buffer
-        let key = self.find_autocoplete_key();
-        if let Some(value) =  self.auto_complete.next_offer(key) {
+        let (key, is_command) = self.find_autocoplete_key();
+        let value = if is_command {
+            self.auto_complete.next_command_offer(key)
+        } else{
+            self.auto_complete.next_offer(key)
+        };
+        if let Some(value) = value {
             while self.character_index != self.auto_complete.search_key_index {
                 self.delete_char();
             }
@@ -290,26 +296,30 @@ impl App {
     /// 
     /// It looks back from the current position in input buffer and it ends either
     /// when it find a space ar the beginning of the buffer. It then returns the substring
-    /// limited by those two positions
-    fn find_autocoplete_key(&mut self) -> String {
+    /// limited by those two positions. Second value of the tuple is indicator if the key 
+    /// is a command (first string in command line) so we can offer commands instead
+    /// of list of files
+    fn find_autocoplete_key(&mut self) -> (String, bool) {
         let mut ch_index = self.character_index;
         let chars: Vec<char> = self.input.chars().collect();
+        let mut is_command = false;
         // Lets find either next ' ' or the beginning of the buffer
         while ch_index != 0 {
             ch_index -= 1;
             if chars[ch_index] == ' ' { break };
         };        
         if ch_index == 0 {
+            is_command = true;
             self.auto_complete.search_key_index = ch_index;
             // Beginning of the input buffer reached
             if self.character_index == 0 {
                 // In this case the input buffer is empty so we return '*'
-                return "". to_string();
+                return ("". to_string(), is_command);
             }
-            return chars[ch_index..self.character_index].iter().collect()
+            return (chars[ch_index..self.character_index].iter().collect(), is_command)
         }
         self.auto_complete.search_key_index = ch_index + 1;
-        chars[ch_index + 1..self.character_index].iter().collect()
+        (chars[ch_index + 1..self.character_index].iter().collect(), is_command)
     }
     /// Returns the byte index based on the character position.
     ///
@@ -631,17 +641,22 @@ struct AutoComplete {
     search_key: String,
     last_offer: String,
     offer_buffer: Option<Vec<String>>,
+    last_command_offer: String,
+    command_offer_buffer: Option<Vec<String>>,
+    command_list: Vec<String>
 }
 
 impl AutoComplete {
     pub fn new () -> Self {
-        Self { index: 0, search_key_index: 0, search_key: "".to_string(), last_offer: "".to_string(), offer_buffer: None }
+        Self { index: 0, search_key_index: 0, search_key: "".to_string(), last_offer: "".to_string(), offer_buffer: None, last_command_offer: "".to_string(), command_offer_buffer: None , command_list: Help::items_list()}
     }
     pub fn clean(&mut self) {
         self.offer_buffer = None;
+        self.command_offer_buffer = None;
         self.index = 0;
         self.search_key_index = 0;
         self.last_offer = String::new();
+        self.last_command_offer = String::new();
     }
     pub fn next_offer(&mut self, mut search_key: String) -> Option<String> {
         if self.offer_buffer.is_none() {
@@ -679,4 +694,54 @@ impl AutoComplete {
         self.last_offer = buffer[idx].clone();
         Some(buffer[idx].clone())
     }
+    pub fn next_command_offer(&mut self, search_key: String) -> Option<String> {
+        if self.command_offer_buffer.is_none() {
+            let mut offers :Vec<String> = Vec::new();
+
+            let command_list = &self.command_list;
+
+            for entry in command_list {
+                if entry.starts_with(&search_key) {
+                    offers.push(entry.to_string());
+                }
+            }
+
+//            search_key.push('*');
+/*
+            match glob(&search_key) {
+                Ok(glob) => {
+                    for entry in glob {
+                        match entry {
+                            Ok(path) => {
+                                offers.push(path.display().to_string());
+                            }
+                            Err(_) => {
+                                // Do nothing
+                            }
+                        }
+                    }
+                }
+                Err(_) => {
+                    // Do nothing
+                }
+            }
+*/
+
+
+            if offers.is_empty() {
+                return None
+            }
+            self.command_offer_buffer = Some(offers);
+            self.search_key = search_key;
+        }
+        let buffer = self.command_offer_buffer.clone().unwrap();
+        if self.index == buffer.len() {
+            self.index = 0;
+        } 
+        let idx = self.index;
+        self.index += 1;
+        self.last_command_offer = buffer[idx].clone();
+        Some(buffer[idx].clone())
+    }
+
 }
