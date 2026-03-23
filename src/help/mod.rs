@@ -63,6 +63,12 @@ pub static HELP: &str = r#"
     "examples": "\\n    b\\n    b 0xabcd\\n    b x\\n Note: b x is used to clear all the breakpoints.\\n       b <address> is used to set or clear the specific breakpoint. If the breakpoint doesn't exist it is set, if it exists it is cleard. "
   },
   {
+    "command": "bl | bootloader",
+    "description": "Sets bootloader filename.",
+    "usage": "bl or bootloader [bootloader filename]",
+    "examples": "\\n    bl bootloaders/cpm.hex\\n    bootloader bootloaders/cpm.hex\\n    bl\\n    bootloader\\n Note: Bootloader file must be in INTELHEX format.\\n       If file is not specified, it returns bootloader status (filename or 'Not defined')."
+  },
+  {
     "command": "cd",
     "description": "Change directory.",
     "usage": "cd or cd <directory>",
@@ -120,7 +126,7 @@ pub static HELP: &str = r#"
     "command": "g | go",
     "description": "Starts a programm from an address defined in PC register or as a parameter on command line.",
     "usage": "g [address] or go [address]",
-    "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    g\\n    g 0x1000\\n    go\\n    go $1000"
+    "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    g\\n    g 0x1000\\n    go\\n    go $1000\\n Note: This command can be used for debugging as it checks keyboard input and exits on CTRL-C. It can slow the execution.\\n       For full speed execution use run command. But in this case it can be interrupted only on predefined HLT instruction."
   },
   {
     "command": "h | help | ?",
@@ -189,16 +195,28 @@ pub static HELP: &str = r#"
     "examples": "\\n    pwd"
   },
   {
+    "command": "rdr | pun | rdr_pun",
+    "description": "Sets tape reader's/puncher's io or memory address.",
+    "usage": "rdr <address> or pun <address> or rdr_pun <address>",
+    "examples": "\\n    rdr 0x40\\n    pun 0x40\\n    rdr_pun M0x1234\\n Note: Address can be defined as <address 8bit> if mapped to io memory or as M<address 16bit> if mapped to cpu's memory."
+  },
+  {
     "command": "reg | r",
     "description": "Shows or sets the content of the register of the currently set CPU.",
     "usage": "r or r <reg> [value] or reg or reg <reg> [value]",
     "examples": "\\n    r\\n    reg\\n    reg a\\n    reg a 0ffh\\n    r x\\n    r x $ff\\n    reg sp 0fffh\\n    r pc $ffff\\n Note: If value is defined, it is set, otherwise only the content of the register is displayed. If no register is provided it will display all registers."
   },
   {
-    "command": "rdr | pun | rdr_pun",
-    "description": "Sets tape reader's/puncher's io or memory address.",
-    "usage": "rdr <address> or pun <address> or rdr_pun <address>",
-    "examples": "\\n    rdr 0x40\\n    pun 0x40\\n    rdr_pun M0x1234\\n Note: Address can be defined as <address 8bit> if mapped to io memory or as M<address 16bit> if mapped to cpu's memory."
+    "command": "res | reset",
+    "description": "Resets the CPU.",
+    "usage": "res or reset",
+    "examples": "\\n    res\\n    reset\\n Note: If bootloader is specified it is executed or it just jumps to address 0x0000"
+  },
+  {
+    "command": "run",
+    "description": "Starts a programm from an address defined in PC register or as a parameter on command line.",
+    "usage": "run [address]",
+    "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    run\\n    run 0x1000\\n Note: This command can be used to start execution at full speed. It doesn't check keyboard input and cannot exit on CTRL-C.\\n       But it can be interrupted on predefined HLT instruction."
   },
   {
     "command": "ser | serial",

@@ -1,9 +1,11 @@
 //! Provides a code for specific CPU
 use crate::io::memory;
 use crate::memory::Memory;
+use crate::bootloader::Bootloader;
 use std::cell::RefMut;
 use std::cell::RefCell;
 use std::rc::Rc;
+
 
 pub mod i8080;
 pub mod i8080_tests;
@@ -25,12 +27,10 @@ pub trait CpuUi {
     fn get_io_memory(&mut self) -> Option<&mut memory::IoMemory>;
     fn get_pc(&mut self) -> u16;
     fn set_pc(&mut self, pc: u16);
-//    fn io_read(&mut self, address: u8) -> u8;
-//    fn io_write(&mut self, address: u8, data: u8);
     fn io_read(&mut self, _address: u8) -> u8 {
         0xff
     }
-fn io_write(&mut self, _address: u8, _data: u8) {}
+    fn io_write(&mut self, _address: u8, _data: u8) {}
 
     fn disasm(&mut self, start: u16, end: u16) -> Vec<String>;
     fn print_disasm(&mut self, start: u16, end: u16) {
@@ -56,6 +56,27 @@ fn io_write(&mut self, _address: u8, _data: u8) {}
     /// during debugging of the programm
     ///
     fn set_debug_flag(&mut self, debug: bool);
+    /// Reset CPU
+    /// 
+    /// Resets cpu and, by default, starts execution at address of 0x000
+    /// It can be used to load a bootloader and start its execution
+    /// Check the built it bootloader for CP/M 2.2 operating system
+    fn reset(&mut self) -> Result<(), String> {
+        self.set_pc(0x0000);
+        loop {
+            self.one_step();
+        }
+    }
+    /// Set bootloader
+    /// 
+    /// Sets bootloader parameters
+    fn set_bootloader(&mut self, bootloader: Bootloader);
+    /// Get bootloader
+    /// 
+    /// Gets bootloader parameters
+    fn get_bootloader(&mut self) -> Option<Bootloader>;
+    fn get_hlt(&self) -> u8;
+    fn run(&mut self, pc:u16) -> Result<(), String>;
 }
 
 pub enum Reg {

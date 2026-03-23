@@ -43,6 +43,17 @@ impl Cpu {
         }
         Ok(AppState::Home)
     }
+    /// Reset
+    /// 
+    /// Resets CPU and if bootloader is specified it is executed
+    pub fn reset(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
+        app.is_cpu_set()?; // Check if cpu is defined
+        if command.len() != 1 {
+            return Err("Invalid number of parameters. Usage: res or reset".to_string());
+        };
+        app.cpu_ui.as_mut().unwrap().reset()?;
+        Ok(AppState::Home)
+    }
     /// Executes one step
     ///
     /// Executes one step and if debug flag is set, it also displays opcode of executed instruction
@@ -115,6 +126,37 @@ impl Cpu {
                         return Ok(AppState::Home);
                     };
                 }
+            }
+            None => cpu_not_set_error(),
+        }
+    }
+
+    /// Starts execution of program from address in PC register
+    ///
+    /// Starts execution of program from address in PC register and stops if it
+    /// reaches predefined HLT instruction code. If pc reaches end of memory (0xffff) 
+    /// it rolles over to 0x0000 and continues execution. Execution cannot be interrupted
+    /// by CTRL-C.
+    pub fn run(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
+        app.is_cpu_set()?; // Check if cpu is defined
+        match &mut app.cpu_ui {
+            Some(cpu) => {
+                // Stores debug flag
+                let debug = cpu.get_debug_flag();
+                // and disable debugging (opcode) output
+                let pc: u16 = match command.len() {
+                    1 => cpu.get_pc(),
+                    2 => {
+                        // Set PC from command line value
+                        Memory::from_hex_string(command[1].to_string())?
+                    }
+                    _ => return Err("ERROR - Invalid number of parameters. Usage: g or go".to_string()),
+                };
+                cpu.set_debug_flag(false);
+                cpu.set_pc(pc); // Set PC before run
+                cpu.run(pc)?;
+                cpu.set_debug_flag(debug);
+                Ok(AppState::Home)
             }
             None => cpu_not_set_error(),
         }

@@ -11,8 +11,7 @@ rdr_pun 0xf0
 fdc 0x78  disk_cpm.dsk[ro] disk_b.dsk disk_c.dsk disk_d.dsk
 # Load BIOS
 lh CPM80_2.2/BIOS.hex
-# Load CCP and BDOS loader
-lh CPM80_2.2/GETSYS.hex
+# Set bootloader
+bootloader CPM80_2.2/GETSYS.hex
 # Start loader and go to CPM
-# g 0x100
-run 0x100
+reset

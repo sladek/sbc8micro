@@ -433,7 +433,7 @@ impl App {
             .set_page_offset(self.output_view_status.get_page_offset() + 1);
     }
 
-    /// Renders UIs and processes events
+    /// Render UIs and process events
     ///
     /// Renders UIs and processes events from terminal (keyboard, mouse)
     /// This is a central part of this application as it renders different UIs
@@ -454,7 +454,7 @@ impl App {
         }
     }
 
-    /// Handles events from command UI
+    /// Handle events from command UI
     ///
     /// Handles evens like events from keyboard and mouse events. Normally it is hardcoded in run function,
     /// but for this implementation we want to process events for multiple UIs so it is called as function
@@ -705,29 +705,6 @@ impl AutoComplete {
                     offers.push(entry.to_string());
                 }
             }
-
-//            search_key.push('*');
-/*
-            match glob(&search_key) {
-                Ok(glob) => {
-                    for entry in glob {
-                        match entry {
-                            Ok(path) => {
-                                offers.push(path.display().to_string());
-                            }
-                            Err(_) => {
-                                // Do nothing
-                            }
-                        }
-                    }
-                }
-                Err(_) => {
-                    // Do nothing
-                }
-            }
-*/
-
-
             if offers.is_empty() {
                 return None
             }

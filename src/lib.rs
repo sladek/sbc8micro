@@ -8,3 +8,4 @@ pub mod io;
 pub mod memory;
 pub mod status;
 pub mod ui;
+pub mod bootloader;

@@ -148,7 +148,7 @@ impl Default for Isbc202 {
             base_address: None,
             memory_base_address: None,
             port_offsets: [0, 1, 2, 3, 7], // 0 - dstat, 1 - ilow/rtype, 2 - ihigh, 3 - rbyte, 7 - reset
-            name: Some("iSBC-201".to_string()),
+            name: Some("iSBC-202".to_string()),
             floppies: [const { None }; NUMBER_OF_DISKS],
             active_floppy: 0,
             cpu_memory: None,

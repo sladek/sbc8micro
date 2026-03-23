@@ -35,6 +35,7 @@ use crate::status::i8080::*;
 use std::cell::{RefCell, RefMut};
 use std::rc::Rc;
 use crate::disassembler::i8080::load_opcodes_table;
+use crate::bootloader::Bootloader;
 
 /// CPU registers, flags, counters and memory
 #[derive(Default)]
@@ -73,6 +74,11 @@ pub struct Cpu {
     /// This can slow the execution so it should be used mainly
     /// during debuging process.
     pub debug: bool,
+    /// Bootloadr
+    pub bootloader: Option<Bootloader>,
+    /// Specify HLT code which will end running command
+    /// and returns to UI or exits the application if UI is not used
+    pub hlt_code: u8,
 }
 
 impl Cpu {
@@ -93,11 +99,12 @@ impl Cpu {
             pc: 0,
             sp: 0,
             inte: false,
-//            memory: Box::new(Rc::new(RefCell::new(Memory::new()))),
             memory: memory.clone(),
             io_memory: io::memory::IoMemory::new(),
             breakpoints: Breakpoints::new(),
             debug: true,
+            bootloader: None,
+            hlt_code: HLT, // Fo 8080 we have HLT instruction
         }
     }
     /// Gets cpu for usage in terminal UI.
@@ -497,7 +504,7 @@ impl Cpu {
     ///
     ///  Steps through the instructions
     ///
-    /// Read instriction from memory, executes it and set PC to point to next instruction in memory.
+    /// Read instruction from memory, executes it and set PC to point to next instruction in memory.
     /// If debug flag is set to true it will also print mnemonic code of the instruction that is executed.
     ///
     pub fn step(&mut self) -> Option<String> {
@@ -1898,5 +1905,53 @@ impl CpuUi for Cpu {
         self.a = data;
         self.out(address);
         self.a = reg_a;        
+    }
+    fn set_bootloader(&mut self, bootloader: Bootloader) {
+        self.bootloader = Some(bootloader);
+    }
+    fn get_bootloader(&mut self) -> Option<Bootloader> {
+        self.bootloader.clone()
+    }
+    fn get_hlt(&self) -> u8 {
+        self.hlt_code
+    }
+    /// Reset the CPU
+    /// 
+    /// Resets the CPU and if bootloader is not specified, sets PC to 0x0000 and starts program.
+    /// If bootloader is specified, load bootloader to memory and starts bootloader
+    fn reset(&mut self) -> Result<(), String> {
+        let pc: u16 = if self.bootloader.is_none() {
+            0x0000u16
+        }
+        else {
+            // Load bootloader and set pc to its start address
+            let bootloader = self.bootloader.as_ref().unwrap();
+            match self.memory.borrow_mut().load_data_from_intelhex_file(&bootloader.get_filename()){
+                Ok(region) => {
+                    region.start
+                }
+                Err(err) => {
+                    return Err(err.to_string());
+                }
+            }
+        };
+        // And start the code 
+        self.pc = pc;
+        self.run(pc)?;
+        Ok(())
+    }
+    /// Run from PC
+    /// 
+    /// Runs from PC. Breaks when it reaches predefined HLT instruction
+    fn run(&mut self, pc: u16) -> Result<(), String> {
+        self.pc = pc;
+        loop {
+            let opcode = self.memory.borrow_mut().read_byte(self.pc);
+            self.step();
+            if opcode == self.hlt_code {
+                break;
+            }
+        }
+        Ok(())
     }
 }

@@ -20,6 +20,7 @@ use crate::commands::ihex::Ihex;
 use crate::commands::{MIN_COMMAND_HISTORY_LENGTH, MIN_OUTPUT_HISTORY_LENGTH};
 use crate::help;
 use crate::ui::app::{App, AppState};
+use crate::commands::bootloader::Bootloader;
 use regex::Regex;
 
 #[derive(Default)]
@@ -35,6 +36,7 @@ impl Command {
         let command: Vec<&str> = params.trim().split(" ").collect();
         match command[0] {
             "b" => Breakpoint::breakpoint(app, command),
+            "bl" | "bootloader" => Bootloader::bootloader(app, command),
             "cd" => Directory::cd(app, command),
             "ch" | "command_history_length" => Self::command_history(app, command),
             "cls" | "clear" => {
@@ -62,6 +64,8 @@ impl Command {
             "pwd" => Directory::pwd(app, command),
             "r" | "reg" => Registers::set_get_reg(app, command),
             "rdr" | "pun" | "rdr_pun" => RdrPun::rdr_pun(app, command),
+            "res" | "reset" => Cpu::reset(app, command),
+            "run" => Cpu::run(app, command),
             "s" | "step" => Cpu::step(app, command),
             "scr" | "script" => Script::script(app, command),
             "ser" | "serial" => Serial::serial(app, command),

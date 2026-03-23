@@ -41,6 +41,7 @@ use crate::disassembler::mos6502_opcode_consts::*;
 use crate::io::memory;
 use crate::memory::Memory;
 use crate::status::mos6502;
+use crate::bootloader::Bootloader;
 
 /// Internal registers and flags for MOS6502 CPU
 #[derive(Default)]
@@ -68,6 +69,8 @@ pub struct Cpu {
     /// This can slow the execution so it should be used mainly
     /// during debuging process.
     debug: bool,
+    bootloader: Option<Bootloader>,
+    hlt_code: u8, // KIL, HLT of MOS6502
 }
 
 impl Cpu {
@@ -84,6 +87,8 @@ impl Cpu {
             io_memory: None,
             breakpoints: Breakpoints::new(),
             debug: true,
+            bootloader: None,
+            hlt_code: 0x02,
         }
     }
     pub fn get_cpu_ui() -> Option<Box<dyn CpuUi>> {
@@ -1742,5 +1747,31 @@ impl CpuUi for Cpu {
     }
     fn set_debug_flag(&mut self, debug: bool) {
         self.debug = debug;
+    }
+    fn reset(&mut self) -> Result<(), String> {
+        Ok(())
+    }
+    fn set_bootloader(&mut self, bootloader: Bootloader) {
+        self.bootloader = Some(bootloader);
+    }
+    fn get_bootloader(&mut self) -> Option<Bootloader> {
+        self.bootloader.clone()
+    }
+    fn get_hlt(&self) -> u8 {
+        self.hlt_code
+    }
+    /// Run from PC
+    /// 
+    /// Runs from PC. Breaks when it reaches predefined HLT instruction
+    fn run(&mut self, pc: u16) -> Result<(), String> {
+        self.pc = pc;
+        loop {
+            let opcode = self.memory.borrow_mut().read_byte(self.pc);
+            self.step();
+            if opcode == self.hlt_code {
+                break;
+            }
+        }
+        Ok(())
     }
 }
