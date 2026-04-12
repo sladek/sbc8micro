@@ -76,7 +76,10 @@ pub trait CpuUi {
     /// Gets bootloader parameters
     fn get_bootloader(&mut self) -> Option<Bootloader>;
     fn get_hlt(&self) -> u8;
+    fn set_hlt(&mut self, hlt: u8);
     fn run(&mut self, pc:u16) -> Result<(), String>;
+    fn get_empty_cycles(&self) -> u8;
+    fn set_empty_cycles(&mut self, ec:u8);
 }
 
 pub enum Reg {

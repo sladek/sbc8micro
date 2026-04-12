@@ -51,7 +51,9 @@ impl Cpu {
         if command.len() != 1 {
             return Err("Invalid number of parameters. Usage: res or reset".to_string());
         };
-        app.cpu_ui.as_mut().unwrap().reset()?;
+        if let Some(cpu) = app.cpu_ui.as_mut()  {
+            _ = cpu.reset();   
+        }
         Ok(AppState::Home)
     }
     /// Executes one step
@@ -156,6 +158,62 @@ impl Cpu {
                 cpu.set_pc(pc); // Set PC before run
                 cpu.run(pc)?;
                 cpu.set_debug_flag(debug);
+                Ok(AppState::Home)
+            }
+            None => cpu_not_set_error(),
+        }
+    }
+    /// Set/get HLT instruction
+    /// 
+    /// Sets or show HLT instruction so that execution of program can be interrupted
+    pub fn set_hlt(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
+        app.is_cpu_set()?; // Check if cpu is defined
+        match &mut app.cpu_ui {
+            Some(cpu) => {
+                match command.len() {
+                    1 => {
+                        let hlt = cpu.get_hlt();
+                        app.messages.push(format!("HLT instruction code = 0x{:02X}", hlt));
+                    },
+                    2 => {
+                        // Set PC from command line value
+                        let hlt = Memory::from_hex_string(command[1].to_string())?;
+                        if hlt > 0xff {
+                            app.messages.push("HLT instruction cannot be bigger than 0xff.".to_string());
+                            return Ok(AppState::Home);
+                        }
+                        cpu.set_hlt(hlt as u8);
+                        app.messages.push(format!("HLT instruction set to 0x{:02X}.", hlt).to_string());
+                    }
+                    _ => return Err("ERROR - Invalid number of parameters. Usage: sh [hlt code] or set_hlt [hlt code]".to_string()),
+                };
+                Ok(AppState::Home)
+            }
+            None => cpu_not_set_error(),
+        }
+    }
+
+    pub fn empty_cycles(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
+        app.is_cpu_set()?; // Check if cpu is defined
+        match &mut app.cpu_ui {
+            Some(cpu) => {
+                match command.len() {
+                    1 => {
+                        let ec = cpu.get_empty_cycles();
+                        app.messages.push(format!("Number of empty cycles  = 0x{:04X}", ec));
+                    },
+                    2 => {
+                        // Set empty_cycles from command line value
+                        let ec = Memory::from_hex_string(command[1].to_string())?;
+                        if ec > 0xff {
+                            app.messages.push("Empty cycles cannot be bigger than 0xff.".to_string());
+                            return Ok(AppState::Home);
+                        }
+                        cpu.set_empty_cycles(ec as u8);
+                        app.messages.push(format!("Number of empty cycles set to 0x{:04X}.", ec).to_string());
+                    }
+                    _ => return Err("ERROR - Invalid number of parameters. Usage: ec [cycle number] or empty_cycles [cycle number]".to_string()),
+                };
                 Ok(AppState::Home)
             }
             None => cpu_not_set_error(),

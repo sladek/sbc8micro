@@ -37,6 +37,8 @@ use std::rc::Rc;
 use crate::disassembler::i8080::load_opcodes_table;
 use crate::bootloader::Bootloader;
 
+const ONE_CYCLE:u16 = 0x7f;
+
 /// CPU registers, flags, counters and memory
 #[derive(Default)]
 pub struct Cpu {
@@ -79,6 +81,11 @@ pub struct Cpu {
     /// Specify HLT code which will end running command
     /// and returns to UI or exits the application if UI is not used
     pub hlt_code: u8,
+    /// Number of empty cycles inserted during execution of each instruction.
+    /// It can be used to slow down the execution of program, which can be
+    /// useful when playing games.
+    /// If the value is 0 CPU runs "at full speed".
+    pub empty_cycles: u8,
 }
 
 impl Cpu {
@@ -104,7 +111,8 @@ impl Cpu {
             breakpoints: Breakpoints::new(),
             debug: true,
             bootloader: None,
-            hlt_code: HLT, // Fo 8080 we have HLT instruction
+            hlt_code: HLT, // For 8080 we have HLT instruction
+            empty_cycles: 0,
         }
     }
     /// Gets cpu for usage in terminal UI.
@@ -1106,7 +1114,7 @@ impl Cpu {
             LDAX_D => {
                 let addr = self.get_de();
                 self.a = self.memory.borrow_mut().read_byte(addr);
-                disasm = dbg!("{}LDAX B", self.code_to_str(1));
+                disasm = dbg!("{}LDAX D", self.code_to_str(1));
             }
             LHLD => {
                 let addr = self.read_immediate_word();
@@ -1915,11 +1923,15 @@ impl CpuUi for Cpu {
     fn get_hlt(&self) -> u8 {
         self.hlt_code
     }
+    fn set_hlt(&mut self, hlt: u8) {
+        self.hlt_code = hlt;
+    }
     /// Reset the CPU
     /// 
     /// Resets the CPU and if bootloader is not specified, sets PC to 0x0000 and starts program.
     /// If bootloader is specified, load bootloader to memory and starts bootloader
     fn reset(&mut self) -> Result<(), String> {
+        self.sp = 0;
         let pc: u16 = if self.bootloader.is_none() {
             0x0000u16
         }
@@ -1936,7 +1948,6 @@ impl CpuUi for Cpu {
             }
         };
         // And start the code 
-        self.pc = pc;
         self.run(pc)?;
         Ok(())
     }
@@ -1948,10 +1959,39 @@ impl CpuUi for Cpu {
         loop {
             let opcode = self.memory.borrow_mut().read_byte(self.pc);
             self.step();
+            // If empty_cycles differs from 0 insert some empty cycles 
+            // to slow down program execution.
+            if self.empty_cycles != 0 {
+                let mut cnt = self.empty_cycles;
+                loop {
+                    if cnt == 0 { break }
+                    cnt -= 1;
+                    let mut cnt2 = ONE_CYCLE;
+                    while cnt2 > 0 {
+                        cnt2 -= 1;
+                    }
+                };
+            }
             if opcode == self.hlt_code {
                 break;
             }
         }
         Ok(())
+    }
+    /// Display a number of empty cycles
+    /// 
+    /// Displays a number of empty cycles inserted to the execution of each instruction
+    /// One cycle is an loop of decrement from a variable defined by ONE_CYCLE constant.
+    /// It depends on a speed of host CPU.
+    fn get_empty_cycles(&self) -> u8 {
+        self.empty_cycles
+    }
+    /// Set a number of empty cycles
+    /// 
+    /// Sets a number of empty cycles inserted to the execution of each instruction
+    /// One cycle is an loop of decrement from a variable defined by ONE_CYCLE constant.
+    /// It depends on a speed of host CPU.
+    fn set_empty_cycles(&mut self, ec:u8) {
+        self.empty_cycles = ec;
     }
 }

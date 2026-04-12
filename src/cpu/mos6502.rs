@@ -43,6 +43,8 @@ use crate::memory::Memory;
 use crate::status::mos6502;
 use crate::bootloader::Bootloader;
 
+const ONE_CYCLE:u16 = 0xff;
+
 /// Internal registers and flags for MOS6502 CPU
 #[derive(Default)]
 pub struct Cpu {
@@ -71,6 +73,11 @@ pub struct Cpu {
     debug: bool,
     bootloader: Option<Bootloader>,
     hlt_code: u8, // KIL, HLT of MOS6502
+    /// Number of empty cycles inserted during execution of each instruction.
+    /// It can be used to slow down the execution of program, which can be
+    /// useful when playing games.
+    /// If the value is 0 CPU runs "at full speed".
+    pub empty_cycles: u8,
 }
 
 impl Cpu {
@@ -89,6 +96,7 @@ impl Cpu {
             debug: true,
             bootloader: None,
             hlt_code: 0x02,
+            empty_cycles: 0
         }
     }
     pub fn get_cpu_ui() -> Option<Box<dyn CpuUi>> {
@@ -1760,6 +1768,9 @@ impl CpuUi for Cpu {
     fn get_hlt(&self) -> u8 {
         self.hlt_code
     }
+    fn set_hlt(&mut self, hlt: u8) {
+        self.hlt_code = hlt;
+    }
     /// Run from PC
     /// 
     /// Runs from PC. Breaks when it reaches predefined HLT instruction
@@ -1768,10 +1779,30 @@ impl CpuUi for Cpu {
         loop {
             let opcode = self.memory.borrow_mut().read_byte(self.pc);
             self.step();
+            // If empty_cycles differs from 0 insert some empty cycles 
+            // to slow down the program execution.
+            if self.empty_cycles != 0 {
+                let mut cnt = self.empty_cycles;
+                loop {
+                    if cnt == 0 { break }
+                    cnt -= 1;
+                    let mut cnt2 = ONE_CYCLE;
+                    while cnt2 > 0 {
+                        cnt2 -= 1;
+                    }
+                };
+            }
             if opcode == self.hlt_code {
                 break;
             }
         }
         Ok(())
     }
+    fn get_empty_cycles(&self) -> u8 {
+        self.empty_cycles
+    }
+    fn set_empty_cycles(&mut self, ec:u8) {
+        self.empty_cycles = ec;
+    }
+
 }

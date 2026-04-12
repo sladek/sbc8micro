@@ -221,6 +221,14 @@ BSERR:	LXI	H,ERMSG2	;<BAD SECTOR ERROR>
 ;		reboot and immediately try to select that
 ;		drive. This gives an error message and a
 ;		reboot which reselects the drive........
+;	NOTE:
+;		It is solved in CCP procedure TRANS
+;		I've just changed the order of SELDSK and
+;		LOGCUR procedures. It solved the issue. 
+;		If there is an error when changing the disk
+;		it will reboot to previously selected disk.
+;		If everything is Ok it will set current disk 
+;		and continue normaly
 ;
 SELER1:	LXI	H,ERMSG3	;<DISK SELECT ERROR>
 	JMP	ROERR2	;

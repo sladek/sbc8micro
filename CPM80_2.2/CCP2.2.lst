@@ -1299,148 +1299,153 @@ EAB3: B7                 1178 |     ORA A   ;
 EAB4: CA 89 EB           1179 |     JZ  CMEND1  ;EXIT IF ON THE LOGIN DISK
 EAB7: 3D                 1180 |     DCR A   ;
 EAB8: 32 EF EB           1181 |     STA CURDSK  ;OTHERWISE LOG BACK TO THE LOGIN DISK
-EABB: CD 29 E5           1182 |     CALL    LOGCUR  ;
-EABE: CD BD E4           1183 |     CALL    SELDSK  ;
-EAC1: C3 89 EB           1184 |     JMP CMEND1  ;AND GO BACK FOR ANOTHER COMMAND
-                         1185 | ;
-EAC4: 11 D6 EB           1186 | TRANS1: LXI D,FCB+9 ; CHECK THE FILE TYPE.
-EAC7: 1A                 1187 |     LDAX    D   ;
-EAC8: FE 20              1188 |     CPI ' ' ;
-EACA: C2 09 E6           1189 |     JNZ WHAT    ; YOU'RE NOT SUPPOSED TO HAVE A FILE TYPE W/ A TRANSIENT.
-EACD: D5                 1190 |     PUSH    D   ;
-EACE: CD 54 E8           1191 |     CALL    SETTRD  ; SET TO TRANSIENT DRIVE.
-EAD1: D1                 1192 |     POP D   ;
-EAD2: 21 83 EB           1193 |     LXI H,COM   ; MOVE FILE TYPE "COM" INTO FCB.
-EAD5: CD 40 E8           1194 |     CALL    MOVE3   ;
-EAD8: CD D0 E4           1195 |     CALL    OPENF1  ; OPEN FILE FOR READING.
-EADB: CA 6B EB           1196 |     JZ  TRANS8  ; ERROR CONDITION, FILE NOT FOUND.
-EADE: 21 00 01           1197 |     LXI H,TPA   ; STARTING POINT FOR PROGRAM LOADING.
-                         1198 |     ;
-EAE1: E5                 1199 | TRANS2: PUSH    H   ; MOVE PROGRAM INTO TPA SECTOR BY SECTOR.
-EAE2: EB                 1200 |     XCHG        ;
-EAE3: CD D8 E5           1201 |     CALL    STDMA1  ; POINT TO LOADING LOCATION.
-EAE6: 11 CD EB           1202 |     LXI D,FCB   ;
-EAE9: CD F9 E4           1203 |     CALL    READF   ; READ 1 SECTOR INTO MEMORY.
-EAEC: C2 01 EB           1204 |     JNZ TRANS3  ; ZFLAG RESET ::= GOOD READ, GO AROUND FOR MORE.
-EAEF: E1                 1205 |     POP H   ;
-EAF0: 11 80 00           1206 |     LXI D,SECLEN    ;
-EAF3: 19                 1207 |     DAD D   ; ADVANCE POINTER FOR NEXT SECTOR.
-EAF4: 11 00 E4           1208 |     LXI D,ORIGIN    ; CHECK FOR PROGRAM OVERLAPPING CCP AREA.
-EAF7: 7D                 1209 |     MOV A,L ;
-EAF8: 93                 1210 |     SUB E   ;
-EAF9: 7C                 1211 |     MOV A,H ;
-EAFA: 9A                 1212 |     SBB D   ;
-EAFB: D2 71 EB           1213 |     JNC LDERR   ; ERROR CONDITION, PROGRAM TOO BIG FOR MEMORY.
-EAFE: C3 E1 EA           1214 |     JMP TRANS2  ; BACK FOR NEXT SECTOR.
-                         1215 | ;
-EB01: E1                 1216 | TRANS3: POP H   ; CLEAR STACK.
-EB02: 3D                 1217 |     DCR A   ; 1 ::= END OF FILE (GOOD) OR 2 ::= READ ERROR (BAD).
-EB03: C2 71 EB           1218 |     JNZ LDERR   ; READ ERROR.
-EB06: CD 66 E8           1219 |     CALL    SETCUR  ; SET BACK TO CURRENT DRIVE.
-EB09: CD 5E E6           1220 |     CALL    TRFCB   ; MOVE ANY FURTHER FCB'S AT 005CH AND 006CH.
-EB0C: 21 F0 EB           1221 |     LXI H,TRDISK    ;
+                         1182 |     ; ORDER OF CALLS TO SELDSK AND LOGCUR HAS BEEN CHANGED HERE TO PREVENT
+                         1183 |     ; ATTEMPT TO RETURN TO THE SAME DISK IF IT DOESN'T EXIST. sO FIRST WE
+                         1184 |     ; TRY TO SELECT NEW DISK AND IF IF DOESN'T EXIST IT WILL END WITH ERROR
+                         1185 |     ; AND REBOOT TO PRVIOUSLY SELECTED DISK
+                         1186 |     ; CALL  LOGCUR  ; THIS IS MOVED AFTER CALL SELDSK
+EABB: CD BD E4           1187 |     CALL    SELDSK  ;
+EABE: CD 29 E5           1188 |     CALL    LOGCUR  ;
+EAC1: C3 89 EB           1189 |     JMP CMEND1  ;AND GO BACK FOR ANOTHER COMMAND
+                         1190 | ;
+EAC4: 11 D6 EB           1191 | TRANS1: LXI D,FCB+9 ; CHECK THE FILE TYPE.
+EAC7: 1A                 1192 |     LDAX    D   ;
+EAC8: FE 20              1193 |     CPI ' ' ;
+EACA: C2 09 E6           1194 |     JNZ WHAT    ; YOU'RE NOT SUPPOSED TO HAVE A FILE TYPE W/ A TRANSIENT.
+EACD: D5                 1195 |     PUSH    D   ;
+EACE: CD 54 E8           1196 |     CALL    SETTRD  ; SET TO TRANSIENT DRIVE.
+EAD1: D1                 1197 |     POP D   ;
+EAD2: 21 83 EB           1198 |     LXI H,COM   ; MOVE FILE TYPE "COM" INTO FCB.
+EAD5: CD 40 E8           1199 |     CALL    MOVE3   ;
+EAD8: CD D0 E4           1200 |     CALL    OPENF1  ; OPEN FILE FOR READING.
+EADB: CA 6B EB           1201 |     JZ  TRANS8  ; ERROR CONDITION, FILE NOT FOUND.
+EADE: 21 00 01           1202 |     LXI H,TPA   ; STARTING POINT FOR PROGRAM LOADING.
+                         1203 |     ;
+EAE1: E5                 1204 | TRANS2: PUSH    H   ; MOVE PROGRAM INTO TPA SECTOR BY SECTOR.
+EAE2: EB                 1205 |     XCHG        ;
+EAE3: CD D8 E5           1206 |     CALL    STDMA1  ; POINT TO LOADING LOCATION.
+EAE6: 11 CD EB           1207 |     LXI D,FCB   ;
+EAE9: CD F9 E4           1208 |     CALL    READF   ; READ 1 SECTOR INTO MEMORY.
+EAEC: C2 01 EB           1209 |     JNZ TRANS3  ; ZFLAG RESET ::= GOOD READ, GO AROUND FOR MORE.
+EAEF: E1                 1210 |     POP H   ;
+EAF0: 11 80 00           1211 |     LXI D,SECLEN    ;
+EAF3: 19                 1212 |     DAD D   ; ADVANCE POINTER FOR NEXT SECTOR.
+EAF4: 11 00 E4           1213 |     LXI D,ORIGIN    ; CHECK FOR PROGRAM OVERLAPPING CCP AREA.
+EAF7: 7D                 1214 |     MOV A,L ;
+EAF8: 93                 1215 |     SUB E   ;
+EAF9: 7C                 1216 |     MOV A,H ;
+EAFA: 9A                 1217 |     SBB D   ;
+EAFB: D2 71 EB           1218 |     JNC LDERR   ; ERROR CONDITION, PROGRAM TOO BIG FOR MEMORY.
+EAFE: C3 E1 EA           1219 |     JMP TRANS2  ; BACK FOR NEXT SECTOR.
+                         1220 | ;
+EB01: E1                 1221 | TRANS3: POP H   ; CLEAR STACK.
 
 
 Assembly Listing                                                                                                Page: 23
 ------------------------------------------------------------------------------------------------------------------------
 
-EB0F: E5                 1222 |     PUSH    H   ;
-EB10: 7E                 1223 |     MOV A,M ;Put transient disk number into
-EB11: 32 CD EB           1224 |     STA FCB ;  first byte of file control block.
-EB14: 3E 10              1225 |     MVI A,16    ;Set offset for TRFCB to upper half of FCB
-EB16: CD 60 E6           1226 |     CALL    TRFCB1  ;Move seconf file name into FCB + 16
-EB19: E1                 1227 |     POP H   ;
-EB1A: 7E                 1228 |     MOV A,M ;Get transient disk number of second FN
-EB1B: 32 DD EB           1229 |     STA FCB+16  ;  and insert it into FCB + 16
-EB1E: AF                 1230 |     XRA A   ;Zero out sector counter
-EB1F: 32 ED EB           1231 |     STA FCB+32  ;
-EB22: 11 5C 00           1232 |     LXI D,DFCB  ;Move filenames to default FCB
-EB25: 21 CD EB           1233 |     LXI H,FCB   ;
-EB28: 06 21              1234 |     MVI B,33    ;File control block & sector counter
-EB2A: CD 42 E8           1235 |     CALL    BLKMOV  ;
-                         1236 | ;
-EB2D: 21 08 E4           1237 |     LXI H,BUFFER    ;Start at the head of buffer
-EB30: 7E                 1238 | TRANS4: MOV A,M ;Step until blank or null found
-EB31: B7                 1239 |     ORA A   ; i.e. step over transient name
-EB32: CA 3E EB           1240 |     JZ  TRANS5  ;
-EB35: FE 20              1241 |     CPI ' ' ;
-EB37: CA 3E EB           1242 |     JZ  TRANS5  ;
-EB3A: 23                 1243 |     INX H   ;
-EB3B: C3 30 EB           1244 |     JMP TRANS4  ;Loop
-                         1245 | ;
-EB3E: 06 00              1246 | TRANS5: MVI B,00H   ;Command line byte counter
-EB40: 11 81 00           1247 |     LXI D,DDMA+1    ;
-EB43: 7E                 1248 | TRANS6: MOV A,M ;Move command line into default buffer
-EB44: 12                 1249 |     STAX    D   ;
-EB45: B7                 1250 |     ORA A   ;Exit on null
-EB46: CA 4F EB           1251 |     JZ  TRANS7  ;
-EB49: 04                 1252 |     INR B   ;Bump counter
-EB4A: 23                 1253 |     INX H   ;
-EB4B: 13                 1254 |     INX D   ;
-EB4C: C3 43 EB           1255 |     JMP TRANS6  ;
-                         1256 | ;
-EB4F: 78                 1257 | TRANS7: MOV A,B ;Put buffer counter at start
-EB50: 32 80 00           1258 |     STA DDMA    ; of default buffer
-EB53: CD 98 E4           1259 |     CALL    PCRLF   ;
-EB56: CD D5 E5           1260 |     CALL    SETDMA  ;Set DMA to default buffer
-EB59: CD 1A E5           1261 |     CALL    SETLOG  ; SET LOG-IN BYTE W/ CURRENT DRIVE & USER NUMBER
-EB5C: CD 00 01           1262 |     CALL    TPA ; GO OUT AND RUN THE PROGRAM.
-EB5F: 31 AB EB           1263 |     LXI SP,STACK    ; RESTORE STACK ON RETURN.
-EB62: CD 29 E5           1264 |     CALL    LOGCUR  ;Log back to the current disk
-EB65: CD BD E4           1265 |     CALL    SELDSK  ;
-EB68: C3 82 E7           1266 |     JMP NXTCMD  ; READY FOR ANOTHER ASSIGNMENT.
-                         1267 | ;
-                         1268 | ;   Redundant code:
-                         1269 | ;           This can be deleted, and jumps to this
-                         1270 | ;           point changed to TYPE4
-                         1271 | ;
-EB6B: CD 66 E8           1272 | TRANS8: CALL    SETCUR  ;Error exit
-EB6E: C3 09 E6           1273 |     JMP WHAT    ;
-                         1274 | ;
-                         1275 | ;   LOAD ERROR
+EB02: 3D                 1222 |     DCR A   ; 1 ::= END OF FILE (GOOD) OR 2 ::= READ ERROR (BAD).
+EB03: C2 71 EB           1223 |     JNZ LDERR   ; READ ERROR.
+EB06: CD 66 E8           1224 |     CALL    SETCUR  ; SET BACK TO CURRENT DRIVE.
+EB09: CD 5E E6           1225 |     CALL    TRFCB   ; MOVE ANY FURTHER FCB'S AT 005CH AND 006CH.
+EB0C: 21 F0 EB           1226 |     LXI H,TRDISK    ;
+EB0F: E5                 1227 |     PUSH    H   ;
+EB10: 7E                 1228 |     MOV A,M ;Put transient disk number into
+EB11: 32 CD EB           1229 |     STA FCB ;  first byte of file control block.
+EB14: 3E 10              1230 |     MVI A,16    ;Set offset for TRFCB to upper half of FCB
+EB16: CD 60 E6           1231 |     CALL    TRFCB1  ;Move seconf file name into FCB + 16
+EB19: E1                 1232 |     POP H   ;
+EB1A: 7E                 1233 |     MOV A,M ;Get transient disk number of second FN
+EB1B: 32 DD EB           1234 |     STA FCB+16  ;  and insert it into FCB + 16
+EB1E: AF                 1235 |     XRA A   ;Zero out sector counter
+EB1F: 32 ED EB           1236 |     STA FCB+32  ;
+EB22: 11 5C 00           1237 |     LXI D,DFCB  ;Move filenames to default FCB
+EB25: 21 CD EB           1238 |     LXI H,FCB   ;
+EB28: 06 21              1239 |     MVI B,33    ;File control block & sector counter
+EB2A: CD 42 E8           1240 |     CALL    BLKMOV  ;
+                         1241 | ;
+EB2D: 21 08 E4           1242 |     LXI H,BUFFER    ;Start at the head of buffer
+EB30: 7E                 1243 | TRANS4: MOV A,M ;Step until blank or null found
+EB31: B7                 1244 |     ORA A   ; i.e. step over transient name
+EB32: CA 3E EB           1245 |     JZ  TRANS5  ;
+EB35: FE 20              1246 |     CPI ' ' ;
+EB37: CA 3E EB           1247 |     JZ  TRANS5  ;
+EB3A: 23                 1248 |     INX H   ;
+EB3B: C3 30 EB           1249 |     JMP TRANS4  ;Loop
+                         1250 | ;
+EB3E: 06 00              1251 | TRANS5: MVI B,00H   ;Command line byte counter
+EB40: 11 81 00           1252 |     LXI D,DDMA+1    ;
+EB43: 7E                 1253 | TRANS6: MOV A,M ;Move command line into default buffer
+EB44: 12                 1254 |     STAX    D   ;
+EB45: B7                 1255 |     ORA A   ;Exit on null
+EB46: CA 4F EB           1256 |     JZ  TRANS7  ;
+EB49: 04                 1257 |     INR B   ;Bump counter
+EB4A: 23                 1258 |     INX H   ;
+EB4B: 13                 1259 |     INX D   ;
+EB4C: C3 43 EB           1260 |     JMP TRANS6  ;
+                         1261 | ;
+EB4F: 78                 1262 | TRANS7: MOV A,B ;Put buffer counter at start
+EB50: 32 80 00           1263 |     STA DDMA    ; of default buffer
+EB53: CD 98 E4           1264 |     CALL    PCRLF   ;
+EB56: CD D5 E5           1265 |     CALL    SETDMA  ;Set DMA to default buffer
+EB59: CD 1A E5           1266 |     CALL    SETLOG  ; SET LOG-IN BYTE W/ CURRENT DRIVE & USER NUMBER
+EB5C: CD 00 01           1267 |     CALL    TPA ; GO OUT AND RUN THE PROGRAM.
+EB5F: 31 AB EB           1268 |     LXI SP,STACK    ; RESTORE STACK ON RETURN.
+EB62: CD 29 E5           1269 |     CALL    LOGCUR  ;Log back to the current disk
+EB65: CD BD E4           1270 |     CALL    SELDSK  ;
+EB68: C3 82 E7           1271 |     JMP NXTCMD  ; READY FOR ANOTHER ASSIGNMENT.
+                         1272 | ;
+                         1273 | ;   Redundant code:
+                         1274 | ;           This can be deleted, and jumps to this
+                         1275 | ;           point changed to TYPE4
                          1276 | ;
-EB71: 01 7A EB           1277 | LDERR:  LXI B,MSG7  ;Load the error pointer
+EB6B: CD 66 E8           1277 | TRANS8: CALL    SETCUR  ;Error exit
 
 
 Assembly Listing                                                                                                Page: 24
 ------------------------------------------------------------------------------------------------------------------------
 
-EB74: CD A7 E4           1278 |     CALL    CRMSG   ;Display the message
-EB77: C3 86 EB           1279 |     JMP COMEND  ;EXIT
-                         1280 | ;
-EB7A: 42 41 44 20 4C...  1281 | MSG7:   DB  'BAD LOAD',0
-                         1282 | ;
-EB83: 43 4F 4D           1283 | COM:    DB  'COM'   ; FILE TYPE FOR TRANSIENT COMMANDS.
-                         1284 | ;
-                         1285 | ;   COMMAND END
-                         1286 | ;       CLEAN-UP AND EXIT POINT FOR ALL COMMANDS
-                         1287 | ;       EXCEPT TRANSIENT COMMANDS.
-                         1288 | ;
-EB86: CD 66 E8           1289 | COMEND: CALL    SETCUR  ;PRIMARY EXIT POINT
-EB89: CD 5E E6           1290 | CMEND1: CALL    TRFCB   ;SECONDARY EXIT POINT
-EB8C: 3A CE EB           1291 |     LDA FCB+1   ; CHECK FOR FURTHER COMMANDS.
-EB8F: D6 20              1292 |     SUI ' ' ;
-EB91: 21 F0 EB           1293 |     LXI H,TRDISK    ;
-EB94: B6                 1294 |     ORA M   ;
-EB95: C2 09 E6           1295 |     JNZ WHAT    ;
-EB98: C3 82 E7           1296 |     JMP NXTCMD  ; BACK TO THE  RATRACE.
-                         1297 | ;
-                         1298 | ;   END OF THE PROGRAM AREA
-                         1299 | ;
-                         1300 | ;   START OF PARAMETER STORAGE AREA
-                         1301 | ;
-EB9B:                    1302 |     DS  16  ;STACK AREA
-                         1303 | STACK:          ;CCP STACK
+EB6E: C3 09 E6           1278 |     JMP WHAT    ;
+                         1279 | ;
+                         1280 | ;   LOAD ERROR
+                         1281 | ;
+EB71: 01 7A EB           1282 | LDERR:  LXI B,MSG7  ;Load the error pointer
+EB74: CD A7 E4           1283 |     CALL    CRMSG   ;Display the message
+EB77: C3 86 EB           1284 |     JMP COMEND  ;EXIT
+                         1285 | ;
+EB7A: 42 41 44 20 4C...  1286 | MSG7:   DB  'BAD LOAD',0
+                         1287 | ;
+EB83: 43 4F 4D           1288 | COM:    DB  'COM'   ; FILE TYPE FOR TRANSIENT COMMANDS.
+                         1289 | ;
+                         1290 | ;   COMMAND END
+                         1291 | ;       CLEAN-UP AND EXIT POINT FOR ALL COMMANDS
+                         1292 | ;       EXCEPT TRANSIENT COMMANDS.
+                         1293 | ;
+EB86: CD 66 E8           1294 | COMEND: CALL    SETCUR  ;PRIMARY EXIT POINT
+EB89: CD 5E E6           1295 | CMEND1: CALL    TRFCB   ;SECONDARY EXIT POINT
+EB8C: 3A CE EB           1296 |     LDA FCB+1   ; CHECK FOR FURTHER COMMANDS.
+EB8F: D6 20              1297 |     SUI ' ' ;
+EB91: 21 F0 EB           1298 |     LXI H,TRDISK    ;
+EB94: B6                 1299 |     ORA M   ;
+EB95: C2 09 E6           1300 |     JNZ WHAT    ;
+EB98: C3 82 E7           1301 |     JMP NXTCMD  ; BACK TO THE  RATRACE.
+                         1302 | ;
+                         1303 | ;   END OF THE PROGRAM AREA
                          1304 | ;
-EBAB:                    1305 | SUBFL:  DS  1   ; SUBMIT FLAG. FLAG SET WHEN COMMANDS COME FROM $$$.SUB FILE.
-EBAC: 00 24 24 24 20...  1306 | SUBFCB: DB  0,'$$$     SUB',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-EBCD:                    1307 | FCB:    DS  33  ;FILE CONTROL BLOCK FOR CCP READ/WRITE
-EBEE:                    1308 | RETVAL: DS  1   ; VALUE RETURNED IN (A) FROM CALLS TO BDOS.
-EBEF:                    1309 | CURDSK: DS  1   ; CURRENT LOGGED IN DISK.
-EBF0:                    1310 | TRDISK: DS  1   ; CURRENT TRANSIENT DISK.
-EBF1:                    1311 | TYPCTR: DS  1   ; INPUT BUFFER COUNTER USED BY 'TYPE' TO KEEP TRACK
-                         1312 |             ; OF INPUT DISK BUFFER.
-                         1313 | ;
-                         1314 | ;END OF SOURCE CODE
-                         1315 |     END
+                         1305 | ;   START OF PARAMETER STORAGE AREA
+                         1306 | ;
+EB9B:                    1307 |     DS  16  ;STACK AREA
+                         1308 | STACK:          ;CCP STACK
+                         1309 | ;
+EBAB:                    1310 | SUBFL:  DS  1   ; SUBMIT FLAG. FLAG SET WHEN COMMANDS COME FROM $$$.SUB FILE.
+EBAC: 00 24 24 24 20...  1311 | SUBFCB: DB  0,'$$$     SUB',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+EBCD:                    1312 | FCB:    DS  33  ;FILE CONTROL BLOCK FOR CCP READ/WRITE
+EBEE:                    1313 | RETVAL: DS  1   ; VALUE RETURNED IN (A) FROM CALLS TO BDOS.
+EBEF:                    1314 | CURDSK: DS  1   ; CURRENT LOGGED IN DISK.
+EBF0:                    1315 | TRDISK: DS  1   ; CURRENT TRANSIENT DISK.
+EBF1:                    1316 | TYPCTR: DS  1   ; INPUT BUFFER COUNTER USED BY 'TYPE' TO KEEP TRACK
+                         1317 |             ; OF INPUT DISK BUFFER.
+                         1318 | ;
+                         1319 | ;END OF SOURCE CODE
+                         1320 |     END
 

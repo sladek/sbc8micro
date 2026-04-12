@@ -314,7 +314,7 @@ FB6C: E5                  247 |     PUSH    H
 FB6D: 21 03 00            248 |     LXI H,IOBYTE
 FB70: 7E                  249 |     MOV     A,M
                           250 |     ;WE WILL TREAT RDR: UR1 OR UR2: 
-                          251 |     ;AS THE SANE DEARED DEVICE
+                          251 |     ;AS THE SAME READER DEVICE
 FB71: E6 30               252 |     ANI     30H ;CHECK IF IT IS RDR:, UR1: OR UR2:
 FB73: 79                  253 |     MOV A,C ;CHARACTER TO REGISTER A
 FB74: C8                  254 |     RZ      ;IT IS NEITHER RDR: NOR UR1: OR UR2:

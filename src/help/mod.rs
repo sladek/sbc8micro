@@ -117,6 +117,12 @@ pub static HELP: &str = r#"
     "examples": "dev"
   },
   {
+    "command": "ec | empty_cycles",
+    "description": "Sets/gets number of empty cycles for CPU.",
+    "usage": "ec <cycles number> or empty_cycles <cycles number> or ec or empty_cycles",
+    "examples": "\\n    ec 0x0f\\n    ec\\n    empty_cycles 0x0f\\n    empty_cycles\\n Note: If number of cycles is not specified it shows current number of cycles."
+  },
+  {
     "command": "fdc | floppy",
     "description": "Sets flppy controller port's address and disk names.",
     "usage": "fdc <address> <disk 1> [disk 2] [disk 3] [disk 4]",
@@ -229,6 +235,12 @@ pub static HELP: &str = r#"
     "description": "Reads commands from script file and executes them one by one.",
     "usage": "scr <script name> or script <script name>",
     "examples": "\\n    scr cpm80.scr\\n    scr cpm80\\n    script scripts/plm80.scr\\n    script scripts/plm80"
+  },
+  {
+    "command": "sh | set_hlt",
+    "description": "Sets or shows an instruction code for HLT. HLT code is used to break from execution of the code and return to UI or closing the main program",
+    "usage": "sh [HLT instruction code] or set_hlt [HLT instruction code]",
+    "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    sh\\n    set_hlt 0x78\\n Note: If no parameter is defined it shows current instruction code for HLT."
   }
 ]
 "#;
