@@ -17,6 +17,7 @@ use crate::commands::serial::Serial;
 use crate::commands::rdr_pun::RdrPun;
 use crate::commands::io::Io;
 use crate::commands::ihex::Ihex;
+use crate::commands::hex_bin::HexBin;
 use crate::commands::{MIN_COMMAND_HISTORY_LENGTH, MIN_OUTPUT_HISTORY_LENGTH};
 use crate::help;
 use crate::ui::app::{App, AppState};
@@ -53,6 +54,7 @@ impl Command {
             "fdc" | "floppy" => Fdc::fdc(app, command),
             "g" | "go" => Cpu::go(app, command),
             "h" | "help" | "?" => Help::help(app, command),
+            "hb" | "hex_bin" => HexBin::hex_bin(app, command),
             "io" => Io::io(app, command),
             "ih" | "ihex" => Ihex::ihex(app, command),
             "l" | "load" => Load::load_file(app, command),

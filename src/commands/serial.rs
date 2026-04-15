@@ -71,7 +71,6 @@ impl Serial {
             command[1]
         );
         app.messages.push(parameters);
-        //        cpu.get_io_memory().remove(base_address as u8);
         match serial.open_port(&name) {
             Ok(serial) => {
                 if m_flag == "M" {

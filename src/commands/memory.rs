@@ -71,11 +71,11 @@ impl Memory {
     /// And of course a standard numbers can be used (0 - 65535)
     pub fn from_hex_string(mut value: String) -> Result<u16, String> {
         // Regex for checking intel hex format like 0ffffh
-        let regex_intel_hex = Regex::new(r"\d[\da-fA-Z]+[h|H]$").unwrap();
+        let regex_intel_hex = Regex::new(r"\d[\da-fA-F]+[h|H]$").unwrap();
         // Regex for modern hex format like 0xfffh
-        let regex_rust_hex = Regex::new(r"0[x|X][\da-fA-Z]+$").unwrap();
+        let regex_rust_hex = Regex::new(r"0[x|X][\da-fA-F]+$").unwrap();
         // Regex for mos6502 hex format like $hffff
-        let regex_6502_hex = Regex::new(r"\$[\da-fA-Z]+$").unwrap();
+        let regex_6502_hex = Regex::new(r"\$[\da-fA-F]+$").unwrap();
         // regex for normal number
         let regex_number = Regex::new(r"[\d]+$").unwrap();
         if regex_intel_hex.is_match(&value) {

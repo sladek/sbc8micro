@@ -66,3 +66,11 @@ Or we can use multiple PIP commands and close the file just after the last file 
 `D>A:PIP UP1:=SC2.OV3,EOF:`
 
 And again if we transfer a file in INTELHEX format this needs to be translated to binary if needed.
+
+To convert a binary file in CP/M, the UNLOAD utility can be used. As an example let's have a file *hlt.com* that we want to transfer. To convert this file to INTELHEX format we can use the following command:
+
+`D>A:UNLOAD HLT.COM`
+
+It will create a file *hlt.hex* which can be now transfered via PIP command:
+
+D>A:PIP UP1:=HLT.HEX,EOF:

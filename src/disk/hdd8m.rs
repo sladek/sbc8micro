@@ -9,13 +9,13 @@ use std::io;
 use std::os::windows::fs::FileExt;
 use crate::io::ErrorIndicators;
 
-const NUM_OF_SECTORS_PER_TRACK: u8 = 26; // Valid number of sector is 1 - 26
-const NUM_OF_TRACKS: u8 = 77; // Valid number of track is 0 - 76
+const NUM_OF_SECTORS_PER_TRACK: u8 = 255; // Valid number of sector is 1 - 255
+const NUM_OF_TRACKS: u8 = 255; // Valid number of track is 0 - 255
 const DATA_SIZE: usize = 128;
 const ID_ADDRESS_MARK: u8 = 0xFE; // ID Address Mark identifier byte
 const SECTOR_SIZE: u16 = 195; // Number of bytes in one complete sector
 const FORMAT_PATTERN: u8 = 0xE5;
-const FLOPPY_CAPACITY: usize = 388388; // Full capacitu of 8" floppy disk
+const DISK_CAPACITY: usize = 12614850; // Full capacitu of 8" floppy disk
 
 #[derive(Clone)]
 pub enum DataDeletedData {
@@ -107,14 +107,14 @@ impl Default for Sector {
     }
 }
 
-// Floppy disk file
-pub struct Floppy {
+// Hdd disk file
+pub struct Hdd {
     name: String,
     read_only: bool,
     disk: File,
 }
 
-impl Floppy {
+impl Hdd {
     pub fn get_name(&self) -> String {
         self.name.clone()
     }
@@ -138,7 +138,7 @@ pub enum ErrorIndicators {
     DataMarkError = 0x08 | 0x04 | 0x02 | 0x01, // // AddressError | SeekError | CrcError | Deleted Record. It indicates that the data field wos not preceded by eitherdata mark or a delete data mark.
 }
 */
-impl Floppy {
+impl Hdd {
     pub fn new(name: &str, read_only: bool) -> Result<Self> {
         let file = Self::open_file_image(name, read_only);
         let mut is_new = false;
@@ -150,7 +150,7 @@ impl Floppy {
                     // File doesn't exist, let's create the empty one.
                     match File::create(name) {
                         Ok(mut file) => {
-                            if file.write_all(&[0x55u8; FLOPPY_CAPACITY]).is_err() {
+                            if file.write_all(&[0x55u8; DISK_CAPACITY]).is_err() {
                                 return Err(ErrorIndicators::WriteError);
                             };
                             // We need to reopen a file as RO or RW based on input parameters so we drop now
@@ -269,7 +269,7 @@ impl Floppy {
     /// Disk has to exist and needs to be formated or SeekError is generated.
     pub fn seek_write_sector(&mut self, sector: Sector) -> Result<()> {
         Self::check_ranges(sector.track_address, sector.sector_address)?;
-        let offset = Floppy::seek_offset(sector.track_address, sector.sector_address);
+        let offset = Hdd::seek_offset(sector.track_address, sector.sector_address);
         if self
             .disk
             .seek(std::io::SeekFrom::Start(offset as u64))
@@ -287,7 +287,7 @@ impl Floppy {
     /// Moves to the beginning of track specified by track_number
     pub fn seek(&mut self, track_number: u8) -> Result<()> {
         Self::check_ranges(track_number, 1)?;
-        let offset = Floppy::seek_offset(track_number, 1);
+        let offset = Hdd::seek_offset(track_number, 1);
         if self
             .disk
             .seek(std::io::SeekFrom::Start(offset as u64))
@@ -365,12 +365,12 @@ impl Floppy {
 #[cfg(test)]
 mod tests {
     use std::fs;
-    use crate::disk::sssd8fd::{ErrorIndicators, FLOPPY_CAPACITY, Floppy, Sector};
+    use crate::disk::hdd8m::{ErrorIndicators, DISK_CAPACITY, Hdd, Sector};
 
     fn init_disk(file_name: &str) {
         _ = fs::remove_file(file_name);
         // Let's create new floppy image and format
-        _ = Floppy::new(file_name, false).unwrap().format();
+        _ = Hdd::new(file_name, false).unwrap().format();
     }    
     fn remove_disk(file_name: &str) {
         _ = fs::remove_file(file_name);
@@ -380,8 +380,8 @@ mod tests {
     fn test_format() {
         let file_name = "disks/test.img";
         init_disk(file_name);
-        let mut floppy = Floppy::new(file_name, false).unwrap();
-        let result = Floppy::format(&mut floppy);
+        let mut floppy = Hdd::new(file_name, false).unwrap();
+        let result = Hdd::format(&mut floppy);
         assert_eq!(true, result.is_ok());
         // Read first sector and compare CRC.
         let sector = floppy.read_sector(0, 1).unwrap();
@@ -393,17 +393,17 @@ mod tests {
     fn test_new_file() {
         let file_name = "disks/test_1.img";
         init_disk(file_name);
-        let floppy = Floppy::new(file_name, false).unwrap();
+        let floppy = Hdd::new(file_name, false).unwrap();
         let len = floppy.disk.metadata().unwrap().len();
-        assert_eq!(len as usize, FLOPPY_CAPACITY);
+        assert_eq!(len as usize, DISK_CAPACITY);
         remove_disk(file_name);
     }
     #[test]
     fn test_read() {
         let file_name = "disks/test_2.img";
         init_disk(file_name);
-        let floppy = Floppy::new(file_name, true).unwrap();
-        let sector = floppy.read_sector(76, 26).unwrap();
+        let floppy = Hdd::new(file_name, true).unwrap();
+        let sector = floppy.read_sector(254, 255).unwrap();
         remove_disk(file_name);
         assert_eq!(sector.crc_id, sector.crc_id());
         assert_eq!(sector.crc_data, sector.crc_data());
@@ -412,45 +412,36 @@ mod tests {
     fn test_read_invalid_track_0() {
         let file_name = "disks/test_3.img";
         init_disk(file_name);
-        let floppy = Floppy::new(file_name, true).unwrap();
+        let floppy = Hdd::new(file_name, true).unwrap();
         let res = floppy.read_sector(0, 1);
         remove_disk(file_name);
         assert!(res.is_ok());
     }
     #[test]
-    fn test_read_invalid_track_77() {
+    fn test_read_invalid_track_255() {
         let file_name = "disks/test_9.img";
         init_disk(file_name);
-        let floppy = Floppy::new(file_name, true).unwrap();
+        let floppy = Hdd::new(file_name, true).unwrap();
         remove_disk(file_name);
-        let res = floppy.read_sector(77, 26);
+        let res = floppy.read_sector(255, 255);
         assert_eq!(Err(ErrorIndicators::SeekError), res);
     }
     #[test]
     fn test_read_invalid_sector_0() {
         let file_name = "disks/test_4.img";
         init_disk(file_name);
-        let floppy = Floppy::new(file_name, true).unwrap();
-        let res = floppy.read_sector(76, 0);
-        remove_disk(file_name);
-        assert_eq!(Err(ErrorIndicators::SeekError), res);
-    }
-    #[test]
-    fn test_read_invalid_sector_27() {
-        let file_name = "disks/test_5.img";
-        init_disk(file_name);
-        let floppy = Floppy::new(file_name, true).unwrap();
-        let res = floppy.read_sector(76, 27);
+        let floppy = Hdd::new(file_name, true).unwrap();
+        let res = floppy.read_sector(254, 0);
         remove_disk(file_name);
         assert_eq!(Err(ErrorIndicators::SeekError), res);
     }
     #[test]
     fn test_write_last_sector() {
-        let track_nr = 76;
-        let sector_nr = 26;
-        let file_name = "disks/test_6.img";
+        let track_nr = 254;
+        let sector_nr = 255;
+        let file_name = "disks/test_5.img";
         init_disk(file_name);
-        let mut floppy = Floppy::new(file_name, false).unwrap();
+        let mut floppy = Hdd::new(file_name, false).unwrap();
         let data = [0xff; 128];
         let sector = Sector::new(track_nr, sector_nr, &data);
         _ = floppy.seek_write_sector(sector);
@@ -461,19 +452,19 @@ mod tests {
     }
     #[test]
     fn test_format_track_ok() {
-        let file_name = "disks/test_7.img";
+        let file_name = "test_6.img";
         init_disk(file_name);
-        let mut disk = Floppy::new(file_name, false).unwrap();
+        let mut disk = Hdd::new(file_name, false).unwrap();
         let res = disk.format_track(1);
         remove_disk(file_name);
         assert_eq!(Ok(()), res);
     }
     #[test]
     fn test_format_track() {
-        let big_track_number = 77;
-        let file_name = "disks/test_8.img";
+        let big_track_number = 255;
+        let file_name = "test_7.img";
         init_disk(file_name);
-        let mut disk = Floppy::new(file_name, false).unwrap();
+        let mut disk = Hdd::new(file_name, false).unwrap();
         let res = disk.format_track(big_track_number);
         remove_disk(file_name);
         assert_eq!(Err(ErrorIndicators::SeekError), res);

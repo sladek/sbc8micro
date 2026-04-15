@@ -19,6 +19,7 @@ pub mod io;
 pub mod rdr_pun;
 pub mod ihex;
 pub mod bootloader;
+pub mod hex_bin;
 
 pub const CPU_LIST: &str = "i8080 | 8080 | mos6502 | 6502";
 pub const MIN_MEMORY_RANGE: u16 = 1;

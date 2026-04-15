@@ -40,15 +40,10 @@ pub enum ErrorKind {
 }
 
 pub struct Serial {
-    //    data_bits: DataBits,
-    //    stop_bits: StopBits,
-    //    parity: Parity,
     tx_rdy: bool,
-    //    rx_data: Option<u8>,
     rx_port: Option<Box<dyn SerialPort>>,
     tx_port: Option<Box<dyn SerialPort>>,
     channel: (Sender<u8>, Receiver<u8>),
-    //    out_buffer: [u8; 1],
 }
 impl Default for Serial {
     fn default() -> Self {
@@ -61,15 +56,10 @@ impl Serial {
     /// At this stage no real port is open
     pub fn new() -> Self {
         Self {
-            //            data_bits: DataBits::Eight,
-            //            stop_bits: StopBits::One,
-            //            parity: Parity::None,
             tx_rdy: true,
-            //            rx_data: None,
             rx_port: None,
             tx_port: None,
             channel: mpsc::channel::<u8>(),
-            //            out_buffer: [0; 1],
         }
     }
     /// Opens serial port with specific name and baud rate

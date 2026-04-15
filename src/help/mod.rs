@@ -141,6 +141,12 @@ pub static HELP: &str = r#"
     "examples": "\\n    help pwd\\n    h ls\\n    ? disasm"
   },
   {
+    "command": "hb | hex_bin",
+    "description": "Converts INTELHEX file to binary file",
+    "usage": "hb <offset> <input file> [output file] or hex_bin <offset> <input file> [output file]",
+    "examples": "\\n    hb 0x100 asm.hex asm.com\\n    hb 0x100 asm.hex\\n Note: If output file name is not defined it is created with .com suffix.\\n       If <offset> is not 0 it is substracted from the offset of INTELHEX file.\\n       Normally .com files of CP/M system start at address 0x100 so if such\\n       a INTELHEX file is converted to .com file the offset of 0x100 must be subtracted."
+  },
+  {
     "command": "io",
     "description": "Input from/ output to specific address on io bus",
     "usage": "io <address> [data]",

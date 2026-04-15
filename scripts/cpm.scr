@@ -9,7 +9,7 @@ rdr_pun 0xf0
 # Don't mark nonexisting disk you want to mount as [RO].
 # Make sure that Read Only [ro] disks already exists and they are formated
 # or it wil be created, but cannot be formated as it is labeled [ro] 
-fdc 0x78  disks/disk_cpm.dsk[ro] disks/disk_sc2.dsk disks/disk_games.dsk disks/disk_d.dsk
+fdc 0x78  disks/disk_cpm.dsk disks/disk_sc2.dsk disks/disk_games.dsk disks/disk_d.dsk
 # fdc 0x78  disk_cpm.dsk[ro] disk_b.dsk disk_c.dsk disk_tmp.dsk
 # Load BIOS
 lh CPM80_2.2/BIOS.hex
@@ -19,11 +19,11 @@ lh CPM80_2.2/GETSYS.hex
 # so adding some 'empty cycles' can slow it down. 
 # This is basically desirable when playing some original game like LADDER 
 # so the LAD is not moving fast.
-#ec 0x03
+ec 0x03
 # Start loader and go to CPM
 # g command will react to CTRL-C in GUI, but the execution is slower
 # as it checks the GUI events during the execution of every instruction.
 # But it can be very usefull mainly when troubleshooting 
-#g 0x100
+g 0x100
 # Run 
-run 0x100
+#run 0x100
