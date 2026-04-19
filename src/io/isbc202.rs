@@ -1,11 +1,18 @@
-use crate::disk::sssd8fd::{DataDeletedData, Floppy, Sector};
+//! Floppy disk controller 
+//! 
+//! This crate provides the functionality of iSBC202 controller for
+//! 4 floppy disks with the capacity of 250 KB 
+//! This is compatible with the examples of original BIOS of MDS800 system
+//! so no big changes are necessary in the bios itself
+use crate::disk::{DataDeletedData, Sector, sssd8fd::Floppy};
 use crate::memory::{self, MemCell};
 use crate::io::{IoPort, ErrorIndicators};
-use crate::disk::sssd8fd::Result;
+use crate::disk::Result;
 use crate::memory::dma::DmaRequest;
 use memory::dma::Dma;
 use std::cell::RefCell;
 use std::rc::Rc;
+use crate::disk::Disk;
 
 const NUMBER_OF_DISKS: usize = 4;
 const BASE: u8 = 0x78;
@@ -31,7 +38,7 @@ enum UnitRedy {
 
 struct DisketteInstruction {
     _value: u8, // binary value of Diskette Instruction
-    unit_select: u8, // bits 4,5. 0b00 - drive 0, 0b11 - drive 1 NOTE: only 2 floppy disks are supported by this controler (SBC 201)
+    unit_select: u8, // bits 4,5 
     _data_word_length: u8, // 0 - if used in 8 - bit systems, 1 - if used in 16 bit systems
     opcode: u8, // 0b000 - no operation, 0b001 - seek, 0b010 - format trackk, 0b011 - recalibrate, 0b100 - read data, 0b101 - Verify CRC, 0b110 - write data, 0b111 - write 'deleted' data
 }
@@ -247,11 +254,11 @@ impl Isbc202 {
     pub fn set_floppy(&mut self, floppy: Floppy, number: u8) -> Result<()> {
         if number <= NUMBER_OF_DISKS as u8 {
             let file_name = floppy.get_name();
-            for name in self.floppies.iter_mut() {
-                if name.is_none() {
+            for disk in self.floppies.iter_mut() {
+                if disk.is_none() {
                     break
                 }
-                let floppy_name = name.as_mut().unwrap().get_name();
+                let floppy_name = disk.as_mut().unwrap().get_name();
                 if floppy_name == file_name {
                     return Err(ErrorIndicators::AddressError)
                 }
@@ -661,8 +668,9 @@ mod tests {
     use crate::cpu::i8080::{self};
     use crate::disassembler::i8080_opcode_consts::*;
     use crate::disassembler::mos6502_opcode_consts::{BRK, LDA_ABS, LDA_IMM, STA_ABS};
-    use crate::disk::sssd8fd::{DataDeletedData, Floppy};
-    use crate::disk::sssd8fd::Sector;
+    use crate::disk::{DataDeletedData, sssd8fd::Floppy};
+    use crate::disk::Sector;
+    use crate::disk::Disk;
     use crate::io::memory::IoMemory;
     use crate::io::{IoPort, isbc202::Isbc202};
     use std::fs;

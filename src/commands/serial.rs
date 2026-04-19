@@ -90,7 +90,7 @@ impl Serial {
                 }
             }
             Err(err) => {
-                app.messages.push(format!("{name}: {}", err));
+                app.messages.push(format!("ERROR - {name}: {}", err));
             }
         };
         Ok(AppState::Home)

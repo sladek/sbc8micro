@@ -28,6 +28,11 @@ impl Script {
                         app.enter_char(*character as char);
                     }
                     app.submit_message();
+                    // Let's check the message from the command for ERROR
+                    let msg = app.messages.last().unwrap();
+                    if msg.to_uppercase().starts_with("ERROR") {
+                        break;
+                    };
                 }
             }
             Err(err) => {

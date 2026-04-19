@@ -6,7 +6,8 @@ use crate::commands::cpu::Cpu;
 use crate::commands::dev::Dev;
 use crate::commands::directory::Directory;
 use crate::commands::disasm::Disasm;
-use crate::commands::fdc::Fdc;
+use crate::commands::fdc::FdC;
+use crate::commands::fdhdc::FdHdC;
 use crate::commands::help::Help;
 use crate::commands::load::Load;
 use crate::commands::memory::Memory;
@@ -51,7 +52,8 @@ impl Command {
             "dar" | "disasm_range" => Disasm::disasm_range(app, command),
             "dev" => Dev::list_devices(app, command),
             "ec" | "empty_cycles" => Cpu::empty_cycles(app, command),
-            "fdc" | "floppy" => Fdc::fdc(app, command),
+            "fdc" | "floppy" => FdC::fdc(app, command),
+            "fdhdc" | "disc_controller" => FdHdC::fdhdc(app, command),
             "g" | "go" => Cpu::go(app, command),
             "h" | "help" | "?" => Help::help(app, command),
             "hb" | "hex_bin" => HexBin::hex_bin(app, command),

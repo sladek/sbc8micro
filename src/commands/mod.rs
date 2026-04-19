@@ -14,6 +14,7 @@ pub mod opcodes;
 pub mod registers;
 pub mod serial;
 pub mod fdc;
+pub mod fdhdc;
 pub mod script;
 pub mod io;
 pub mod rdr_pun;

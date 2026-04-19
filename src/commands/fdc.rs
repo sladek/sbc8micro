@@ -1,12 +1,17 @@
+use std::f32::consts::E;
+
 use crate::commands::memory::Memory;
+use crate::disk;
+use crate::disk::Disk;
+use crate::io::ErrorIndicators;
 use crate::ui::app::App;
 use crate::ui::app::AppState;
 use crate::io::isbc202::Isbc202;
 use crate::disk::sssd8fd::Floppy;
 
-pub struct Fdc;
+pub struct FdC;
 
-impl Fdc {
+impl FdC {
     pub fn fdc(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
         app.is_cpu_set()?; // Check if cpu is defined
         let cpu = app.cpu_ui.as_mut().unwrap();
@@ -37,7 +42,7 @@ impl Fdc {
         let mut assigned_floppies = String::new();
         let mut floppy_char_index = 0;
         let mut fdc = Box::new(Isbc202::new(cpu.get_memory_ref())); // Base address 0x78
-        let mut floppu_number = 0;
+        let mut floppy_number = 0;
         while floppy_index < command.len() {
             let floppy_file = command[floppy_index].to_string();
             let (file_name, ro_flag) = process_disk_name(floppy_file.clone());
@@ -49,16 +54,29 @@ impl Fdc {
                             floppy
                 }
                 Err(err) => {
-                    return Err(format!("ERROR[{:?}] - Cannot open floppy file: {:?}. Please check if the file name is correct.", err, file_name));
+                    match err {
+                        ErrorIndicators::NotReady => {
+                            return Err(format!("ERROR[{:?}] - Floppy file: {:?} has different size than expected {:?} bytes. Please check if the file is correct floppy disk image.", err, file_name, disk::sssd8fd::Floppy::DISK_CAPACITY));
+                        }
+                        _ => {
+                            return Err(format!("ERROR[{:?}] - Cannot open floppy file: {:?}. Please check if the file name is correct.", err, file_name));
+                        }
+                    }
                 }
             };
-            if fdc.set_floppy(floppy, floppu_number).is_err() {
-                return Err(format!("ERROR - File {file_name} has already been assigned").to_string());
-            } else {
-            floppu_number += 1;
+            if let Err(err) = fdc.set_floppy(floppy, floppy_number) {
+                match err {
+                    ErrorIndicators::AddressError => {
+                        return Err(format!("ERROR - File {file_name} has already been assigned.").to_string());
+                    }
+                    _ => {
+                        return Err(format!("ERROR[{:?}] - Cannot set the floppy to {file_name}.", err))
+                    }
+                }
+            };
+            floppy_number += 1;
             floppy_char_index += 1;
             floppy_index += 1;
-            }
         }
         if m_flag == "M" {
             fdc.set_memory_base_address(base_address);

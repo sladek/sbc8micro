@@ -129,6 +129,12 @@ pub static HELP: &str = r#"
     "examples": "\\n    fdc 0x78 cpm.dsk\\n    floppy 0x78 cpm.dsk[ro] asm.dsk\\n    fdc M0x1234 cpm.dsk\\n    floppy M0x1234 cpm.dsk[RO] plm.dsk data1.dsk data2.dsk\\n Note: Address can be defined as <address 8bit> if mapped to io memory or as M<address 16bit> if mapped to cpu's memory.\\n       File name can have a suffix [ro] or [RO] (not case sensitive) to indicate that the disk will be mounted as read only."
   },
   {
+    "command": "fdhdc | disk_controller",
+    "description": "Sets disk controller port's address and disk names.",
+    "usage": "fdhdc <address> <disk 1> [disk 2] [disk 3] [disk 4] or disc_controller <address> <disk 1> [disk 2] [disk 3] [disk 4]",
+    "examples": "\\n    fdhdc 0x78 cpm.dsk\\n    disk_controller 0x78 cpm.dsk[ro] asm.dsk\\n    fdhdc M0x1234 cpm.dsk\\n    disk_controller M0x1234 cpm.dsk[RO] plm.dsk data1.dsk data2.dsk\\n Note: Address can be defined as <address 8bit> if mapped to io memory or as M<address 16bit> if mapped to cpu's memory.\\n       File name can have a suffix [ro] or [RO] (not case sensitive) to indicate that the disk will be mounted as read only."
+  },
+  {
     "command": "g | go",
     "description": "Starts a programm from an address defined in PC register or as a parameter on command line.",
     "usage": "g [address] or go [address]",

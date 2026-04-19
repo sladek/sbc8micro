@@ -418,6 +418,13 @@ mod tests {
     }
     #[test]
     fn write_pun_io_mapped() {
+
+        let paths = glob("data/data.pun.*").expect("Failed to read glob pattern");
+        for path in paths {
+            let name = path.unwrap();
+            _ = fs::remove_file(name);
+
+        }
         // Let's read from cpu
         let mut cpu = i8080::Cpu::new();
         let mut rdr_pun = Box::new(RdrPun::new());

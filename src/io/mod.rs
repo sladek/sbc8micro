@@ -2,6 +2,7 @@ pub mod i8251a;
 pub mod memory;
 pub mod serial;
 pub mod isbc202;
+pub mod fdhdc;
 pub mod rdr_pun;
 use crate::memory::{MemCell};
 use crate::memory::dma::Dma;
