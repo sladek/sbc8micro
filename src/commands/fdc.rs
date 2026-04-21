@@ -1,5 +1,3 @@
-use std::f32::consts::E;
-
 use crate::commands::memory::Memory;
 use crate::disk;
 use crate::disk::Disk;

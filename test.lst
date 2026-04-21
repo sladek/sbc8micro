@@ -1,0 +1,244 @@
+0100  21 1C 01    LXI H,011CH
+0103  CD 10 01    CALL 0110H
+0106  76          HLT
+0107  C3 00 00    JMP 0000H
+010A  5F          MOV E,A
+010B  0E 02       MVI C,02H
+010D  C3 05 00    JMP 0005H
+0110  7E          MOV A,M
+0111  B7          ORA A
+0112  C8          RZ
+0113  23          INX H
+0114  E5          PUSH H
+0115  CD 0A 01    CALL 010AH
+0118  E1          POP H
+0119  C3 10 01    JMP 0110H
+011C  53          MOV D,E
+011D  59          MOV E,C
+011E  53          MOV D,E
+011F  54          MOV D,H
+0120  45          MOV B,L
+0121  4D          MOV C,L
+0122  20          DB 20
+0123  48          MOV C,B
+0124  41          MOV B,C
+0125  4C          MOV C,H
+0126  54          MOV D,H
+0127  45          MOV B,L
+0128  44          MOV B,H
+0129  0D          DCR C
+012A  0A          LDAX B
+012B  00          NOP
+012C  00          NOP
+012D  00          NOP
+012E  00          NOP
+012F  00          NOP
+0130  00          NOP
+0131  00          NOP
+0132  00          NOP
+0133  00          NOP
+0134  00          NOP
+0135  00          NOP
+0136  00          NOP
+0137  00          NOP
+0138  00          NOP
+0139  00          NOP
+013A  00          NOP
+013B  00          NOP
+013C  00          NOP
+013D  00          NOP
+013E  00          NOP
+013F  00          NOP
+0140  00          NOP
+0141  00          NOP
+0142  00          NOP
+0143  00          NOP
+0144  00          NOP
+0145  00          NOP
+0146  00          NOP
+0147  00          NOP
+0148  00          NOP
+0149  00          NOP
+014A  00          NOP
+014B  00          NOP
+014C  00          NOP
+014D  00          NOP
+014E  00          NOP
+014F  00          NOP
+0150  00          NOP
+0151  00          NOP
+0152  00          NOP
+0153  00          NOP
+0154  00          NOP
+0155  00          NOP
+0156  00          NOP
+0157  00          NOP
+0158  00          NOP
+0159  00          NOP
+015A  00          NOP
+015B  00          NOP
+015C  00          NOP
+015D  00          NOP
+015E  00          NOP
+015F  00          NOP
+0160  00          NOP
+0161  00          NOP
+0162  00          NOP
+0163  00          NOP
+0164  00          NOP
+0165  00          NOP
+0166  00          NOP
+0167  00          NOP
+0168  00          NOP
+0169  00          NOP
+016A  00          NOP
+016B  00          NOP
+016C  00          NOP
+016D  00          NOP
+016E  00          NOP
+016F  00          NOP
+0170  00          NOP
+0171  00          NOP
+0172  00          NOP
+0173  00          NOP
+0174  00          NOP
+0175  00          NOP
+0176  00          NOP
+0177  00          NOP
+0178  00          NOP
+0179  00          NOP
+017A  00          NOP
+017B  00          NOP
+017C  00          NOP
+017D  00          NOP
+017E  00          NOP
+017F  00          NOP
+0180  00          NOP
+0181  00          NOP
+0182  00          NOP
+0183  00          NOP
+0184  00          NOP
+0185  00          NOP
+0186  00          NOP
+0187  00          NOP
+0188  00          NOP
+0189  00          NOP
+018A  00          NOP
+018B  00          NOP
+018C  00          NOP
+018D  00          NOP
+018E  00          NOP
+018F  00          NOP
+0190  00          NOP
+0191  00          NOP
+0192  00          NOP
+0193  00          NOP
+0194  00          NOP
+0195  00          NOP
+0196  00          NOP
+0197  00          NOP
+0198  00          NOP
+0199  00          NOP
+019A  00          NOP
+019B  00          NOP
+019C  00          NOP
+019D  00          NOP
+019E  00          NOP
+019F  00          NOP
+01A0  00          NOP
+01A1  00          NOP
+01A2  00          NOP
+01A3  00          NOP
+01A4  00          NOP
+01A5  00          NOP
+01A6  00          NOP
+01A7  00          NOP
+01A8  00          NOP
+01A9  00          NOP
+01AA  00          NOP
+01AB  00          NOP
+01AC  00          NOP
+01AD  00          NOP
+01AE  00          NOP
+01AF  00          NOP
+01B0  00          NOP
+01B1  00          NOP
+01B2  00          NOP
+01B3  00          NOP
+01B4  00          NOP
+01B5  00          NOP
+01B6  00          NOP
+01B7  00          NOP
+01B8  00          NOP
+01B9  00          NOP
+01BA  00          NOP
+01BB  00          NOP
+01BC  00          NOP
+01BD  00          NOP
+01BE  00          NOP
+01BF  00          NOP
+01C0  00          NOP
+01C1  00          NOP
+01C2  00          NOP
+01C3  00          NOP
+01C4  00          NOP
+01C5  00          NOP
+01C6  00          NOP
+01C7  00          NOP
+01C8  00          NOP
+01C9  00          NOP
+01CA  00          NOP
+01CB  00          NOP
+01CC  00          NOP
+01CD  00          NOP
+01CE  00          NOP
+01CF  00          NOP
+01D0  00          NOP
+01D1  00          NOP
+01D2  00          NOP
+01D3  00          NOP
+01D4  00          NOP
+01D5  00          NOP
+01D6  00          NOP
+01D7  00          NOP
+01D8  00          NOP
+01D9  00          NOP
+01DA  00          NOP
+01DB  00          NOP
+01DC  00          NOP
+01DD  00          NOP
+01DE  00          NOP
+01DF  00          NOP
+01E0  00          NOP
+01E1  00          NOP
+01E2  00          NOP
+01E3  00          NOP
+01E4  00          NOP
+01E5  00          NOP
+01E6  00          NOP
+01E7  00          NOP
+01E8  00          NOP
+01E9  00          NOP
+01EA  00          NOP
+01EB  00          NOP
+01EC  00          NOP
+01ED  00          NOP
+01EE  00          NOP
+01EF  00          NOP
+01F0  00          NOP
+01F1  00          NOP
+01F2  00          NOP
+01F3  00          NOP
+01F4  00          NOP
+01F5  00          NOP
+01F6  00          NOP
+01F7  00          NOP
+01F8  00          NOP
+01F9  00          NOP
+01FA  00          NOP
+01FB  00          NOP
+01FC  00          NOP
+01FD  00          NOP
+01FE  00          NOP
+01FF  00          NOP
+0200  00          NOP

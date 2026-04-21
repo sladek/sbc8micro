@@ -82,39 +82,8 @@ impl Dev {
                         }
                     }
                 }
-                3 => {
-                    if command[1].to_uppercase() != "REMOVE" {
-                        return Err(format!(
-                            "ERROR - Invalid parameter: {}. Usage: \'dev\' or \'dev <address>\' or \'dev remove <address>\' ",
-                            command[1]
-                        ));
-                    }
-                    let address = Self::parse_address(command[2].to_string())?;
-                    match address {
-                        IoAddress::Io(address) => match cpu.get_io_memory() {
-                            Some(memory) => {
-                                let ports = memory.get_ports();
-                                ports.remove(&address);
-                            }
-                            None => {
-                                return Err("ERROR - Io memory is not supported by this CPU".to_string());
-                            }
-                        },
-                        IoAddress::Mem(address) => {
-                            let mut memory = cpu.get_memory();
-                            match memory.get_data()[address as usize] {
-                                MemCell::Io(address) => {
-                                    memory.get_ports().remove(&address);
-                                }
-                                MemCell::Memory(address) => {
-                                    return Self::error_not_mapped(address as u16);
-                                }
-                            }
-                        }
-                    }
-                }
                 _ => {
-                    app.messages.push("ERROR - Invalid number of parameters. Usage: \'dev\' or \'dev <address>\' or \'dev remove <address>\'".to_string());
+                    app.messages.push("ERROR - Invalid number of parameters. Usage: \'dev\' or \'dev <address>\'".to_string());
                 }
             }
         }

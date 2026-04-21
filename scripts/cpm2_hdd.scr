@@ -8,7 +8,7 @@ rdr_pun 0xf0
 # If disk images don't exist they are created and formated
 # Make sure that Read Only [ro] disks already exists and they are formated
 # or it wil be created, but cannot be formated as it is labeled [ro] 
-fdhdc 0x78 disks/disk_cpm_hdd.dsk[ro] disks/disk_ladder.dsk disks/hdd_c.dsk disks/hdd_d.dsk
+fdhdc 0x78 disks/disk_cpm_hdd.dsk disks/disk_ladder.dsk disks/hdd_c.dsk disks/hdd_d.dsk
 # Load BIOS
 lh CPM80_2.2/CBIOS.hex
 # Set bootloader

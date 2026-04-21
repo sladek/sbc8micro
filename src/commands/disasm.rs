@@ -1,5 +1,7 @@
 use crate::commands::{MIN_DISASM_RANGE, memory::Memory};
 use crate::ui::app::{App, AppState};
+use std::fs::File;
+use std::io::Write;
 
 pub struct Disasm;
 
@@ -8,6 +10,7 @@ impl Disasm {
         app.is_cpu_set()?; // Check if cpu is defined
         let mut start_address = 0u16;
         let end_address: u16;
+        let mut file: Option<File> = None;
         match command.len() {
             1 => {
                 if let Some(cpu) = &mut app.cpu_ui {
@@ -40,18 +43,45 @@ impl Disasm {
                 app.disasm.set_start_address(start_address);
                 app.disasm.set_range(end_address - start_address + 1);
             }
+            4 => {
+                // Save values from command line so they can be used later
+                start_address = Memory::from_hex_string(command[1].to_string())?;
+                end_address = Memory::from_hex_string(command[2].to_string())?;
+                match File::create(command[3]) {
+                    Ok(f) => {
+                        file = Some(f);
+                    }
+                    Err(err) => {
+                        return Err(format!("ERROR - {:?}", err.to_string()));
+                    }
+                };
+                if start_address > end_address {
+                    app.messages
+                        .push("ERROR - End address must be bigger than start address.".to_string());
+                    return Ok(AppState::Home);
+                }
+                app.disasm.set_start_address(start_address);
+                app.disasm.set_range(end_address - start_address + 1);
+            }
             _ => {
                 return Err(
-                    "ERROR - Invalid number of parameters. Usage: disasm <start address> <end_address>"
+                    "ERROR - Invalid number of parameters. Usage: disasm <start address> <end address> [file name]"
                         .to_string(),
                 );
             }
         }
         if let Some(cpu) = &mut app.cpu_ui {
-            let mut disasm = cpu.disasm(start_address, end_address);
-            app.messages.append(&mut disasm);
+            let disasm = cpu.disasm(start_address, end_address);
+            app.messages.append(&mut disasm.clone());
+            if let Some(mut file) = file {
+                for mut string in disasm.clone() {
+                    string.push('\n');
+                    if let Err(err) = file.write_all(string.as_bytes()) {
+                        app.messages.append(&mut vec!(format!("ERROR - {:?}", err.to_string())));
+                    };
+                }
+            }
         }
-
         Ok(AppState::Home)
     }
     /// Set memory range for dissasembler

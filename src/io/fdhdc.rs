@@ -472,11 +472,16 @@ impl FdHdC {
                         };
                         let data = sector.get_data();
                         result_data.append(&mut data.to_vec());
+                        sectors_to_read -= 1;
+                        // First check if we read all the sectors 
+                        if sectors_to_read == 0 {
+                            break;
+                        }
+                        // If not the last sector to read but it is the last sector of track generate an error
                         if sector_num == 255 {
                             return Err(ErrorIndicators::SeekError);
                         }
                         sector_num += 1;
-                        sectors_to_read -= 1;
                     };
                     Ok(result_data)
                 }
@@ -513,13 +518,17 @@ impl FdHdC {
                             }
                             let mut sector = Sector::new(iopb.track_address, sector_num, &sector_data);
                             sector.set_data_deleted_data(data_deleted_data.clone());
-
                             disk.seek_write_sector(sector)?;
+                            sectors_to_read -= 1;
+                            // First check if we read all the sectors 
+                            if sectors_to_read == 0 {
+                                break;
+                            }
+                            // If not the last sector to read but it is the last sector of track generate an error
                             if sector_num == 255 {
                                 return Err(ErrorIndicators::SeekError);
                             }
                             sector_num += 1;
-                            sectors_to_read -= 1;
                         };                        
                     },
                     None => {

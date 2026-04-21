@@ -644,6 +644,7 @@ impl IoPort for Isbc202 {
         Ok(None)
     }
 }
+
 #[derive(Default, Debug)]
 struct Iopb {
     channel_word: u8,

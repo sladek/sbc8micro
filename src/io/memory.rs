@@ -16,7 +16,7 @@
 //! let result = memory.read(address);
 //! assert_eq!(value, result)
 //! ```
-use crate::{io::*, ui::app::AppState};
+use crate::io::*;
 use std::{collections::HashMap};
 
 const MEMORY_SIZE: usize = 256;
@@ -80,25 +80,7 @@ impl IoMemory {
         }
         else {None}
     }
-    /// Removes ports mapped to base address
-    pub fn remove(&mut self, base_address: u8) -> Result<AppState, String> {
-        match self.ports.get(&base_address) {
-            Some(port) => {
-                // Remove ports from memory
-                let offsets = port.get_ports_offset();
-                for offset in offsets {
-                    let address = base_address + offset;
-                    self.port_map[address as usize] = None;
-                }
-                // remove port from ports HashMap
-                self.ports.remove(&base_address);
-            }
-            None => {
-                return Err(format!("ERROR - No device mapped to this address [{base_address}]"));
-            }
-        }
-        Ok(AppState::Home)
-    }
+
     /// Gets io port info
     pub fn get_io_ports_info(&self) -> Vec<String> {
         let ports = &self.ports;
@@ -291,22 +273,5 @@ mod tests {
         assert_eq!(data, result);
         result = memory.read(address_control);
         assert_eq!(control, result);
-    }
-    #[test]
-    fn test_io_map_remove() {
-        let base_address: u8 = 0x40;
-        let mut memory = IoMemory::new();
-        let _ = memory.map_port(Box::new(DummyIo::new())).unwrap();
-        let port = memory.ports.get(&base_address);
-        assert!(!port.is_none());
-        let offsets = port.unwrap().get_ports_offset();
-        let mem1 = base_address + offsets[0];
-        assert!(memory.port_map[mem1 as usize].is_some()); // Is data port mapped?
-        let mem2 = base_address + offsets[1];
-        assert!(memory.port_map[mem2 as usize].is_some()); // Is control port mapped?
-        let result = memory.remove(base_address);
-        assert!(memory.port_map[mem1 as usize].is_none()); // Is data port removed?
-        assert!(memory.port_map[mem2 as usize].is_none()); // Is control port removed?
-        assert!(result.is_ok());
     }
 }

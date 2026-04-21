@@ -101,8 +101,8 @@ pub static HELP: &str = r#"
   {
     "command": "da | disasm",
     "description": "Shows a disassembled code of a specific memory region.",
-    "usage": "da or disasm or da <start address> or disasm <start address> or da <start address> <end address> or disasm <start address> <end address>",
-    "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    da\\n    disasm\\n    da 0ffh\\n    disasm $ff\\n    da 0 255\\n    disasm 0x0000 0x00ff\\n Note: When <start address> and <end address> are defined they are stored internally and next usage of disasm command without address range will use these value.\\n       When only \"disasm <start address>\" is defined then <end address> is calculated as <start address> + <disasm_range> where disasm_range is by default 16 and can be changed\\n       by disasm_range <value> command or dr <value>."
+    "usage": "da or disasm or da <start address> or disasm <start address> or da <start address> <end address> [file name] or disasm <start address> <end address> [file name]",
+    "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    da\\n    disasm\\n    da 0ffh\\n    disasm $ff\\n    da 0 255\\n    disasm 0x0000 0x00ff\\n    disasm 0x0000 0x00ff output.lst\\n Note: When <start address> and <end address> are defined they are stored internally and next usage of disasm command without address range will use these value.\\n       When only \"disasm <start address>\" is defined then <end address> is calculated as <start address> + <disasm_range> where disasm_range is by default 16 and can be changed\\n       by disasm_range <value> command or dr <value>.\\n       When <file name> is specified (like output.lst in examples above), then the output of disassembler is also recorded to that file."
   },
   {
     "command": "dar | disasm_range",
@@ -112,9 +112,9 @@ pub static HELP: &str = r#"
   },
   {
     "command": "dev",
-    "description": "Shows devices (serial, floppy disk controllers, ...) currently attached to the CPU.",
-    "usage": "dev",
-    "examples": "dev"
+    "description": "Shows devices (serial, disk controllers, ...) currently attached to the CPU.",
+    "usage": "dev or dev <address>",
+    "examples": "\\n    dev\\n    dev 0x78"
   },
   {
     "command": "ec | empty_cycles",
