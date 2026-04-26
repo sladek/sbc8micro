@@ -13,9 +13,9 @@ impl FdC {
     pub fn fdc(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
         app.is_cpu_set()?; // Check if cpu is defined
         let cpu = app.cpu_ui.as_mut().unwrap();
-        if command.len() > 6 || command.len() < 3 {
+        if command.len() > 6 || command.len() < 2 {
             app.messages.push(
-                "ERROR - Invalid number of parameters. Usage: fdc <address> <disk 1> [disk 2] [disk 3] [disk 4]"
+                "ERROR - Invalid number of parameters. Usage: fdc <address> [disk 1] [disk 2] [disk 3] [disk 4]"
                     .to_string(),
             );
             return Ok(AppState::Home);

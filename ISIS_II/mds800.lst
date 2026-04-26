@@ -1,0 +1,1588 @@
+		; combined Boot and Monitor ROM code for MDS-800
+		
+		; ASCII characters
+0000          	NIL	equ	0
+0003          	CTRL$C	equ	3
+000D          	CR	equ	13
+000A          	LF	equ	10
+		
+00C7          	RST0	equ	0c7h	; RST 0 instruction for breakpoints
+		
+0000          	pgexit	equ	0000h
+0003          	iobyte	equ	0003h	; current iobyte
+0004          	ramtop	equ	0004h	; low byte = PROM data XOR mask, high byte = top RAM page
+0006          	iobyte2	equ	0006h	; iobyte as probed by BOOT ROM
+3000          	bootbuf	equ	3000h	; assume at least 16K
+		
+		; I/O ports
+0078          	dstat	equ	078h	; read - bit0: device present, bit2: ready
+0079          	diopbl	equ	079h	; write - iopb low
+007A          	diopch	equ	07ah	; write - iopb high
+0079          	drtype	equ	079h	; read - result type
+007B          	drbyte	equ	07bh	; read - result byte
+007F          	dreset	equ	07fh	; write - reset controller
+		
+0004          	dcread	equ	4	; disk ctrl READ command
+0006          	dcwrit	equ	6	; WRITE command
+0003          	dchome	equ	3	; seek track 0
+		
+0001          	dcredy	equ	0001b	; dstat floppy ready
+0004          	dcfini	equ	0100b	; dstat I/O finished
+		
+00F0          	promda	equ	0f0h	; write starts programming, read either uses /WAIT
+					; or sets "start read" and polls promst for !uppbsy.
+					; Monitor depends on /WAIT.
+00F1          	promah	equ	0f1h	; write (ah+ctrl bits) direct to programmer
+00F1          	promst	equ	0f1h	; read - direct from programmer
+00F2          	promal	equ	0f2h	; write - direct to programmer
+00F3          	intctl	equ	0f3h	; write - bit 7 enables TTY/CRT/PTP/PTR/LPT intrs
+					;	  6:0 reset intr sources, see intsts
+		; promst
+0080          	uppori	equ	10000000b	; orientation error
+0040          	uppbrd	equ	01000000b	; board sense error
+0020          	upphwe	equ	00100000b	; hardware error
+0010          	uppadr	equ	00010000b	; address error
+0008          	upppgm	equ	00001000b	; programming error
+0004          	uppftp	equ	00000100b	; failed to program
+0002          	uppok	equ	00000010b	; operation complete verified
+0001          	uppbsy	equ	00000001b	; busy
+		; promah - CRSNAAAA
+		;	C = Control #1 (0)
+		;	R = start Read
+		;	S = Socket select (1=#1, 0=#2)
+		;	N = Nibble select (1=high)
+		;	A = Addr 11:8
+		; promal - AAAAAAAA
+		;	A = Addr 7:0
+		
+		; values for promah:
+0FFF          	promam	equ	0fffh	; PROM address mask - 4K max
+00FF          	promsX	equ	00ffh	; socket X (low byte unused?) C=0, R=0, S=0, N=0 (8-bit?)
+30F0          	promsY	equ	30f0h	; socket Y (low byte unused?) C=0, R=0, S=1, N=1
+200F          	promsZ	equ	200fh	; socket Z (low byte unused?) C=0, R=0, S=1, N=0
+		; intctl:
+0080          	chrie	equ	10000000b	; enable all char I/O interrupts
+		
+00F4          	ttydat	equ	0f4h	; TTY: data
+00F5          	ttysts	equ	0f5h	; read
+00F5          	ttyctl	equ	0f5h	; write
+00F6          	crtdat	equ	0f6h	; CRT: data
+00F7          	crtsts	equ	0f7h	; read
+00F7          	crtctl	equ	0f7h	; write
+		
+00F8          	ptdat	equ	0f8h	; read PTR, write PTP
+00F9          	ptsts	equ	0f9h	; read - PTR/P status
+00F9          	ptctl	equ	0f9h	; write - PTR/P control
+00FA          	intsts	equ	0fah	; read - TTY/CRT/PTP/PTR/LPT intr status
+00FA          	lptdat	equ	0fah	; write - LPT data out - inverted
+00FB          	lptsts	equ	0fbh	; read - LPT status
+00FB          	lptctl	equ	0fbh	; write - LPT control
+		; ptsts:
+0001          	ptrrdy	equ	00000001b	; PTR data ready
+0002          	ptrsys	equ	00000010b	; PTR system ready
+0004          	ptprdy	equ	00000100b	; PTP ready for data
+0008          	ptpsys	equ	00001000b	; PTP system ready
+0010          	ptpchd	equ	00010000b	; PTP chad error
+0020          	ptplow	equ	00100000b	; PTP tape low
+		; ptctl:
+0002          	ttyadv	equ	00000010b	; TTY strobe reader one char
+0004          	ptrdir	equ	00000100b	; PTR direction?
+0008          	ptrdrv	equ	00001000b	; PTR strobe reader one char
+0010          	ptpfor	equ	00010000b	; PTP forward? (direction?)
+0020          	ptpadv	equ	00100000b	; PTP punch one char
+		; lptsts:
+0001          	lptbsy	equ	00000001b	; LPT busy (data) - active low
+0002          	lptstt	equ	00000010b	; LPT stat? error/ready?
+		
+		;intsts and intctl:
+0001          	ttyoi	equ	00000001b
+0002          	ttyii	equ	00000010b
+0004          	ptpoi	equ	00000100b
+0008          	ptrii	equ	00001000b
+0010          	crtoi	equ	00010000b
+0020          	crtii	equ	00100000b
+0040          	lptoi	equ	01000000b
+		
+00FC          	imask	equ	0fch	; i8259 intr masks
+00FD          	rstint	equ	0fdh	; i8259 control/command
+		
+0001          	im0	equ	00000001b
+0002          	im1	equ	00000010b
+0004          	im2	equ	00000100b
+0008          	im3	equ	00001000b
+0010          	im4	equ	00010000b
+0020          	im5	equ	00100000b
+0040          	im6	equ	01000000b
+0080          	im7	equ	10000000b
+00FE          	im1$7	equ	im1+im2+im3+im4+im5+im6+im7
+		
+00FF          	fpsw	equ	0ffh	; read - front panel switches and state
+0001          	fp1ms	equ	0001b	; 1mS clock?
+0002          	bsw	equ	0010b	; BOOT switch
+		
+		; Appears to have a sophisticated priority interrupt controller,
+		; (i3214) and interrupt stack (i3101A 16x4 RAM and 74191 stack ptr).
+		
+		;     |      BOOT switch      |
+		;     |    OFF    |    ON     |
+		; ----+-----------+-----------+
+		; 0000|           | Bootstrap |
+		;     |           |    ROM    |
+		; ----+           +-----------+
+		; 0100|                       |
+		;     |          RAM          |
+		;     ~       (ex: 16K)       ~
+		;     |                       |
+		; 3EFF|   (end of user RAM)   | (default user stack)
+		; ----+ - - - - - - - - - - - +
+		; 3F00|       Monitor         |
+		;     |       Reserved        |
+		; 3FFF|         Page          | (max phys RAM addr)
+		; ----+-----------------------+
+		;     :\ \ \ \ \ \ \ \ \ \ \ \:
+		;     : \ \ \ \(empty)\ \ \ \ :
+		;     :\ \ \ \ \ \ \ \ \ \ \ \:
+		; ----+-----------------------+
+		; F800|                       |
+		;     |        Monitor        |
+		;     |          ROM          |
+		; FFFF|                       |
+		; ----+-----------------------+
+		;
+		; Page 0 (always writeable):
+		; 0000: JMP breakpoint	; exit from user program
+		; 0003: DB iobyte	; device assignments
+		; 0004: DW RAMend	; last byte of user memory
+		; 0008: RST 1 ...
+		; 0040: free...
+		
+		;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+		; Bootstrap ROM
+		; 256 byte i1702 EPROM at A36 on F.P. Ctrl PCB.
+		; Overrides RAM reads (only) when BOOT switch is ON.
+		;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+		
+0000          		org	0000h
+0000  C30600  		jmp	L0006		;; 0000: c3 06 00    ...
+		
+		; overlays iobyte for reads
+0003  00      	L0003:	db	00000000b	; default iobyte
+		
+0004  0915    		db	9,21		; datestamp, MM,DD
+		
+0006  F3      	L0006:	di			;; 0006: f3          .
+0007  3E12    		mvi	a,012h	; ICW1: init i8259, SINGLE, vectors in xx00H
+0009  D3FD    		out	rstint		;; 0009: d3 fd       ..
+000B  AF      		xra	a		;; 000b: af          .
+000C  AF      		xra	a	; ICW2: vectors in 00xxH
+000D  D3FC    		out	imask		;; 000d: d3 fc       ..
+000F  3EFE    		mvi	a,im1$7	; OCW1: intr masks
+0011  D3FC    		out	imask		;; 0011: d3 fc       ..
+0013  3E00    		mvi	a,0		;; 0013: 3e 00       >.
+0015  D3F3    		out	intctl	; /INT3 off
+		; look for end of RAM, starting with 0100h
+0017  210000  		lxi	h,0000h		;; 0017: 21 00 00    ...
+		; As we have 64KB of ram and monitor and bootloader are loaded we have to skip
+		; memory chaeck and specify ramtop as 0f7ff directly here. If original RAM test
+		; is needed remove the following instruction and uncomment the code below.
+		;	lxi	h,0f800h	;; Start address of monitor
+001A  24      	L001a:	inr	h		;; 001a: 24          $
+001B  7E      		mov	a,m		;; 001b: 7e          ~
+001C  2F      		cma			;; 001c: 2f          /
+001D  77      		mov	m,a		;; 001d: 77          w
+001E  BE      		cmp	m		;; 001e: be          .
+001F  2F      		cma			;; 001f: 2f          /
+0020  77      		mov	m,a		;; 0020: 77          w
+0021  CA1A00  		jz	L001a		;; 0021: ca 1a 00    ...
+0024  2B      		dcx	h		;; 0024: 2b          +
+0025  220400  		shld	ramtop		;; 0025: 22 04 00    "..
+		; copy savDE-L00ff to high memory page (xxC8H)
+0028  01C800  		lxi	b,savDE		;; 0028: 01 c8 00    ...
+002B  69      		mov	l,c		;; 002b: 69          i
+002C  F9      		sphl			;; 002c: f9          .
+002D  0A      	L002d:	ldax	b		;; 002d: 0a          .
+002E  77      		mov	m,a		;; 002e: 77          w
+002F  0C      		inr	c		;; 002f: 0c          .
+0030  2C      		inr	l		;; 0030: 2c          ,
+0031  C22D00  		jnz	L002d		;; 0031: c2 2d 00    .-.
+		; HL = top page of RAM
+0034  2ED1    		mvi	l,LOW savSP+1	;; 0034: 2e d1       ..
+0036  74      		mov	m,h		;; 0036: 74          t
+0037  35      		dcr	m	; save very top page for monitor
+0038  3EC3    		mvi	a,JMP		;; 0038: 3e c3       >.
+		; during BOOT, RAM is written while ROM is read
+003A  320000  		sta	pgexit		;; 003a: 32 00 00    2..
+003D  2111FF  		lxi	h,pgmxit	;; 003d: 21 0f ff    ...
+0040  220100  		shld	pgexit+1	;; 0040: 22 01 00    "..
+0043  3E4F    		mvi	a,04fh	; 1 stop, np, 8 data, 64x
+0045  D3F7    		out	crtctl		;; 0045: d3 f7       ..
+0047  3ECE    		mvi	a,0ceh	; 2 stop, np, 8 data, 16x
+0049  D3F5    		out	ttyctl		;; 0049: d3 f5       ..
+004B  3E27    		mvi	a,027h	; RTS, RxEn, DTR, TxEn
+004D  D3F7    		out	crtctl		;; 004d: d3 f7       ..
+004F  D3F5    		out	ttyctl		;; 004f: d3 f5       ..
+0051  AF      		xra	a		;; 0051: af          .
+0052  D3F9    		out	ptctl		;; 0052: d3 f9       ..
+			; check floppy inserted?
+0054  DB78    		in	dstat		;; 0054: db 78       .x
+0056  0F      		rrc		; CY = dcredy
+0057  D26800  		jnc	L0068		;; 0057: d2 68 00    .h.
+			; floppy is inserted - boot it
+005A  3EAA    		mvi	a,LOW iopb
+005C  D379    		out	diopbl		;; 005c: d3 79       .y
+005E  AF      		xra	a	; HIGH iopb
+005F  D37A    		out	diopch		;; 005f: d3 7a       .z
+			; wait for disk command finished
+0061  DB78    	L0061:	in	dstat		;; 0061: db 78       .x
+0063  E604    		ani	dcfini
+0065  CA6100  		jz	L0061		;; 0065: ca 61 00    .a.
+		
+		; alternately poll CRT and TTY for input.
+		; must see the blank-space character.
+0068  210300  	L0068:	lxi	h,iobyte	; reads access L0003
+006B  56      		mov	d,m		;; 006b: 56          V
+006C  DBF5    		in	ttysts		;; 006c: db f5       ..
+006E  E602    		ani	002h		;; 006e: e6 02       ..
+0070  CA7800  		jz	L0078		;; 0070: ca 78 00    .x.
+0073  DBF4    		in	ttydat		;; 0073: db f4       ..
+0075  C38200  		jmp	L0082		;; 0075: c3 82 00    ...
+		
+0078  14      	L0078:	inr	d		;; 0078: 14          .
+0079  DBF7    		in	crtsts		;; 0079: db f7       ..
+007B  E602    		ani	002h		;; 007b: e6 02       ..
+007D  CA6800  		jz	L0068		;; 007d: ca 68 00    .h.
+0080  DBF6    		in	crtdat		;; 0080: db f6       ..
+0082  E67F    	L0082:	ani	07fh		;; 0082: e6 7f       ..
+0084  FE20    		cpi	' '		;; 0084: fe 20       .
+0086  C26800  		jnz	L0068		;; 0086: c2 68 00    .h.
+			; found console, D is iobyte
+0089  72      		mov	m,d	; save iobyte in RAM
+008A  2E06    		mvi	l,LOW iobyte2	;; 008a: 2e 06       ..
+008C  72      		mov	m,d	; also save in L0006???
+			; alternate monitor? based on port 78 bit 0...
+008D  DB78    		in	dstat		;; 008d: db 78       .x
+008F  0F      		rrc	; CY = dcredy
+0090  DA0030  		jc	bootbuf		;; 0090: da 00 30    ..0
+		
+		; print 'MDS MONITOR, V2.0' to CON:
+0093  2EB1    		mvi	l,LOW L00b1
+0095  0615    		mvi	b,Z00b1		;; 0095: 06 15       ..
+0097  4E      	L0097:	mov	c,m		;; 0097: 4e          N
+0098  7A      		mov	a,d		;; 0098: 7a          z
+0099  0F      		rrc			;; 0099: 0f          .
+009A  D427FD  		cnc	ttyout
+009D  7A      		mov	a,d		;; 009d: 7a          z
+009E  0F      		rrc			;; 009e: 0f          .
+009F  DC3EFD  		cc	crtout
+00A2  23      		inx	h		;; 00a2: 23          #
+00A3  05      		dcr	b		;; 00a3: 05          .
+00A4  C29700  		jnz	L0097		;; 00a4: c2 97 00    ...
+00A7  C300F8  		jmp	coldsf
+		
+		; floppy boot iopb
+00AA  80      	iopb:	db	80h	; iocw: no update
+00AB  04      		db	dcread	; floppy READ command
+00AC  1A      		db	26	; number of sectors to read (?)
+00AD  00      		db	0	; track 0
+00AE  01      		db	1	; sector 1 (first)
+00AF  0030    		dw	bootbuf	; DMA addr
+		
+00B1  0D0A4D44	L00b1:	db	CR,LF,'MDS MONITOR, V2.0'
+      53204D4F
+      4E49544F
+      522C2056
+      322E30
+00C4  0D0A    		db	CR,LF
+0015          	Z00b1	equ	$-L00b1
+		
+00C6  4F3E    	L00c6:	db	4fh,3eh	; 'O>' or L3e4f or 79,62 or DS 2
+		
+		;------------------------------------------------------
+		; Template for monitor area of RAM.
+		; copied into high RAM page - xxC8H - also top of stack
+		;
+		monstk:	ds	0	; stop of stack for monitor
+00C0          	usrtop	equ	monstk-8	; monstk - 264
+		
+00C8  EEDD    	savDE:	dw	0ddeeh	; saved DE
+00CA  CCBB    	savBC:	dw	0bbcch	; saved BC
+00CC  00FE    	savIM:	dw	0fe00h	; saved port FC
+00CE  FFAA    	savPSW:	dw	0aaffh	; saved PSW
+00D0  C000    	savSP:	dw	usrtop	; saved SP (modified for RAM size)
+000A          	savlen	equ	$-savDE
+		
+		; routine to resume user code
+00D2  F3      	resume:	di			;; 00d2: f3          .
+00D3  D1      		pop	d		;; 00d3: d1          .
+00D4  C1      		pop	b		;; 00d4: c1          .
+00D5  F1      		pop	psw		;; 00d5: f1          .
+00D6  D3FC    		out	imask		;; 00d6: d3 fc       ..
+00D8  F1      		pop	psw		;; 00d8: f1          .
+00D9  E1      		pop	h		;; 00d9: e1          .
+00DA  F9      		sphl			;; 00da: f9          .
+00DB  213412  	lxiHL:	lxi	h,01234h	; filled with saved HL
+00DE  FB      		ei			;; 00de: fb          .
+00DF  C38967  	jmpPC:	jmp	06789h		; filled with resume/GO addr (PC)
+		
+00E2  0000    	brkpts:	dw	0	; breakpoint addr #1
+00E4  00      		db	0	; saved byte for bp#1
+00E5  0000    		dw	0	; breakpoint addr #2
+00E7  00      		db	0	; saved byte for bp#2
+		
+		; user-defined device driver hooks
+00E8  C30000  	uc1in:	jmp	pgexit		;; 00e8: c3 00 00    ...
+00EB  C30000  	uc1out:	jmp	pgexit		;; 00eb: c3 00 00    ...
+00EE  C30000  	ur1in:	jmp	pgexit		;; 00ee: c3 00 00    ...
+00F1  C30000  	ur2in:	jmp	pgexit		;; 00f1: c3 00 00    ...
+00F4  C30000  	up1out:	jmp	pgexit		;; 00f4: c3 00 00    ...
+00F7  C30000  	up2out:	jmp	pgexit		;; 00f7: c3 00 00    ...
+00FA  C30000  	ul1out:	jmp	pgexit		;; 00fa: c3 00 00    ...
+00FD  C30000  	uc1sts:	jmp	pgexit		;; 00fd: c3 00 00    ...
+		
+		;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+		; Monitor ROM
+		; 2K byte 8316 MROM at A7 on Monitor PCB.
+		;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+F800          		org	0f800h
+		
+F800  C330F8  	coldsf:	jmp	colds		;; f800: c3 30 f8    .0.
+F803  C387FC  		jmp	conin		;; f803: conin
+F806  C3BAFC  		jmp	rdrin		;; f806: rdrin
+F809  C31FFD  		jmp	conout		;; f809: conout
+F80C  C354FD  		jmp	punout		;; f80c: punout
+F80F  C386FD  		jmp	lstout		;; f80f: lstout
+F812  C3A6FD  		jmp	consts		;; f812: consts
+F815  C3CDFD  		jmp	Lfdcb		;; f815: chkcfg - get iobyte
+F818  C3D1FD  		jmp	Lfdcf		;; f818: setcfg - set iobyte
+F81B  C3D6FD  		jmp	Lfdd4		;; f81b: ramsiz - 16K: B=3EH, A=0C0H
+F81E  C3DEFD  		jmp	Lfddc		;; f81e: iodef - define usr i/o - C=fnc vec, DE=rtn
+F821  C3C8FF  		jmp	Lffc6		;; f821: nop - imm return
+		
+F824  0915    		db	9,21	; date code, MM,DD
+		
+F826  2A0400  	abort:	lhld	ramtop		;; f826: 2a 04 00    *..
+F829  2EC8    		mvi	l,LOW monstk	;; f829: 2e c8       ..
+F82B  F9      		sphl			;; f82b: f9          .
+F82C  CD49FD  		call	conimm		;; f82c: cd 47 fd    .G.
+F82F  23      		db	'#'
+		; cold start (RESET)
+F830  DBFF    	colds:	in	fpsw		;; f830: db ff       ..
+F832  E602    		ani	bsw		;; f832: e6 02       ..
+F834  E600    		ani	0		;; don't wait on boot switch
+F836  C230F8  		jnz	colds	; wait for BOOT switch to be turned OFF
+F839  FB      		ei			;; f837: fb          .
+F83A  CD1AFE  		call	coneol		;; f838: cd 18 fe    ...
+F83D  CD49FD  		call	conimm		;; f83b: cd 47 fd    .G.
+F840  2E      		db	'.'
+F841  CDC9FF  		call	echin		;; f83f: cd c7 ff    ...
+F844  D641    		sui	'A'		;; f842: d6 41       .A
+F846  FA30F8  		jm	colds		;; f844: fa 30 f8    .0.
+F849  0E02    		mvi	c,2	; default to 2 params?
+F84B  1130F8  		lxi	d,colds		;; f849: 11 30 f8    .0.
+F84E  D5      		push	d		;; f84c: d5          .
+F84F  2161F8  		lxi	h,cmdtab	;; f84d: 21 5f f8    ._.
+F852  FE18    		cpi	'X'-'A'+1	;; f850: fe 18       ..
+F854  F226F8  		jp	abort		;; f852: f2 26 f8    .&.
+F857  5F      		mov	e,a		;; f855: 5f          _
+F858  1600    		mvi	d,0		;; f856: 16 00       ..
+F85A  19      		dad	d		;; f858: 19          .
+F85B  19      		dad	d		;; f859: 19          .
+F85C  7E      		mov	a,m		;; f85a: 7e          ~
+F85D  23      		inx	h		;; f85b: 23          #
+F85E  66      		mov	h,m		;; f85c: 66          f
+F85F  6F      		mov	l,a		;; f85d: 6f          o
+F860  E9      		pchl			;; f85e: e9          .
+		
+F861  91F8    	cmdtab:	dw	Acmd	; A (Assign) <ldev>=<pdev> [see ldevtb]
+F863  0EF9    		dw	Bcmd	; B (BNPF punch) <low-adr>,<high-adr>
+F865  47F9    		dw	Ccmd	; C (Compare PROM) <T/F><socket><low-adr>,<high-adr>
+F867  92F9    		dw	Dcmd	; D (Display mem) <low-adr>,<high-adr>
+F869  BEF9    		dw	Ecmd	; E (HEX EOF to PUN:) <entry-adr> [after W command(s)]
+F86B  DCF9    		dw	Fcmd	; F (Fill mem) <low-adr>,<high-adr>,<byte>
+F86D  EBF9    		dw	Gcmd	; G (Go/exec) <addr>,<bp-1>,<bp-2>
+F86F  34FA    		dw	Hcmd	; H (Hex math) <num-1>,<num-2>
+F871  26F8    		dw	abort	; I (invalid)
+F873  26F8    		dw	abort	; J (invalid)
+F875  26F8    		dw	abort	; K (invalid)
+F877  4FFA    		dw	Lcmd	; L (Load BNPF) <low-adr>,<high-adr>
+F879  80FA    		dw	Mcmd	; M (Move mem) <low-adr>,<high-adr>,<dest-adr>
+F87B  91FA    		dw	Ncmd	; N (NUL leader/trailer to PUN:) [60 NULs to PUN:]
+F87D  26F8    		dw	abort	; O (invalid)
+F87F  A1FA    		dw	Pcmd	; P (Prog PROM) <T/F><socket><low-adr>,<high-adr>,<prom-adr>
+F881  DFFA    		dw	Qcmd	; Q (Query I/O assignments)
+F883  1DFB    		dw	Rcmd	; R (Read HEX on RDR:) <bias>
+F885  79FB    		dw	Scmd	; S (Substitute mem) <address>
+F887  97FB    		dw	Tcmd	; T (Transfer PROM) <T/F><socket><low-adr>,<high-adr>
+F889  26F8    		dw	abort	; U (invalid)
+F88B  26F8    		dw	abort	; V (invalid)
+F88D  C3FB    		dw	Wcmd	; W (Write HEX on PUN:) <low-adr>,<high-adr>
+F88F  07FC    		dw	Xcmd	; X (Examine all regs)
+					; X (Modify regs) <reg-id> [see regtbl]
+		
+F891  CDC9FF  	Acmd:	call	echin		;; f88f: cd c7 ff    ...
+F894  21DEF8  		lxi	h,ldevtb	;; f892: 21 dc f8    ...
+F897  0E04    		mvi	c,004h		;; f895: 0e 04       ..
+F899  BE      	Lf897:	cmp	m		;; f897: be          .
+F89A  23      		inx	h		;; f898: 23          #
+F89B  CAA8F8  		jz	Lf8a6		;; f899: ca a6 f8    ...
+F89E  23      		inx	h		;; f89c: 23          #
+F89F  23      		inx	h		;; f89d: 23          #
+F8A0  23      		inx	h		;; f89e: 23          #
+F8A1  0D      		dcr	c		;; f89f: 0d          .
+F8A2  C299F8  		jnz	Lf897		;; f8a0: c2 97 f8    ...
+F8A5  C326F8  		jmp	abort		;; f8a3: c3 26 f8    .&.
+		
+F8A8  46      	Lf8a6:	mov	b,m		;; f8a6: 46          F
+F8A9  23      		inx	h		;; f8a7: 23          #
+F8AA  5E      		mov	e,m		;; f8a8: 5e          ^
+F8AB  23      		inx	h		;; f8a9: 23          #
+F8AC  56      		mov	d,m		;; f8aa: 56          V
+F8AD  EB      		xchg			;; f8ab: eb          .
+F8AE  CDC9FF  	Lf8ac:	call	echin		;; f8ac: cd c7 ff    ...
+F8B1  FE3D    		cpi	'='		;; f8af: fe 3d       .=
+F8B3  C2AEF8  		jnz	Lf8ac		;; f8b1: c2 ac f8    ...
+F8B6  CDC9FF  	Lf8b4:	call	echin		;; f8b4: cd c7 ff    ...
+F8B9  FE20    		cpi	' '		;; f8b7: fe 20       .
+F8BB  CAB6F8  		jz	Lf8b4		;; f8b9: ca b4 f8    ...
+F8BE  0E04    		mvi	c,004h		;; f8bc: 0e 04       ..
+F8C0  BE      	Lf8be:	cmp	m		;; f8be: be          .
+F8C1  23      		inx	h		;; f8bf: 23          #
+F8C2  CACDF8  		jz	Lf8cb		;; f8c0: ca cb f8    ...
+F8C5  23      		inx	h		;; f8c3: 23          #
+F8C6  0D      		dcr	c		;; f8c4: 0d          .
+F8C7  C2C0F8  		jnz	Lf8be		;; f8c5: c2 be f8    ...
+F8CA  C326F8  		jmp	abort		;; f8c8: c3 26 f8    .&.
+		
+F8CD  CDC9FF  	Lf8cb:	call	echin		;; f8cb: cd c7 ff    ...
+F8D0  FE0D    		cpi	CR		;; f8ce: fe 0d       ..
+F8D2  C2CDF8  		jnz	Lf8cb		;; f8d0: c2 cb f8    ...
+F8D5  3A0300  		lda	iobyte		;; f8d3: 3a 03 00    :..
+F8D8  A0      		ana	b		;; f8d6: a0          .
+F8D9  B6      		ora	m		;; f8d7: b6          .
+F8DA  320300  		sta	iobyte		;; f8d8: 32 03 00    2..
+F8DD  C9      		ret			;; f8db: c9          .
+		
+		; decoding of 'A' command parameters
+F8DE  43FC    	ldevtb:	db	'C',11111100b !
+F8E0  EEF8    	 dw contbl	; CON:
+F8E2  52F3    		db	'R',11110011b !
+F8E4  F6F8    	 dw rdrtbl	; RDR:
+F8E6  50CF    		db	'P',11001111b !
+F8E8  FEF8    	 dw puntbl	; PUN:
+F8EA  4C3F    		db	'L',00111111b !
+F8EC  06F9    	 dw lsttbl	; LST:
+		
+F8EE  5400    	contbl:	db	'T',00000000b	; TTY:
+F8F0  4301    		db	'C',00000001b	; CRT:
+F8F2  4202    		db	'B',00000010b	; BAT:
+F8F4  3103    		db	'1',00000011b	; UC1:
+		
+F8F6  5400    	rdrtbl:	db	'T',00000000b	; TTY:
+F8F8  5004    		db	'P',00000100b	; PTR:
+F8FA  3108    		db	'1',00001000b	; UR1:
+F8FC  320C    		db	'2',00001100b	; UR2:
+		
+F8FE  5400    	puntbl:	db	'T',00000000b	; TTY:
+F900  5010    		db	'P',00010000b	; PTP:
+F902  3120    		db	'1',00100000b	; UP1:
+F904  3230    		db	'2',00110000b	; UP2:
+		
+F906  5400    	lsttbl:	db	'T',00000000b	; TTY:
+F908  4340    		db	'C',01000000b	; CRT:
+F90A  4C80    		db	'L',10000000b	; LPT:
+F90C  31C0    		db	'1',11000000b	; UL1:
+		
+F90E  CD59FE  	Bcmd:	call	Lfe57	; C=2
+F911  CD1AFE  		call	coneol
+F914  CD9AFE  		call	nulout		;; f912: cd 98 fe    ...
+F917  D1      		pop	d		;; f915: d1          .
+F918  E1      		pop	h		;; f916: e1          .
+F919  CD50FD  	Lf917:	call	punimm		;; f917: cd 4e fd    .N.
+F91C  42      		db	'B'
+F91D  0608    		mvi	b,008h		;; f91b: 06 08       ..
+F91F  7E      		mov	a,m		;; f91d: 7e          ~
+F920  07      	Lf91e:	rlc			;; f91e: 07          .
+F921  F5      		push	psw		;; f91f: f5          .
+F922  3E27    		mvi	a,027h		;; f920: 3e 27       >'
+F924  CE00    		aci	000h		;; f922: ce 00       ..
+F926  87      		add	a		;; f924: 87          .
+F927  4F      		mov	c,a		;; f925: 4f          O
+F928  CD54FD  		call	punout		;; f926: cd 52 fd    .R.
+F92B  F1      		pop	psw		;; f929: f1          .
+F92C  05      		dcr	b		;; f92a: 05          .
+F92D  C220F9  		jnz	Lf91e		;; f92b: c2 1e f9    ...
+F930  CD50FD  		call	punimm		;; f92e: cd 4e fd    .N.
+F933  46      		db	'F'
+F934  CD50FD  	Lf932:	call	punimm		;; f932: cd 4e fd    .N.
+F937  20      	Lf935:	db	' '
+F938  CD6CFE  		call	Lfe6a		;; f936: cd 6a fe    .j.
+F93B  DA99FA  		jc	Lfa97		;; f939: da 97 fa    ...
+F93E  7D      		mov	a,l		;; f93c: 7d          }
+F93F  E603    		ani	003h		;; f93d: e6 03       ..
+F941  CC08FF  		cz	puneol		;; f93f: cc 06 ff    ...
+F944  C319F9  		jmp	Lf917		;; f942: c3 17 f9    ...
+		
+F947  CD96FF  	Ccmd:	call	Lff94		;; f945: cd 94 ff    ...
+F94A  C5      		push	b		;; f948: c5          .
+F94B  0E02    		mvi	c,2		;; f949: 0e 02       ..
+F94D  CD59FE  		call	Lfe57		;; f94b: cd 57 fe    .W.
+F950  D1      		pop	d	; prom addr
+F951  E1      		pop	h	; mem addr
+F952  C1      		pop	b	; prom socket word - B=ctl, C=msk
+F953  C5      		push	b		;; f951: c5          .
+F954  0E00    		mvi	c,000h	; start addr 000
+F956  78      	Lf954:	mov	a,b		;; f954: 78          x
+F957  D3F1    		out	promah		;; f955: d3 f1       ..
+F959  79      		mov	a,c		;; f957: 79          y
+F95A  D3F2    		out	promal		;; f958: d3 f2       ..
+F95C  DBF0    		in	promda	; /WAIT until done
+F95E  E5      		push	h		;; f95c: e5          .
+F95F  210400  		lxi	h,ramtop	; data invert mask
+F962  AE      		xra	m		;; f960: ae          .
+F963  E1      		pop	h	; data to compare
+F964  AE      		xra	m		;; f962: ae          .
+F965  E3      		xthl		; prom socket word
+F966  A5      		ana	l	; mask off data bits
+F967  E3      		xthl			;; f965: e3          .
+F968  CA89F9  		jz	Lf987	; OK - data is same
+			; report compare error
+F96B  C5      		push	b		;; f969: c5          .
+F96C  CD1AFE  		call	coneol		;; f96a: cd 18 fe    ...
+F96F  CD7CFE  		call	adrout		;; f96d: cd 7a fe    .z.
+F972  CD13FD  		call	space		;; f970: cd 11 fd    ...
+F975  7E      		mov	a,m		;; f973: 7e          ~
+F976  CD84FE  		call	hexout		;; f974: cd 82 fe    ...
+F979  CD13FD  		call	space		;; f977: cd 11 fd    ...
+F97C  DBF0    		in	promda		;; f97a: db f0       ..
+F97E  CD84FE  		call	hexout		;; f97c: cd 82 fe    ...
+F981  DBF1    		in	promst		;; f97f: db f1       ..
+F983  E602    		ani	uppok		;; f981: e6 02       ..
+F985  CA26F8  		jz	abort		;; f983: ca 26 f8    .&.
+F988  C1      		pop	b		;; f986: c1          .
+F989  03      	Lf987:	inx	b	; next prom addr
+F98A  CD6CFE  		call	Lfe6a	; check for buffer end
+F98D  D256F9  		jnc	Lf954	; keep going until end
+F990  C1      		pop	b		;; f98e: c1          .
+F991  C9      		ret			;; f98f: c9          .
+		
+F992  CD59FE  	Dcmd:	call	Lfe57	; C=2
+F995  D1      		pop	d		;; f993: d1          .
+F996  E1      		pop	h		;; f994: e1          .
+F997  CD90FE  	Lf995:	call	lsteol		;; f995: cd 8e fe    ...
+F99A  CD23FE  		call	Lfe21		;; f998: cd 21 fe    ...
+F99D  0E20    	Lf99b:	mvi	c,' '		;; f99b: 0e 20       .
+F99F  CD7CFD  		call	lstbrk		;; f99d: cd 7a fd    .z.
+F9A2  7E      		mov	a,m		;; f9a0: 7e          ~
+F9A3  CD2BFE  		call	Lfe29		;; f9a1: cd 29 fe    .).
+F9A6  CD6CFE  		call	Lfe6a		;; f9a4: cd 6a fe    .j.
+F9A9  DAB5F9  		jc	Lf9b3		;; f9a7: da b3 f9    ...
+F9AC  7D      		mov	a,l		;; f9aa: 7d          }
+F9AD  E60F    		ani	00fh		;; f9ab: e6 0f       ..
+F9AF  C29DF9  		jnz	Lf99b		;; f9ad: c2 9b f9    ...
+F9B2  C397F9  		jmp	Lf995		;; f9b0: c3 95 f9    ...
+		
+F9B5  CD90FE  	Lf9b3:	call	lsteol		;; f9b3: cd 8e fe    ...
+F9B8  0E00    		mvi	c,NIL		;; f9b6: 0e 00       ..
+F9BA  CD7CFD  		call	lstbrk		;; f9b8: cd 7a fd    .z.
+F9BD  C9      		ret			;; f9bb: c9          .
+		
+F9BE  0D      	Ecmd:	dcr	c	; C=1
+F9BF  CD59FE  		call	Lfe57		;; f9bd: cd 57 fe    .W.
+F9C2  CD50FD  		call	punimm		;; f9c0: cd 4e fd    .N.
+F9C5  3A      		db	':'
+F9C6  AF      		xra	a		;; f9c4: af          .
+F9C7  57      		mov	d,a		;; f9c5: 57          W
+F9C8  CDE3FE  		call	punhex		;; f9c6: cd e1 fe    ...
+F9CB  E1      		pop	h		;; f9c9: e1          .
+F9CC  CDDBFE  		call	punadr		;; f9ca: cd d9 fe    ...
+F9CF  3E01    		mvi	a,001h		;; f9cd: 3e 01       >.
+F9D1  CDE3FE  		call	punhex		;; f9cf: cd e1 fe    ...
+F9D4  AF      		xra	a		;; f9d2: af          .
+F9D5  92      		sub	d		;; f9d3: 92          .
+F9D6  CDE3FE  		call	punhex		;; f9d4: cd e1 fe    ...
+F9D9  C399FA  		jmp	Lfa97		;; f9d7: c3 97 fa    ...
+		
+F9DC  0C      	Fcmd:	inr	c	; C=3
+F9DD  CD59FE  		call	Lfe57		;; f9db: cd 57 fe    .W.
+F9E0  C1      		pop	b		;; f9de: c1          .
+F9E1  D1      		pop	d		;; f9df: d1          .
+F9E2  E1      		pop	h		;; f9e0: e1          .
+F9E3  71      	Lf9e1:	mov	m,c		;; f9e1: 71          q
+F9E4  CD6CFE  		call	Lfe6a		;; f9e2: cd 6a fe    .j.
+F9E7  D2E3F9  		jnc	Lf9e1		;; f9e5: d2 e1 f9    ...
+F9EA  C9      		ret			;; f9e8: c9          .
+		
+F9EB  2A0400  	Gcmd:	lhld	ramtop		;; f9e9: 2a 04 00    *..
+F9EE  2ED2    		mvi	l,LOW resume	;; f9ec: 2e d2       ..
+F9F0  E3      		xthl			;; f9ee: e3          .
+F9F1  CDF9FE  		call	trmin		;; f9ef: cd f7 fe    ...
+F9F4  CA03FA  		jz	Lfa01		;; f9f2: ca 01 fa    ...
+F9F7  CDABFE  		call	Lfea9		;; f9f5: cd a9 fe    ...
+F9FA  EB      		xchg			;; f9f8: eb          .
+F9FB  2A0400  		lhld	ramtop		;; f9f9: 2a 04 00    *..
+F9FE  2EE1    		mvi	l,LOW jmpPC+2	;; f9fc: 2e e1       ..
+FA00  72      		mov	m,d		;; f9fe: 72          r
+FA01  2B      		dcx	h		;; f9ff: 2b          +
+FA02  73      		mov	m,e		;; fa00: 73          s
+FA03  DA30FA  	Lfa01:	jc	Lfa2e		;; fa01: da 2e fa    ...
+FA06  110200  		lxi	d,00002h	;; fa04: 11 02 00    ...
+FA09  CD49FD  	Lfa07:	call	conimm		;; fa07: cd 47 fd    .G.
+FA0C  2D      		db	'-'
+FA0D  CDA5FE  		call	adrin		;; fa0b: cd a3 fe    ...
+FA10  E5      		push	h		;; fa0e: e5          .
+FA11  14      		inr	d		;; fa0f: 14          .
+FA12  DA19FA  		jc	Lfa17		;; fa10: da 17 fa    ...
+FA15  1D      		dcr	e		;; fa13: 1d          .
+FA16  C209FA  		jnz	Lfa07		;; fa14: c2 07 fa    ...
+FA19  D226F8  	Lfa17:	jnc	abort		;; fa17: d2 26 f8    .&.
+FA1C  2A0400  		lhld	ramtop		;; fa1a: 2a 04 00    *..
+FA1F  2EE2    		mvi	l,LOW brkpts	;; fa1d: 2e e2       ..
+FA21  C1      	Lfa1f:	pop	b		;; fa1f: c1          .
+FA22  71      		mov	m,c		;; fa20: 71          q
+FA23  23      		inx	h		;; fa21: 23          #
+FA24  70      		mov	m,b		;; fa22: 70          p
+FA25  23      		inx	h		;; fa23: 23          #
+FA26  0A      		ldax	b		;; fa24: 0a          .
+FA27  77      		mov	m,a		;; fa25: 77          w
+FA28  23      		inx	h		;; fa26: 23          #
+FA29  3EC7    		mvi	a,RST0	; set breakpoint
+FA2B  02      		stax	b		;; fa29: 02          .
+FA2C  15      		dcr	d		;; fa2a: 15          .
+FA2D  C221FA  		jnz	Lfa1f		;; fa2b: c2 1f fa    ...
+FA30  CD1AFE  	Lfa2e:	call	coneol		;; fa2e: cd 18 fe    ...
+FA33  C9      		ret			;; fa31: c9          .
+		
+FA34  CD59FE  	Hcmd:	call	Lfe57	; C=2
+FA37  CD1AFE  		call	coneol		;; fa35: cd 18 fe    ...
+FA3A  D1      		pop	d		;; fa38: d1          .
+FA3B  E1      		pop	h		;; fa39: e1          .
+FA3C  E5      		push	h		;; fa3a: e5          .
+FA3D  19      		dad	d		;; fa3b: 19          .
+FA3E  CD7CFE  		call	adrout		;; fa3c: cd 7a fe    .z.
+FA41  CD13FD  		call	space		;; fa3f: cd 11 fd    ...
+FA44  E1      		pop	h		;; fa42: e1          .
+FA45  7D      		mov	a,l		;; fa43: 7d          }
+FA46  93      		sub	e		;; fa44: 93          .
+FA47  6F      		mov	l,a		;; fa45: 6f          o
+FA48  7C      		mov	a,h		;; fa46: 7c          |
+FA49  9A      		sbb	d		;; fa47: 9a          .
+FA4A  67      		mov	h,a		;; fa48: 67          g
+FA4B  CD7CFE  		call	adrout		;; fa49: cd 7a fe    .z.
+FA4E  C9      		ret			;; fa4c: c9          .
+		
+FA4F  CD59FE  	Lcmd:	call	Lfe57	; C=2
+FA52  D1      		pop	d		;; fa50: d1          .
+FA53  E1      		pop	h		;; fa51: e1          .
+FA54  CD8DFF  	Lfa52:	call	Lff8b		;; fa52: cd 8b ff    ...
+FA57  FE42    		cpi	'B'		;; fa55: fe 42       .B
+FA59  C254FA  		jnz	Lfa52		;; fa57: c2 52 fa    .R.
+FA5C  3601    		mvi	m,001h		;; fa5a: 36 01       6.
+FA5E  CD8DFF  	Lfa5c:	call	Lff8b		;; fa5c: cd 8b ff    ...
+FA61  FE4E    		cpi	'N'		;; fa5f: fe 4e       .N
+FA63  CA6BFA  		jz	Lfa69		;; fa61: ca 69 fa    .i.
+FA66  C6B0    		adi	-'P'		;; fa64: c6 b0       ..
+FA68  C226F8  		jnz	abort		;; fa66: c2 26 f8    .&.
+FA6B  7E      	Lfa69:	mov	a,m		;; fa69: 7e          ~
+FA6C  17      		ral			;; fa6a: 17          .
+FA6D  77      		mov	m,a		;; fa6b: 77          w
+FA6E  D25EFA  		jnc	Lfa5c		;; fa6c: d2 5c fa    .\.
+FA71  CD8DFF  		call	Lff8b		;; fa6f: cd 8b ff    ...
+FA74  FE46    		cpi	'F'		;; fa72: fe 46       .F
+FA76  C226F8  		jnz	abort		;; fa74: c2 26 f8    .&.
+FA79  CD6CFE  		call	Lfe6a		;; fa77: cd 6a fe    .j.
+FA7C  D254FA  		jnc	Lfa52		;; fa7a: d2 52 fa    .R.
+FA7F  C9      		ret			;; fa7d: c9          .
+		
+FA80  0C      	Mcmd:	inr	c		;; fa7e: 0c          .
+FA81  CD59FE  		call	Lfe57	; C=3
+FA84  C1      		pop	b		;; fa82: c1          .
+FA85  D1      		pop	d		;; fa83: d1          .
+FA86  E1      		pop	h		;; fa84: e1          .
+FA87  7E      	Lfa85:	mov	a,m		;; fa85: 7e          ~
+FA88  02      		stax	b		;; fa86: 02          .
+FA89  03      		inx	b		;; fa87: 03          .
+FA8A  CD6CFE  		call	Lfe6a		;; fa88: cd 6a fe    .j.
+FA8D  D287FA  		jnc	Lfa85		;; fa8b: d2 85 fa    ...
+FA90  C9      		ret			;; fa8e: c9          .
+		
+FA91  CDC9FF  	Ncmd:	call	echin		;; fa8f: cd c7 ff    ...
+FA94  FE0D    		cpi	CR		;; fa92: fe 0d       ..
+FA96  C226F8  		jnz	abort		;; fa94: c2 26 f8    .&.
+FA99  CD9AFE  	Lfa97:	call	nulout		;; fa97: cd 98 fe    ...
+FA9C  CD50FD  		call	punimm		;; fa9a: cd 4e fd    .N.
+FA9F  00      		db	NIL
+FAA0  C9      		ret			;; fa9e: c9          .
+		
+FAA1  CD96FF  	Pcmd:	call	Lff94	; setup T/F (ramtop) and X/Y/Z (BC)
+FAA4  C5      		push	b		;; faa2: c5          .
+FAA5  0E03    		mvi	c,3		;; faa3: 0e 03       ..
+FAA7  CD59FE  		call	Lfe57	; get 3 addresses, on stack
+FAAA  CD1AFE  		call	coneol		;; faa8: cd 18 fe    ...
+FAAD  C1      		pop	b	; BC = param3 - PROM addr
+FAAE  D1      		pop	d	; DE = param2 - high addr
+FAAF  E1      		pop	h	; HL = param1 - low addr
+FAB0  3E0F    		mvi	a,HIGH promam	; limit to 0fffH (4K)
+FAB2  A0      		ana	b		;; fab0: a0          .
+FAB3  47      		mov	b,a		;; fab1: 47          G
+FAB4  F1      		pop	psw	; X/Y/Z - 00/30/20
+FAB5  B0      		ora	b		;; fab3: b0          .
+FAB6  47      		mov	b,a		;; fab4: 47          G
+FAB7  78      	Lfab5:	mov	a,b		;; fab5: 78          x
+FAB8  D3F1    		out	promah		;; fab6: d3 f1       ..
+FABA  79      		mov	a,c		;; fab8: 79          y
+FABB  D3F2    		out	promal		;; fab9: d3 f2       ..
+FABD  03      		inx	b		;; fabb: 03          .
+FABE  3A0400  		lda	ramtop		;; fabc: 3a 04 00    :..
+FAC1  AE      		xra	m		;; fabf: ae          .
+FAC2  D3F0    		out	promda		;; fac0: d3 f0       ..
+FAC4  DBF1    	Lfac2:	in	promst		;; fac2: db f1       ..
+FAC6  E601    		ani	uppbsy	; busy?
+FAC8  C2C4FA  		jnz	Lfac2		;; fac6: c2 c2 fa    ...
+FACB  DBF1    		in	promst		;; fac9: db f1       ..
+FACD  E602    		ani	uppok	; done/OK
+FACF  CAD9FA  		jz	Lfad7		;; facd: ca d7 fa    ...
+FAD2  CD6CFE  		call	Lfe6a	; check ++HL for reaching DE
+FAD5  D2B7FA  		jnc	Lfab5		;; fad3: d2 b5 fa    ...
+FAD8  C9      		ret		; done - success
+		
+FAD9  CD7CFE  	Lfad7:	call	adrout		;; fad7: cd 7a fe    .z.
+FADC  C326F8  		jmp	abort		;; fada: c3 26 f8    .&.
+		
+FADF  CDC9FF  	Qcmd:	call	echin		;; fadd: cd c7 ff    ...
+FAE2  FE0D    		cpi	CR		;; fae0: fe 0d       ..
+FAE4  C226F8  		jnz	abort		;; fae2: c2 26 f8    .&.
+FAE7  0604    		mvi	b,4	; 4 logical devices
+FAE9  21DEF8  		lxi	h,ldevtb	;; fae7: 21 dc f8    ...
+FAEC  CD1AFE  	Lfaea:	call	coneol		;; faea: cd 18 fe    ...
+FAEF  4E      		mov	c,m		;; faed: 4e          N
+FAF0  CD15FD  		call	conbrk		;; faee: cd 13 fd    ...
+FAF3  CD49FD  		call	conimm		;; faf1: cd 47 fd    .G.
+FAF6  3D      		db	'='
+FAF7  23      		inx	h		;; faf5: 23          #
+FAF8  7E      		mov	a,m		;; faf6: 7e          ~
+FAF9  2F      		cma			;; faf7: 2f          /
+FAFA  4F      		mov	c,a		;; faf8: 4f          O
+FAFB  23      		inx	h		;; faf9: 23          #
+FAFC  5E      		mov	e,m		;; fafa: 5e          ^
+FAFD  23      		inx	h		;; fafb: 23          #
+FAFE  56      		mov	d,m		;; fafc: 56          V
+FAFF  23      		inx	h		;; fafd: 23          #
+FB00  EB      		xchg			;; fafe: eb          .
+FB01  3A0300  		lda	iobyte		;; faff: 3a 03 00    :..
+FB04  A1      		ana	c		;; fb02: a1          .
+FB05  C5      		push	b		;; fb03: c5          .
+FB06  0604    		mvi	b,4	; 4 possible phys devices
+FB08  4E      	Lfb06:	mov	c,m		;; fb06: 4e          N
+FB09  23      		inx	h		;; fb07: 23          #
+FB0A  BE      		cmp	m		;; fb08: be          .
+FB0B  CA13FB  		jz	Lfb11		;; fb09: ca 11 fb    ...
+FB0E  23      		inx	h		;; fb0c: 23          #
+FB0F  05      		dcr	b		;; fb0d: 05          .
+FB10  C208FB  		jnz	Lfb06		;; fb0e: c2 06 fb    ...
+FB13  CD15FD  	Lfb11:	call	conbrk		;; fb11: cd 13 fd    ...
+FB16  EB      		xchg			;; fb14: eb          .
+FB17  C1      		pop	b		;; fb15: c1          .
+FB18  05      		dcr	b		;; fb16: 05          .
+FB19  C2ECFA  		jnz	Lfaea		;; fb17: c2 ea fa    ...
+FB1C  C9      		ret			;; fb1a: c9          .
+		
+		; R <bias> = Read HEX file from RDR: (C=2)
+FB1D  0D      	Rcmd:	dcr	c	; C=1
+FB1E  CD59FE  		call	Lfe57	; get 1 address, on stack
+FB21  CD1AFE  		call	coneol		;; fb1f: cd 18 fe    ...
+FB24  CD8DFF  	Lfb22:	call	Lff8b		;; fb22: cd 8b ff    ...
+FB27  FE3A    		cpi	':'		;; fb25: fe 3a       .:
+FB29  C224FB  		jnz	Lfb22		;; fb27: c2 22 fb    .".
+FB2C  AF      		xra	a		;; fb2a: af          .
+FB2D  57      		mov	d,a	; init checksum
+FB2E  CDF7FD  		call	Lfdf5	; num bytes
+FB31  CA69FB  		jz	Lfb67	; EOF record
+FB34  5F      		mov	e,a		;; fb32: 5f          _
+FB35  CDF7FD  		call	Lfdf5	; addr high
+FB38  67      		mov	h,a		;; fb36: 67          g
+FB39  CDF7FD  		call	Lfdf5	; addr low
+FB3C  6F      		mov	l,a		;; fb3a: 6f          o
+FB3D  CDF7FD  		call	Lfdf5	; rec type - discard
+FB40  4B      		mov	c,e	; C=E=num bytes
+FB41  E5      		push	h		;; fb3f: e5          .
+FB42  2100FF  		lxi	h,-256	; buffer on stack
+FB45  39      		dad	sp		;; fb43: 39          9
+FB46  CDF7FD  	Lfb44:	call	Lfdf5	; data byte
+FB49  77      		mov	m,a		;; fb47: 77          w
+FB4A  23      		inx	h		;; fb48: 23          #
+FB4B  1D      		dcr	e		;; fb49: 1d          .
+FB4C  C246FB  		jnz	Lfb44		;; fb4a: c2 44 fb    .D.
+FB4F  CDF7FD  		call	Lfdf5	; checksum
+FB52  C226F8  		jnz	abort		;; fb50: c2 26 f8    .&.
+FB55  D1      		pop	d	; DE=load addr
+FB56  E3      		xthl		; TOS=buf end, HL=bias
+FB57  EB      		xchg		; DE=bias, HL=load addr
+FB58  19      		dad	d	; HL+=bias (mem addr)
+FB59  0600    		mvi	b,0
+FB5B  09      		dad	b	; HL+=num bytes (end of mem adr)
+FB5C  EB      		xchg		; DE=mem addr end, HL=bias
+FB5D  E3      		xthl		; TOS=bias, HL=buf end
+		; copy buf backwards into memory...
+FB5E  2B      	Lfb5c:	dcx	h		;; fb5c: 2b          +
+FB5F  7E      		mov	a,m		;; fb5d: 7e          ~
+FB60  1B      		dcx	d		;; fb5e: 1b          .
+FB61  12      		stax	d		;; fb5f: 12          .
+FB62  0D      		dcr	c		;; fb60: 0d          .
+FB63  C25EFB  		jnz	Lfb5c		;; fb61: c2 5c fb    .\.
+FB66  C324FB  		jmp	Lfb22	; look for next line
+		
+		; HEX EOF record
+FB69  2A0400  	Lfb67:	lhld	ramtop		;; fb67: 2a 04 00    *..
+FB6C  2EE1    		mvi	l,LOW jmpPC+2	;; fb6a: 2e e1       ..
+FB6E  CDF7FD  		call	Lfdf5	; entry high
+FB71  77      		mov	m,a		;; fb6f: 77          w
+FB72  2B      		dcx	h		;; fb70: 2b          +
+FB73  CDF7FD  		call	Lfdf5	; entry low
+FB76  77      		mov	m,a		;; fb74: 77          w
+FB77  E1      		pop	h	; discard bias
+FB78  C9      		ret
+		
+FB79  CDA5FE  	Scmd:	call	adrin		;; fb77: cd a3 fe    ...
+FB7C  D8      		rc			;; fb7a: d8          .
+FB7D  7E      	Lfb7b:	mov	a,m		;; fb7b: 7e          ~
+FB7E  CD84FE  		call	hexout		;; fb7c: cd 82 fe    ...
+FB81  CD49FD  		call	conimm		;; fb7f: cd 47 fd    .G.
+FB84  2D      		db	'-'
+FB85  CDF9FE  		call	trmin		;; fb83: cd f7 fe    ...
+FB88  D8      		rc			;; fb86: d8          .
+FB89  CA93FB  		jz	Lfb91		;; fb87: ca 91 fb    ...
+FB8C  EB      		xchg			;; fb8a: eb          .
+FB8D  CDABFE  		call	Lfea9		;; fb8b: cd a9 fe    ...
+FB90  EB      		xchg			;; fb8e: eb          .
+FB91  73      		mov	m,e		;; fb8f: 73          s
+FB92  D8      		rc			;; fb90: d8          .
+FB93  23      	Lfb91:	inx	h		;; fb91: 23          #
+FB94  C37DFB  		jmp	Lfb7b		;; fb92: c3 7b fb    .{.
+		
+FB97  CD96FF  	Tcmd:	call	Lff94		;; fb95: cd 94 ff    ...
+FB9A  0E00    		mvi	c,0		;; fb98: 0e 00       ..
+FB9C  C5      		push	b		;; fb9a: c5          .
+FB9D  0E02    		mvi	c,2		;; fb9b: 0e 02       ..
+FB9F  CD59FE  		call	Lfe57		;; fb9d: cd 57 fe    .W.
+FBA2  D1      		pop	d		;; fba0: d1          .
+FBA3  E1      		pop	h		;; fba1: e1          .
+FBA4  C1      		pop	b		;; fba2: c1          .
+FBA5  78      	Lfba3:	mov	a,b		;; fba3: 78          x
+FBA6  D3F1    		out	promah		;; fba4: d3 f1       ..
+FBA8  79      		mov	a,c		;; fba6: 79          y
+FBA9  D3F2    		out	promal		;; fba7: d3 f2       ..
+FBAB  03      		inx	b		;; fba9: 03          .
+FBAC  DBF0    		in	promda		;; fbaa: db f0       ..
+FBAE  E5      		push	h		;; fbac: e5          .
+FBAF  210400  		lxi	h,ramtop	;; fbad: 21 04 00    ...
+FBB2  AE      		xra	m		;; fbb0: ae          .
+FBB3  E1      		pop	h		;; fbb1: e1          .
+FBB4  77      		mov	m,a		;; fbb2: 77          w
+FBB5  DBF1    		in	promst		;; fbb3: db f1       ..
+FBB7  E602    		ani	uppok		;; fbb5: e6 02       ..
+FBB9  CA26F8  		jz	abort		;; fbb7: ca 26 f8    .&.
+FBBC  CD6CFE  		call	Lfe6a		;; fbba: cd 6a fe    .j.
+FBBF  D2A5FB  		jnc	Lfba3		;; fbbd: d2 a3 fb    ...
+FBC2  C9      		ret			;; fbc0: c9          .
+		
+FBC3  CD59FE  	Wcmd:	call	Lfe57	; C=2
+FBC6  CD1AFE  		call	coneol		;; fbc4: cd 18 fe    ...
+FBC9  D1      		pop	d		;; fbc7: d1          .
+FBCA  E1      		pop	h		;; fbc8: e1          .
+FBCB  CD50FD  	Lfbc9:	call	punimm		;; fbc9: cd 4e fd    .N.
+FBCE  3A      		db	':'
+			; count number of bytes in record
+FBCF  011000  		lxi	b,16		;; fbcd: 01 10 00    ...
+FBD2  E5      		push	h		;; fbd0: e5          .
+FBD3  04      	Lfbd1:	inr	b		;; fbd1: 04          .
+FBD4  0D      		dcr	c		;; fbd2: 0d          .
+FBD5  CADEFB  		jz	Lfbdc		;; fbd3: ca dc fb    ...
+FBD8  CD6CFE  		call	Lfe6a	; check ++HL against DE
+FBDB  D2D3FB  		jnc	Lfbd1		;; fbd9: d2 d1 fb    ...
+		; B=num bytes
+FBDE  E1      	Lfbdc:	pop	h		;; fbdc: e1          .
+FBDF  D5      		push	d		;; fbdd: d5          .
+FBE0  1600    		mvi	d,0		;; fbde: 16 00       ..
+FBE2  78      		mov	a,b		;; fbe0: 78          x
+FBE3  CDE3FE  		call	punhex	; num bytes
+FBE6  CDDBFE  		call	punadr	; addr H/L
+FBE9  AF      		xra	a
+FBEA  CDE3FE  		call	punhex	; rec type (00)
+FBED  7E      	Lfbeb:	mov	a,m		;; fbeb: 7e          ~
+FBEE  CDE3FE  		call	punhex	; data bytes
+FBF1  23      		inx	h		;; fbef: 23          #
+FBF2  05      		dcr	b		;; fbf0: 05          .
+FBF3  C2EDFB  		jnz	Lfbeb		;; fbf1: c2 eb fb    ...
+FBF6  AF      		xra	a		;; fbf4: af          .
+FBF7  92      		sub	d		;; fbf5: 92          .
+FBF8  CDE3FE  		call	punhex	; checksum
+FBFB  D1      		pop	d		;; fbf9: d1          .
+FBFC  2B      		dcx	h		;; fbfa: 2b          +
+FBFD  CD08FF  		call	puneol		;; fbfb: cd 06 ff    ...
+FC00  CD6CFE  		call	Lfe6a	; check ++HL against DE
+FC03  D2CBFB  		jnc	Lfbc9	; do another record
+FC06  C9      		ret
+		
+FC07  2162FC  	Xcmd:	lxi	h,regtbl	;; fc05: 21 60 fc    .`.
+FC0A  CDF9FE  		call	trmin		;; fc08: cd f7 fe    ...
+FC0D  DA4BFC  		jc	regall	; CR hit
+FC10  0E0C    		mvi	c,12		;; fc0e: 0e 0c       ..
+FC12  BE      	Lfc10:	cmp	m		;; fc10: be          .
+FC13  CA20FC  		jz	Lfc1e	; matched reg-id
+FC16  23      		inx	h		;; fc14: 23          #
+FC17  23      		inx	h		;; fc15: 23          #
+FC18  23      		inx	h		;; fc16: 23          #
+FC19  0D      		dcr	c		;; fc17: 0d          .
+FC1A  C212FC  		jnz	Lfc10		;; fc18: c2 10 fc    ...
+FC1D  C326F8  		jmp	abort		;; fc1b: c3 26 f8    .&.
+		
+FC20  CD13FD  	Lfc1e:	call	space		;; fc1e: cd 11 fd    ...
+FC23  CD45FE  	Lfc21:	call	regout		;; fc21: cd 43 fe    .C.
+FC26  CD49FD  		call	conimm		;; fc24: cd 47 fd    .G.
+FC29  2D      		db	'-'
+FC2A  CDF9FE  		call	trmin		;; fc28: cd f7 fe    ...
+FC2D  D8      		rc			;; fc2b: d8          .
+FC2E  CA41FC  		jz	Lfc3f		;; fc2c: ca 3f fc    .?.
+FC31  E5      		push	h		;; fc2f: e5          .
+FC32  C5      		push	b		;; fc30: c5          .
+FC33  CDABFE  		call	Lfea9		;; fc31: cd a9 fe    ...
+FC36  7D      		mov	a,l		;; fc34: 7d          }
+FC37  12      		stax	d		;; fc35: 12          .
+FC38  F1      		pop	psw		;; fc36: f1          .
+FC39  B7      		ora	a		;; fc37: b7          .
+FC3A  FA40FC  		jm	Lfc3e		;; fc38: fa 3e fc    .>.
+FC3D  13      		inx	d		;; fc3b: 13          .
+FC3E  7C      		mov	a,h		;; fc3c: 7c          |
+FC3F  12      		stax	d		;; fc3d: 12          .
+FC40  E1      	Lfc3e:	pop	h		;; fc3e: e1          .
+FC41  AF      	Lfc3f:	xra	a		;; fc3f: af          .
+FC42  B6      		ora	m		;; fc40: b6          .
+FC43  F8      		rm			;; fc41: f8          .
+FC44  78      		mov	a,b		;; fc42: 78          x
+FC45  FE0D    		cpi	CR		;; fc43: fe 0d       ..
+FC47  C8      		rz			;; fc45: c8          .
+FC48  C323FC  		jmp	Lfc21		;; fc46: c3 21 fc    ...
+		
+		; HL=regtbl
+FC4B  CD1AFE  	regall:	call	coneol		;; fc49: cd 18 fe    ...
+FC4E  CD13FD  	Lfc4c:	call	space		;; fc4c: cd 11 fd    ...
+FC51  AF      		xra	a		;; fc4f: af          .
+FC52  B6      		ora	m		;; fc50: b6          .
+FC53  F8      		rm		; end of table marked 0ffh
+FC54  4E      		mov	c,m		;; fc52: 4e          N
+FC55  CD15FD  		call	conbrk		;; fc53: cd 13 fd    ...
+FC58  CD49FD  		call	conimm		;; fc56: cd 47 fd    .G.
+FC5B  3D      		db	'='
+FC5C  CD45FE  		call	regout		;; fc5a: cd 43 fe    .C.
+FC5F  C34EFC  		jmp	Lfc4c		;; fc5d: c3 4c fc    .L.
+		
+		; decoding of X command parameters
+		; how/where to access saved registers
+FC62  41      	regtbl:	db 'A' !
+FC63  CF      	 db LOW savPSW+1!
+FC64  00      	 db 0	; A reg
+FC65  42      		db 'B' !
+FC66  CB      	 db LOW savBC+1 !
+FC67  00      	 db 0	; B reg
+FC68  43      		db 'C' !
+FC69  CA      	 db LOW savBC   !
+FC6A  00      	 db 0	; C reg
+FC6B  44      		db 'D' !
+FC6C  C9      	 db LOW savDE+1 !
+FC6D  00      	 db 0	; D reg
+FC6E  45      		db 'E' !
+FC6F  C8      	 db LOW savDE   !
+FC70  00      	 db 0	; E reg
+FC71  46      		db 'F' !
+FC72  CE      	 db LOW savPSW  !
+FC73  00      	 db 0	; flags
+FC74  48      		db 'H' !
+FC75  DD      	 db LOW lxiHL+2 !
+FC76  00      	 db 0	; H reg
+FC77  49      		db 'I' !
+FC78  CD      	 db LOW savIM+1 !
+FC79  00      	 db 0	; imask
+FC7A  4C      		db 'L' !
+FC7B  DC      	 db LOW lxiHL+1 !
+FC7C  00      	 db 0	; L reg
+FC7D  4D      		db 'M' !
+FC7E  DD      	 db LOW lxiHL+2 !
+FC7F  01      	 db 1	; HL (M ptr)
+FC80  50      		db 'P' !
+FC81  E1      	 db LOW jmpPC+2 !
+FC82  01      	 db 1	; PC
+FC83  53      		db 'S' !
+FC84  D1      	 db LOW savSP+1 !
+FC85  01      	 db 1	; SP
+FC86  FF      		db 0ffh	; termination
+		
+FC87  3A0300  	conin:	lda	iobyte
+FC8A  E603    		ani	003h		;; fc88: e6 03       ..
+FC8C  C299FC  		jnz	Lfc97		;; fc8a: c2 97 fc    ...
+FC8F  DBF5    	Lfc8d:	in	ttysts		;; fc8d: db f5       ..
+FC91  E602    		ani	002h		;; fc8f: e6 02       ..
+FC93  CA8FFC  		jz	Lfc8d		;; fc91: ca 8d fc    ...
+FC96  DBF4    		in	ttydat		;; fc94: db f4       ..
+FC98  C9      		ret			;; fc96: c9          .
+		
+FC99  FE01    	Lfc97:	cpi	001h		;; fc97: fe 01       ..
+FC9B  C2A8FC  		jnz	Lfca6		;; fc99: c2 a6 fc    ...
+FC9E  DBF7    	Lfc9c:	in	crtsts		;; fc9c: db f7       ..
+FCA0  E602    		ani	002h		;; fc9e: e6 02       ..
+FCA2  CA9EFC  		jz	Lfc9c		;; fca0: ca 9c fc    ...
+FCA5  DBF6    		in	crtdat		;; fca3: db f6       ..
+FCA7  C9      		ret			;; fca5: c9          .
+		
+FCA8  FE02    	Lfca6:	cpi	002h		;; fca6: fe 02       ..
+FCAA  CABAFC  		jz	rdrin		;; fca8: ca b8 fc    ...
+FCAD  3EE8    		mvi	a,LOW uc1in	;; fcab: 3e e8       >.
+FCAF  C30CFD  		jmp	usrvec		;; fcad: c3 0a fd    ...
+		
+FCB2  CDA6FD  	brkchk:	call	consts		;; fcb0: cd a4 fd    ...
+FCB5  B7      		ora	a		;; fcb3: b7          .
+FCB6  C8      		rz			;; fcb4: c8          .
+FCB7  C3C9FF  		jmp	echin		;; fcb5: c3 c7 ff    ...
+		
+		; get char from RDR:, return CY on timeout
+FCBA  E5      	rdrin:	push	h		;; fcb8: e5          .
+FCBB  210300  		lxi	h,iobyte	;; fcb9: 21 03 00    ...
+FCBE  7E      		mov	a,m		;; fcbc: 7e          ~
+FCBF  E60C    		ani	00ch		;; fcbd: e6 0c       ..
+FCC1  C2E1FC  		jnz	Lfcdf		;; fcbf: c2 df fc    ...
+		; TTY PTR
+FCC4  3E02    		mvi	a,ttyadv	;; fcc2: 3e 02       >.
+FCC6  D3F9    		out	ptctl		;; fcc4: d3 f9       ..
+FCC8  26FA    		mvi	h,250	; approx 1/4 sec
+FCCA  DBF5    	Lfcc8:	in	ttysts		;; fcc8: db f5       ..
+FCCC  E602    		ani	002h		;; fcca: e6 02       ..
+FCCE  C2DCFC  		jnz	Lfcda		;; fccc: c2 da fc    ...
+FCD1  CD3DFE  		call	wt1ms	; wait for 1ms tick
+FCD4  25      		dcr	h		;; fcd2: 25          %
+FCD5  C2CAFC  		jnz	Lfcc8		;; fcd3: c2 c8 fc    ...
+FCD8  AF      	Lfcd6:	xra	a		;; fcd6: af          .
+FCD9  37      		stc			;; fcd7: 37          7
+FCDA  E1      		pop	h		;; fcd8: e1          .
+FCDB  C9      		ret			;; fcd9: c9          .
+		
+FCDC  DBF4    	Lfcda:	in	ttydat		;; fcda: db f4       ..
+FCDE  B7      		ora	a		;; fcdc: b7          .
+FCDF  E1      		pop	h		;; fcdd: e1          .
+FCE0  C9      		ret			;; fcde: c9          .
+		
+FCE1  FE04    	Lfcdf:	cpi	004h		;; fcdf: fe 04       ..
+FCE3  C202FD  		jnz	Lfd00		;; fce1: c2 00 fd    ...
+		; high speed reader - PTR:
+FCE6  3E08    		mvi	a,ptrdrv	;; fce4: 3e 08       >.
+FCE8  D3F9    		out	ptctl		;; fce6: d3 f9       ..
+FCEA  26FA    		mvi	h,250	; approx 1/4 sec
+FCEC  DBF9    	Lfcea:	in	ptsts		;; fcea: db f9       ..
+FCEE  E601    		ani	ptrrdy		;; fcec: e6 01       ..
+FCF0  C2FDFC  		jnz	Lfcfb		;; fcee: c2 fb fc    ...
+FCF3  CD3DFE  		call	wt1ms	; wait for 1ms tick
+FCF6  25      		dcr	h		;; fcf4: 25          %
+FCF7  C2ECFC  		jnz	Lfcea		;; fcf5: c2 ea fc    ...
+FCFA  C3D8FC  		jmp	Lfcd6		;; fcf8: c3 d6 fc    ...
+		
+FCFD  DBF8    	Lfcfb:	in	ptdat		;; fcfb: db f8       ..
+FCFF  B7      		ora	a		;; fcfd: b7          .
+FD00  E1      		pop	h		;; fcfe: e1          .
+FD01  C9      		ret			;; fcff: c9          .
+		
+FD02  E1      	Lfd00:	pop	h		;; fd00: e1          .
+FD03  FE08    		cpi	008h		;; fd01: fe 08       ..
+FD05  3EEE    		mvi	a,LOW ur1in	;; fd03: 3e ee       >.
+FD07  CA0CFD  		jz	usrvec		;; fd05: ca 0a fd    ...
+FD0A  3EF1    		mvi	a,LOW ur2in	;; fd08: 3e f1       >.
+		; call a user device vector (A={e8,eb,ee,f1,f4,f7,fa,fd})
+FD0C  E5      	usrvec:	push	h		;; fd0a: e5          .
+FD0D  2A0400  		lhld	ramtop		;; fd0b: 2a 04 00    *..
+FD10  6F      		mov	l,a		;; fd0e: 6f          o
+FD11  E3      		xthl			;; fd0f: e3          .
+FD12  C9      		ret			;; fd10: c9          .
+		
+FD13  0E20    	space:	mvi	c,' '		;; fd11: 0e 20       .
+FD15  3A0300  	conbrk:	lda	iobyte		;; fd13: 3a 03 00    :..
+FD18  E603    		ani	003h		;; fd16: e6 03       ..
+FD1A  FE02    		cpi	002h		;; fd18: fe 02       ..
+FD1C  C4B2FC  		cnz	brkchk		;; fd1a: c4 b0 fc    ...
+		; CON: out from C
+FD1F  3A0300  	conout:	lda	iobyte		;; fd1d: 3a 03 00    :..
+FD22  E603    		ani	003h		;; fd20: e6 03       ..
+FD24  C232FD  		jnz	Lfd30		;; fd22: c2 30 fd    .0.
+		; TTY: out
+FD27  DBF5    	ttyout:	in	ttysts		;; fd25: db f5       ..
+FD29  E601    		ani	001h		;; fd27: e6 01       ..
+FD2B  CA27FD  		jz	ttyout		;; fd29: ca 25 fd    .%.
+FD2E  79      		mov	a,c		;; fd2c: 79          y
+FD2F  D3F4    		out	ttydat		;; fd2d: d3 f4       ..
+FD31  C9      		ret			;; fd2f: c9          .
+		
+FD32  FE02    	Lfd30:	cpi	002h		;; fd30: fe 02       ..
+FD34  CA86FD  		jz	lstout		;; fd32: ca 84 fd    ...
+FD37  FE01    		cpi	001h		;; fd35: fe 01       ..
+FD39  3EEB    		mvi	a,LOW uc1out	;; fd37: 3e eb       >.
+FD3B  C20CFD  		jnz	usrvec		;; fd39: c2 0a fd    ...
+FD3E  DBF7    	crtout:	in	crtsts		;; fd3c: db f7       ..
+FD40  E601    		ani	001h		;; fd3e: e6 01       ..
+FD42  CA3EFD  		jz	crtout		;; fd40: ca 3c fd    .<.
+FD45  79      		mov	a,c		;; fd43: 79          y
+FD46  D3F6    		out	crtdat		;; fd44: d3 f6       ..
+FD48  C9      		ret			;; fd46: c9          .
+		
+FD49  E3      	conimm:	xthl			;; fd47: e3          .
+FD4A  4E      		mov	c,m		;; fd48: 4e          N
+FD4B  23      		inx	h		;; fd49: 23          #
+FD4C  E3      		xthl			;; fd4a: e3          .
+FD4D  C315FD  		jmp	conbrk		;; fd4b: c3 13 fd    ...
+		
+FD50  E3      	punimm:	xthl			;; fd4e: e3          .
+FD51  4E      		mov	c,m		;; fd4f: 4e          N
+FD52  23      		inx	h		;; fd50: 23          #
+FD53  E3      		xthl			;; fd51: e3          .
+FD54  3A0300  	punout:	lda	iobyte		;; fd52: 3a 03 00    :..
+FD57  E630    		ani	030h		;; fd55: e6 30       .0
+FD59  CA27FD  		jz	ttyout		;; fd57: ca 25 fd    .%.
+FD5C  FE10    		cpi	010h		;; fd5a: fe 10       ..
+FD5E  C270FD  		jnz	Lfd6e		;; fd5c: c2 6e fd    .n.
+FD61  DBF9    	Lfd5f:	in	ptsts		;; fd5f: db f9       ..
+FD63  E604    		ani	ptprdy		;; fd61: e6 04       ..
+FD65  CA61FD  		jz	Lfd5f		;; fd63: ca 5f fd    ._.
+FD68  79      		mov	a,c		;; fd66: 79          y
+FD69  D3F8    		out	ptdat		;; fd67: d3 f8       ..
+FD6B  3E20    		mvi	a,ptpadv	;; fd69: 3e 20       >
+FD6D  D3F9    		out	ptctl		;; fd6b: d3 f9       ..
+FD6F  C9      		ret			;; fd6d: c9          .
+		
+FD70  FE20    	Lfd6e:	cpi	020h		;; fd6e: fe 20       .
+FD72  3EF4    		mvi	a,LOW up1out	;; fd70: 3e f4       >.
+FD74  CA0CFD  		jz	usrvec		;; fd72: ca 0a fd    ...
+FD77  3EF7    		mvi	a,LOW up2out	;; fd75: 3e f7       >.
+FD79  C30CFD  		jmp	usrvec		;; fd77: c3 0a fd    ...
+		
+		; output char to LST:, check for console break
+FD7C  3A0300  	lstbrk:	lda	iobyte		;; fd7a: 3a 03 00    :..
+FD7F  E603    		ani	003h		;; fd7d: e6 03       ..
+FD81  FE02    		cpi	002h		;; fd7f: fe 02       ..
+FD83  C4B2FC  		cnz	brkchk		;; fd81: c4 b0 fc    ...
+FD86  3A0300  	lstout:	lda	iobyte		;; fd84: 3a 03 00    :..
+FD89  E6C0    		ani	0c0h		;; fd87: e6 c0       ..
+FD8B  CA27FD  		jz	ttyout		;; fd89: ca 25 fd    .%.
+FD8E  FE40    		cpi	040h		;; fd8c: fe 40       .@
+FD90  CA3EFD  		jz	crtout		;; fd8e: ca 3c fd    .<.
+FD93  FEC0    		cpi	0c0h		;; fd91: fe c0       ..
+FD95  3EFA    		mvi	a,LOW ul1out	;; fd93: 3e fa       >.
+FD97  CA0CFD  		jz	usrvec		;; fd95: ca 0a fd    ...
+FD9A  DBFB    	Lfd98:	in	lptsts		;; fd98: db fb       ..
+FD9C  E601    		ani	lptbsy		;; fd9a: e6 01       ..
+FD9E  CA9AFD  		jz	Lfd98		;; fd9c: ca 98 fd    ...
+FDA1  79      		mov	a,c		;; fd9f: 79          y
+FDA2  2F      		cma			;; fda0: 2f          /
+FDA3  D3FA    		out	lptdat		;; fda1: d3 fa       ..
+FDA5  C9      		ret			;; fda3: c9          .
+		
+FDA6  3A0300  	consts:	lda	iobyte		;; fda4: 3a 03 00    :..
+FDA9  E603    		ani	003h		;; fda7: e6 03       ..
+FDAB  C2B3FD  		jnz	Lfdb1		;; fda9: c2 b1 fd    ...
+FDAE  DBF5    		in	ttysts		;; fdac: db f5       ..
+FDB0  C3BAFD  		jmp	Lfdb8		;; fdae: c3 b8 fd    ...
+		
+FDB3  FE01    	Lfdb1:	cpi	001h		;; fdb1: fe 01       ..
+FDB5  C2C1FD  		jnz	Lfdbf		;; fdb3: c2 bf fd    ...
+FDB8  DBF7    		in	crtsts		;; fdb6: db f7       ..
+FDBA  E602    	Lfdb8:	ani	002h		;; fdb8: e6 02       ..
+FDBC  3E00    		mvi	a,000h		;; fdba: 3e 00       >.
+FDBE  C8      	Lfdbc:	rz			;; fdbc: c8          .
+FDBF  2F      		cma			;; fdbd: 2f          /
+FDC0  C9      		ret			;; fdbe: c9          .
+		
+FDC1  FE02    	Lfdbf:	cpi	002h		;; fdbf: fe 02       ..
+FDC3  3EFF    		mvi	a,0ffh		;; fdc1: 3e ff       >.
+FDC5  CABEFD  		jz	Lfdbc		;; fdc3: ca bc fd    ...
+FDC8  3EFD    		mvi	a,LOW uc1sts	;; fdc6: 3e fd       >.
+FDCA  C30CFD  		jmp	usrvec		;; fdc8: c3 0a fd    ...
+		
+FDCD  3A0300  	Lfdcb:	lda	iobyte		;; fdcb: 3a 03 00    :..
+FDD0  C9      		ret			;; fdce: c9          .
+		
+FDD1  79      	Lfdcf:	mov	a,c		;; fdcf: 79          y
+FDD2  320300  		sta	iobyte		;; fdd0: 32 03 00    2..
+FDD5  C9      		ret			;; fdd3: c9          .
+		
+FDD6  3A0500  	Lfdd4:	lda	ramtop+1
+FDD9  3D      		dcr	a		; last page for users
+FDDA  47      		mov	b,a
+FDDB  3EC0    		mvi	a,LOW usrtop	; offset of user top RAM
+FDDD  C9      		ret
+		
+		; Define user I/O routine. C=vector, DE=routine
+FDDE  E5      	Lfddc:	push	h		;; fddc: e5          .
+FDDF  C5      		push	b		;; fddd: c5          .
+FDE0  2A0400  		lhld	ramtop		;; fdde: 2a 04 00    *..
+FDE3  2EE9    		mvi	l,LOW uc1in+1	;; fde1: 2e e9       ..
+FDE5  79      		mov	a,c		;; fde3: 79          y
+FDE6  FE08    		cpi	008h		;; fde4: fe 08       ..
+FDE8  D226F8  		jnc	abort		;; fde6: d2 26 f8    .&.
+FDEB  81      		add	c		;; fde9: 81          .
+FDEC  81      		add	c		;; fdea: 81          .
+FDED  4F      		mov	c,a		;; fdeb: 4f          O
+FDEE  0600    		mvi	b,000h		;; fdec: 06 00       ..
+FDF0  09      		dad	b	; point to vector
+FDF1  73      		mov	m,e	; install routine from DE
+FDF2  23      		inx	h		;; fdf0: 23          #
+FDF3  72      		mov	m,d		;; fdf1: 72          r
+FDF4  C1      		pop	b		;; fdf2: c1          .
+FDF5  E1      		pop	h		;; fdf3: e1          .
+FDF6  C9      		ret			;; fdf4: c9          .
+		
+FDF7  C5      	Lfdf5:	push	b		;; fdf5: c5          .
+FDF8  CD8DFF  		call	Lff8b		;; fdf6: cd 8b ff    ...
+FDFB  CDC9FE  		call	a2hex		;; fdf9: cd c7 fe    ...
+FDFE  07      		rlc			;; fdfc: 07          .
+FDFF  07      		rlc			;; fdfd: 07          .
+FE00  07      		rlc			;; fdfe: 07          .
+FE01  07      		rlc			;; fdff: 07          .
+FE02  4F      		mov	c,a		;; fe00: 4f          O
+FE03  CD8DFF  		call	Lff8b		;; fe01: cd 8b ff    ...
+FE06  CDC9FE  		call	a2hex		;; fe04: cd c7 fe    ...
+FE09  B1      		ora	c		;; fe07: b1          .
+FE0A  4F      		mov	c,a		;; fe08: 4f          O
+FE0B  82      		add	d		;; fe09: 82          .
+FE0C  57      		mov	d,a		;; fe0a: 57          W
+FE0D  79      		mov	a,c		;; fe0b: 79          y
+FE0E  C1      		pop	b		;; fe0c: c1          .
+FE0F  C9      		ret			;; fe0d: c9          .
+		
+FE10  E60F    	hex2a:	ani	00fh		;; fe0e: e6 0f       ..
+FE12  C690    		adi	090h		;; fe10: c6 90       ..
+FE14  27      		daa			;; fe12: 27          '
+FE15  CE40    		aci	040h		;; fe13: ce 40       .@
+FE17  27      		daa			;; fe15: 27          '
+FE18  4F      		mov	c,a		;; fe16: 4f          O
+FE19  C9      		ret			;; fe17: c9          .
+		
+FE1A  CD49FD  	coneol:	call	conimm		;; fe18: cd 47 fd    .G.
+FE1D  0D      		db	CR
+FE1E  CD49FD  		call	conimm		;; fe1c: cd 47 fd    .G.
+FE21  0A      		db	LF
+FE22  C9      		ret			;; fe20: c9          .
+		
+FE23  7C      	Lfe21:	mov	a,h		;; fe21: 7c          |
+FE24  CD2BFE  		call	Lfe29		;; fe22: cd 29 fe    .).
+FE27  7D      		mov	a,l		;; fe25: 7d          }
+FE28  C32BFE  		jmp	Lfe29		;; fe26: c3 29 fe    .).
+		
+FE2B  F5      	Lfe29:	push	psw		;; fe29: f5          .
+FE2C  0F      		rrc			;; fe2a: 0f          .
+FE2D  0F      		rrc			;; fe2b: 0f          .
+FE2E  0F      		rrc			;; fe2c: 0f          .
+FE2F  0F      		rrc			;; fe2d: 0f          .
+FE30  CD10FE  		call	hex2a		;; fe2e: cd 0e fe    ...
+FE33  CD7CFD  		call	lstbrk		;; fe31: cd 7a fd    .z.
+FE36  F1      		pop	psw		;; fe34: f1          .
+FE37  CD10FE  		call	hex2a		;; fe35: cd 0e fe    ...
+FE3A  C37CFD  		jmp	lstbrk		;; fe38: c3 7a fd    .z.
+		
+FE3D  DBFF    	wt1ms:	in	fpsw		;; fe3b: db ff       ..
+FE3F  E601    		ani	fp1ms		;; fe3d: e6 01       ..
+FE41  CA3DFE  		jz	wt1ms		;; fe3f: ca 3b fe    .;.
+FE44  C9      		ret			;; fe42: c9          .
+		
+		; reg-id match
+FE45  23      	regout:	inx	h		;; fe43: 23          #
+FE46  5E      		mov	e,m		;; fe44: 5e          ^
+FE47  3A0500  		lda	ramtop+1	;; fe45: 3a 05 00    :..
+FE4A  57      		mov	d,a		;; fe48: 57          W
+FE4B  23      		inx	h		;; fe49: 23          #
+FE4C  46      		mov	b,m		;; fe4a: 46          F
+FE4D  23      		inx	h		;; fe4b: 23          #
+		; params = DE=reg adr, B=num-bytes (-1)
+FE4E  1A      		ldax	d		;; fe4c: 1a          .
+FE4F  CD84FE  		call	hexout		;; fe4d: cd 82 fe    ...
+FE52  05      		dcr	b		;; fe50: 05          .
+FE53  F8      		rm			;; fe51: f8          .
+FE54  1B      		dcx	d		;; fe52: 1b          .
+FE55  1A      		ldax	d		;; fe53: 1a          .
+FE56  C384FE  		jmp	hexout		;; fe54: c3 82 fe    ...
+		
+		; input C addresses from console, put on stack
+FE59  CDA5FE  	Lfe57:	call	adrin		;; fe57: cd a3 fe    ...
+FE5C  E3      		xthl			;; fe5a: e3          .
+FE5D  E5      		push	h		;; fe5b: e5          .
+FE5E  0D      		dcr	c		;; fe5c: 0d          .
+FE5F  D266FE  		jnc	Lfe64		;; fe5d: d2 64 fe    .d.
+FE62  C226F8  		jnz	abort		;; fe60: c2 26 f8    .&.
+FE65  C9      		ret			;; fe63: c9          .
+		
+FE66  C259FE  	Lfe64:	jnz	Lfe57		;; fe64: c2 57 fe    .W.
+FE69  C326F8  		jmp	abort		;; fe67: c3 26 f8    .&.
+		
+		; ++HL, compare DE :: HL, unless HL=0 (overflow?)
+FE6C  23      	Lfe6a:	inx	h		;; fe6a: 23          #
+FE6D  7C      		mov	a,h		;; fe6b: 7c          |
+FE6E  B5      		ora	l		;; fe6c: b5          .
+FE6F  37      		stc			;; fe6d: 37          7
+FE70  C8      		rz			;; fe6e: c8          .
+FE71  7B      		mov	a,e		;; fe6f: 7b          {
+FE72  95      		sub	l		;; fe70: 95          .
+FE73  7A      		mov	a,d		;; fe71: 7a          z
+FE74  9C      		sbb	h		;; fe72: 9c          .
+FE75  C9      		ret			;; fe73: c9          .
+		
+FE76  CD10FE  	Lfe74:	call	hex2a		;; fe74: cd 0e fe    ...
+FE79  C315FD  		jmp	conbrk		;; fe77: c3 13 fd    ...
+		
+FE7C  7C      	adrout:	mov	a,h		;; fe7a: 7c          |
+FE7D  CD84FE  		call	hexout		;; fe7b: cd 82 fe    ...
+FE80  7D      		mov	a,l		;; fe7e: 7d          }
+FE81  C384FE  		jmp	hexout		;; fe7f: c3 82 fe    ...
+		
+FE84  F5      	hexout:	push	psw		;; fe82: f5          .
+FE85  0F      		rrc			;; fe83: 0f          .
+FE86  0F      		rrc			;; fe84: 0f          .
+FE87  0F      		rrc			;; fe85: 0f          .
+FE88  0F      		rrc			;; fe86: 0f          .
+FE89  CD76FE  		call	Lfe74		;; fe87: cd 74 fe    .t.
+FE8C  F1      		pop	psw		;; fe8a: f1          .
+FE8D  C376FE  		jmp	Lfe74		;; fe8b: c3 74 fe    .t.
+		
+FE90  0E0D    	lsteol:	mvi	c,CR		;; fe8e: 0e 0d       ..
+FE92  CD7CFD  		call	lstbrk		;; fe90: cd 7a fd    .z.
+FE95  0E0A    		mvi	c,LF		;; fe93: 0e 0a       ..
+FE97  C37CFD  		jmp	lstbrk		;; fe95: c3 7a fd    .z.
+		
+FE9A  063C    	nulout:	mvi	b,60		;; fe98: 06 3c       .<
+FE9C  CD50FD  	Lfe9a:	call	punimm		;; fe9a: cd 4e fd    .N.
+FE9F  00      		db	NIL
+FEA0  05      		dcr	b		;; fe9e: 05          .
+FEA1  C29CFE  		jnz	Lfe9a		;; fe9f: c2 9a fe    ...
+FEA4  C9      		ret			;; fea2: c9          .
+		
+FEA5  CDF9FE  	adrin:	call	trmin		;; fea3: cd f7 fe    ...
+FEA8  CA26F8  		jz	abort		;; fea6: ca 26 f8    .&.
+FEAB  210000  	Lfea9:	lxi	h,00000h	;; fea9: 21 00 00    ...
+FEAE  47      	Lfeac:	mov	b,a		;; feac: 47          G
+FEAF  CDC9FE  		call	a2hex		;; fead: cd c7 fe    ...
+FEB2  DAC1FE  		jc	Lfebf		;; feb0: da bf fe    ...
+FEB5  29      		dad	h		;; feb3: 29          )
+FEB6  29      		dad	h		;; feb4: 29          )
+FEB7  29      		dad	h		;; feb5: 29          )
+FEB8  29      		dad	h		;; feb6: 29          )
+FEB9  B5      		ora	l		;; feb7: b5          .
+FEBA  6F      		mov	l,a		;; feb8: 6f          o
+FEBB  CDC9FF  		call	echin		;; feb9: cd c7 ff    ...
+FEBE  C3AEFE  		jmp	Lfeac		;; febc: c3 ac fe    ...
+		
+FEC1  78      	Lfebf:	mov	a,b		;; febf: 78          x
+FEC2  CDFCFE  		call	Lfefa		;; fec0: cd fa fe    ...
+FEC5  C226F8  		jnz	abort		;; fec3: c2 26 f8    .&.
+FEC8  C9      		ret			;; fec6: c9          .
+		
+FEC9  D630    	a2hex:	sui	'0'		;; fec7: d6 30       .0
+FECB  D8      		rc			;; fec9: d8          .
+FECC  C6E9    		adi	0e9h		;; feca: c6 e9       ..
+FECE  D8      		rc			;; fecc: d8          .
+FECF  C606    		adi	6		;; fecd: c6 06       ..
+FED1  F2D7FE  		jp	Lfed5		;; fecf: f2 d5 fe    ...
+FED4  C607    		adi	7		;; fed2: c6 07       ..
+FED6  D8      		rc			;; fed4: d8          .
+FED7  C60A    	Lfed5:	adi	10		;; fed5: c6 0a       ..
+FED9  B7      		ora	a		;; fed7: b7          .
+FEDA  C9      		ret			;; fed8: c9          .
+		
+FEDB  7C      	punadr:	mov	a,h		;; fed9: 7c          |
+FEDC  CDE3FE  		call	punhex		;; feda: cd e1 fe    ...
+FEDF  7D      		mov	a,l		;; fedd: 7d          }
+FEE0  C3E3FE  		jmp	punhex		;; fede: c3 e1 fe    ...
+		
+FEE3  5F      	punhex:	mov	e,a		;; fee1: 5f          _
+FEE4  0F      		rrc			;; fee2: 0f          .
+FEE5  0F      		rrc			;; fee3: 0f          .
+FEE6  0F      		rrc			;; fee4: 0f          .
+FEE7  0F      		rrc			;; fee5: 0f          .
+FEE8  CD10FE  		call	hex2a		;; fee6: cd 0e fe    ...
+FEEB  CD54FD  		call	punout		;; fee9: cd 52 fd    .R.
+FEEE  7B      		mov	a,e		;; feec: 7b          {
+FEEF  CD10FE  		call	hex2a		;; feed: cd 0e fe    ...
+FEF2  CD54FD  		call	punout		;; fef0: cd 52 fd    .R.
+FEF5  7B      		mov	a,e		;; fef3: 7b          {
+FEF6  82      		add	d		;; fef4: 82          .
+FEF7  57      		mov	d,a		;; fef5: 57          W
+FEF8  C9      		ret			;; fef6: c9          .
+		
+FEF9  CDC9FF  	trmin:	call	echin		;; fef7: cd c7 ff    ...
+FEFC  FE20    	Lfefa:	cpi	' '		;; fefa: fe 20       .
+FEFE  C8      		rz			;; fefc: c8          .
+FEFF  FE2C    		cpi	','		;; fefd: fe 2c       .,
+FF01  C8      		rz			;; feff: c8          .
+FF02  FE0D    	Lff00:	cpi	CR		;; ff00: fe 0d       ..
+FF04  37      		stc			;; ff02: 37          7
+FF05  C8      		rz			;; ff03: c8          .
+FF06  3F      		cmc			;; ff04: 3f          ?
+FF07  C9      		ret			;; ff05: c9          .
+		
+FF08  CD50FD  	puneol:	call	punimm		;; ff06: cd 4e fd    .N.
+FF0B  0D      		db	CR
+FF0C  CD50FD  		call	punimm		;; ff0a: cd 4e fd    .N.
+FF0F  0A      		db	LF
+FF10  C9      		ret			;; ff0e: c9          .
+		
+		; program exit
+FF11  F3      	pgmxit:	di			;; ff0f: f3          .
+FF12  E5      		push	h	; HL (+4)
+FF13  D5      		push	d	; DE (+6)
+FF14  C5      		push	b	; BC (+8)
+FF15  F5      		push	psw		;; ff13: f5          .
+FF16  E1      		pop	h		;; ff14: e1          .
+FF17  DBFC    		in	imask		;; ff15: db fc       ..
+FF19  F5      		push	psw	; IN FCH (+10)
+FF1A  E5      		push	h	; PSW (+12)
+FF1B  3EFE    		mvi	a,im1$7
+FF1D  D3FC    		out	imask		;; ff1b: d3 fc       ..
+FF1F  2A0400  		lhld	ramtop		;; ff1d: 2a 04 00    *..
+FF22  2ED2    		mvi	l,LOW resume	;; ff20: 2e d2       ..
+FF24  EB      		xchg			;; ff22: eb          .
+FF25  210C00  		lxi	h,savlen+2	;; ff23: 21 0c 00    ...
+FF28  39      		dad	sp		;; ff26: 39          9
+FF29  0605    		mvi	b,savlen/2	;; ff27: 06 05       ..
+FF2B  EB      		xchg			;; ff29: eb          .
+		; stored saved regs in memtop...
+FF2C  2B      	Lff2a:	dcx	h		;; ff2a: 2b          +
+FF2D  72      		mov	m,d		;; ff2b: 72          r
+FF2E  2B      		dcx	h		;; ff2c: 2b          +
+FF2F  73      		mov	m,e		;; ff2d: 73          s
+FF30  D1      		pop	d		;; ff2e: d1          .
+FF31  05      		dcr	b		;; ff2f: 05          .
+FF32  C22CFF  		jnz	Lff2a		;; ff30: c2 2a ff    .*.
+FF35  C1      		pop	b		;; ff33: c1          .
+FF36  0B      		dcx	b		;; ff34: 0b          .
+FF37  F9      		sphl			;; ff35: f9          .
+			; find which breakpoint, if any
+FF38  2A0400  		lhld	ramtop		;; ff36: 2a 04 00    *..
+FF3B  2EE2    		mvi	l,LOW brkpts	;; ff39: 2e e2       ..
+FF3D  7E      		mov	a,m		;; ff3b: 7e          ~
+FF3E  91      		sub	c		;; ff3c: 91          .
+FF3F  23      		inx	h		;; ff3d: 23          #
+FF40  C248FF  		jnz	Lff46		;; ff3e: c2 46 ff    .F.
+FF43  7E      		mov	a,m		;; ff41: 7e          ~
+FF44  98      		sbb	b		;; ff42: 98          .
+FF45  CA5AFF  		jz	Lff58		;; ff43: ca 58 ff    .X.
+FF48  23      	Lff46:	inx	h		;; ff46: 23          #
+FF49  23      		inx	h		;; ff47: 23          #
+FF4A  7E      		mov	a,m		;; ff48: 7e          ~
+FF4B  91      		sub	c		;; ff49: 91          .
+FF4C  23      		inx	h		;; ff4a: 23          #
+FF4D  C255FF  		jnz	Lff53		;; ff4b: c2 53 ff    .S.
+FF50  7E      		mov	a,m		;; ff4e: 7e          ~
+FF51  98      		sbb	b		;; ff4f: 98          .
+FF52  CA5AFF  		jz	Lff58		;; ff50: ca 58 ff    .X.
+FF55  3E20    	Lff53:	mvi	a,020h	; OCW2: EOI to i8259
+FF57  D3FD    		out	rstint	; "restore operating level" (intr)
+FF59  03      		inx	b		;; ff57: 03          .
+FF5A  2A0400  	Lff58:	lhld	ramtop		;; ff58: 2a 04 00    *..
+FF5D  2EDC    		mvi	l,LOW lxiHL+1	;; ff5b: 2e dc       ..
+FF5F  73      		mov	m,e		;; ff5d: 73          s
+FF60  23      		inx	h		;; ff5e: 23          #
+FF61  72      		mov	m,d		;; ff5f: 72          r
+FF62  2EE0    		mvi	l,LOW jmpPC+1	;; ff60: 2e e0       ..
+FF64  71      		mov	m,c		;; ff62: 71          q
+FF65  23      		inx	h		;; ff63: 23          #
+FF66  70      		mov	m,b		;; ff64: 70          p
+FF67  C5      		push	b		;; ff65: c5          .
+FF68  CD49FD  		call	conimm		;; ff66: cd 47 fd    .G.
+FF6B  23      		db	'#'
+FF6C  E1      		pop	h		;; ff6a: e1          .
+FF6D  CD7CFE  		call	adrout		;; ff6b: cd 7a fe    .z.
+			; cleanup breakpoints
+FF70  2A0400  		lhld	ramtop		;; ff6e: 2a 04 00    *..
+FF73  2EE2    		mvi	l,LOW brkpts	;; ff71: 2e e2       ..
+FF75  1602    		mvi	d,2		;; ff73: 16 02       ..
+FF77  4E      	Lff75:	mov	c,m		;; ff75: 4e          N
+FF78  AF      		xra	a		;; ff76: af          .
+FF79  77      		mov	m,a		;; ff77: 77          w
+FF7A  23      		inx	h		;; ff78: 23          #
+FF7B  46      		mov	b,m		;; ff79: 46          F
+FF7C  77      		mov	m,a		;; ff7a: 77          w
+FF7D  23      		inx	h		;; ff7b: 23          #
+FF7E  79      		mov	a,c		;; ff7c: 79          y
+FF7F  B0      		ora	b		;; ff7d: b0          .
+FF80  CA85FF  		jz	Lff83		;; ff7e: ca 83 ff    ...
+FF83  7E      		mov	a,m		;; ff81: 7e          ~
+FF84  02      		stax	b		;; ff82: 02          .
+FF85  23      	Lff83:	inx	h		;; ff83: 23          #
+FF86  15      		dcr	d		;; ff84: 15          .
+FF87  C277FF  		jnz	Lff75		;; ff85: c2 75 ff    .u.
+FF8A  C330F8  		jmp	colds		;; ff88: c3 30 f8    .0.
+		
+FF8D  CDBAFC  	Lff8b:	call	rdrin		;; ff8b: cd b8 fc    ...
+FF90  DA26F8  		jc	abort		;; ff8e: da 26 f8    .&.
+FF93  E67F    		ani	07fh		;; ff91: e6 7f       ..
+FF95  C9      		ret			;; ff93: c9          .
+		
+		; get PROM params T/F and X/Y/Z
+		;	T/F: set ramtop to data XOR mask
+		;	X/Y/Z: set BC according to socket type
+FF96  DBF1    	Lff94:	in	promst		;; ff94: db f1       ..
+FF98  B7      		ora	a		;; ff96: b7          .
+FF99  CA26F8  		jz	abort		;; ff97: ca 26 f8    .&.
+FF9C  CDC9FF  		call	echin	; T/F - PROM data invert
+FF9F  FE54    		cpi	'T'		;; ff9d: fe 54       .T
+FFA1  C2A8FF  		jnz	Lffa6		;; ff9f: c2 a6 ff    ...
+FFA4  AF      		xra	a		;; ffa2: af          .
+FFA5  C3AFFF  		jmp	Lffad		;; ffa3: c3 ad ff    ...
+		
+FFA8  FE46    	Lffa6:	cpi	'F'		;; ffa6: fe 46       .F
+FFAA  C226F8  		jnz	abort		;; ffa8: c2 26 f8    .&.
+FFAD  3EFF    		mvi	a,0ffh		;; ffab: 3e ff       >.
+FFAF  320400  	Lffad:	sta	ramtop		;; ffad: 32 04 00    2..
+FFB2  CDC9FF  		call	echin	; X/Y/Z - PROM socket type
+FFB5  D658    		sui	'X'		;; ffb3: d6 58       .X
+FFB7  01FF00  		lxi	b,promsX	;; ffb5: 01 ff 00    ...
+FFBA  C8      		rz			;; ffb8: c8          .
+FFBB  3D      		dcr	a	; 'Y'
+FFBC  01F030  		lxi	b,promsY	;; ffba: 01 f0 30    ..0
+FFBF  C8      		rz			;; ffbd: c8          .
+FFC0  3D      		dcr	a	; 'Z'
+FFC1  C226F8  		jnz	abort		;; ffbf: c2 26 f8    .&.
+FFC4  010F20  		lxi	b,promsZ	;; ffc2: 01 0f 20    ..
+FFC7  C9      		ret			;; ffc5: c9          .
+		
+FFC8  C9      	Lffc6:	ret			;; ffc6: c9          .
+		
+		; input char, toupper, check ^C, echo
+FFC9  C5      	echin:	push	b		;; ffc7: c5          .
+FFCA  CD87FC  		call	conin		;; ffc8: cd 85 fc    ...
+FFCD  E67F    		ani	07fh		;; ffcb: e6 7f       ..
+FFCF  CDDEFF  		call	toupper		;; ffcd: cd dc ff    ...
+FFD2  FE03    		cpi	CTRL$C		;; ffd0: fe 03       ..
+FFD4  CA26F8  		jz	abort		;; ffd2: ca 26 f8    .&.
+FFD7  4F      		mov	c,a		;; ffd5: 4f          O
+FFD8  CD1FFD  		call	conout		;; ffd6: cd 1d fd    ...
+FFDB  79      		mov	a,c		;; ffd9: 79          y
+FFDC  C1      		pop	b		;; ffda: c1          .
+FFDD  C9      		ret			;; ffdb: c9          .
+		
+FFDE          	toupper:
+FFDE  FE61    		cpi	'a'		;; ffdc: fe 61       .a
+FFE0  F8      		rm			;; ffde: f8          .
+FFE1  FE7B    		cpi	'z'+1		;; ffdf: fe 7b       .{
+FFE3  F0      		rp			;; ffe1: f0          .
+FFE4  E6DF    		ani	11011111b	;; ffe2: e6 df       ..
+FFE6  C9      		ret			;; ffe4: c9          .
+		
+FFE7  23000000		db	'#',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+      00000000
+      00000000
+      00000000
+      00000000
+      00000000
+      000000
+0002          		end
+
+
+
+Statistics:
+
+     4	passes
+     0	jr promotions
+   277	symbols
+  2306	bytes

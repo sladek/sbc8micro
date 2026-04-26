@@ -23,6 +23,7 @@ use crate::commands::{MIN_COMMAND_HISTORY_LENGTH, MIN_OUTPUT_HISTORY_LENGTH};
 use crate::help;
 use crate::ui::app::{App, AppState};
 use crate::commands::bootloader::Bootloader;
+use crate::commands::conf_switch::ConfSwitch;
 use regex::Regex;
 
 #[derive(Default)]
@@ -45,6 +46,7 @@ impl Command {
                 app.messages.clear();
                 Ok(AppState::Home)
             }
+            "cs" | "conf_switch" => ConfSwitch::set_switch(app, command),
             "cpu" => Cpu::set_cpu(app, command),
             "d" | "dump" => Memory::dump(app, command),
             "dr" | "dump_range" => Memory::dump_range(app, command),
@@ -68,6 +70,7 @@ impl Command {
             "op" | "opcodes" => Opcodes::list_opcodes(app, command),
             "pwd" => Directory::pwd(app, command),
             "r" | "reg" => Registers::set_get_reg(app, command),
+            "ro" | "read_only" => Memory::set_read_only(app, command),
             "rdr" | "pun" | "rdr_pun" => RdrPun::rdr_pun(app, command),
             "res" | "reset" => Cpu::reset(app, command),
             "run" => Cpu::run(app, command),

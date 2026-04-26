@@ -80,11 +80,17 @@ pub static HELP: &str = r#"
     "usage": "clear or cls",
     "examples": "\\n    clear\\n    cls"
   },
-    {
+  {
     "command": "ch | command_history_length",
     "description": "Shows or sets length of command window history.",
     "usage": "ch [length] command_history_length [length]",
     "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    ch\\n    command_history_length\\n    ch 100\\n    ch 0ffh\\n    command_history_length 0x00ff\\n    command_history_length $00ff\\n Note: If only oh or command_history_length is used, then the command history length is displayed; otherwise, the length is set to the value provided as a parameter."
+  },
+  {
+    "command": "cs | conf_switch",
+    "description": "Sets configuration switch at specific address.",
+    "usage": "cs <address> <data> [name]",
+    "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    cs 0xf0 0x02\\n    cs 0xf0 0x02 boot\\n    conf_switch 0xf0 0x02\\n    conf_swotch 0xf0 0x02 boot."
   },
   {
     "command": "d | dump",
@@ -125,14 +131,14 @@ pub static HELP: &str = r#"
   {
     "command": "fdc | floppy",
     "description": "Sets flppy controller port's address and disk names.",
-    "usage": "fdc <address> <disk 1> [disk 2] [disk 3] [disk 4]",
-    "examples": "\\n    fdc 0x78 cpm.dsk\\n    floppy 0x78 cpm.dsk[ro] asm.dsk\\n    fdc M0x1234 cpm.dsk\\n    floppy M0x1234 cpm.dsk[RO] plm.dsk data1.dsk data2.dsk\\n Note: Address can be defined as <address 8bit> if mapped to io memory or as M<address 16bit> if mapped to cpu's memory.\\n       File name can have a suffix [ro] or [RO] (not case sensitive) to indicate that the disk will be mounted as read only."
+    "usage": "fdc <address> [disk 1] [disk 2] [disk 3] [disk 4]",
+    "examples": "\\n    fdc 0x78\\n    fdc 0x78 cpm.dsk\\n    floppy 0x78 cpm.dsk[ro] asm.dsk\\n    fdc M0x1234 cpm.dsk\\n    floppy M0x1234 cpm.dsk[RO] plm.dsk data1.dsk data2.dsk\\n Note: Address can be defined as <address 8bit> if mapped to io memory or as M<address 16bit> if mapped to cpu's memory.\\n       File name can have a suffix [ro] or [RO] (not case sensitive) to indicate that the disk will be mounted as read only.\\n       The controller can be used without any disk defined. This is usefull in the cases when booting to Monitor (ISIS II os)\\n       or BASIC for the case that no floppy is present."
   },
   {
     "command": "fdhdc | disk_controller",
     "description": "Sets disk controller port's address and disk names.",
     "usage": "fdhdc <address> <disk 1> [disk 2] [disk 3] [disk 4] or disc_controller <address> <disk 1> [disk 2] [disk 3] [disk 4]",
-    "examples": "\\n    fdhdc 0x78 cpm.dsk\\n    disk_controller 0x78 cpm.dsk[ro] asm.dsk\\n    fdhdc M0x1234 cpm.dsk\\n    disk_controller M0x1234 cpm.dsk[RO] plm.dsk data1.dsk data2.dsk\\n Note: Address can be defined as <address 8bit> if mapped to io memory or as M<address 16bit> if mapped to cpu's memory.\\n       File name can have a suffix [ro] or [RO] (not case sensitive) to indicate that the disk will be mounted as read only."
+    "examples": "\\n    fdhdc 0x78 cpm.dsk\\n    disk_controller 0x78 cpm.dsk[ro] asm.dsk\\n    fdhdc M0x1234 cpm.dsk\\n    disk_controller M0x1234 cpm.dsk[RO] plm.dsk data1.dsk data2.dsk\\n Note: Address can be defined as <address 8bit> if mapped to io memory or as M<address 16bit> if mapped to cpu's memory.\\n       File name can have a suffix [ro] or [RO] (not case sensitive) to indicate that the disk will be mounted as read only.\\n       The controller can be used without any disk defined. This is usefull in the cases when booting to Monitor (ISIS II os)\\n       or BASIC for the case that no floppy is present."
   },
   {
     "command": "g | go",
@@ -229,6 +235,12 @@ pub static HELP: &str = r#"
     "description": "Resets the CPU.",
     "usage": "res or reset",
     "examples": "\\n    res\\n    reset\\n Note: If bootloader is specified it is executed or it just jumps to address 0x0000"
+  },
+  {
+    "command": "ro | read_only",
+    "description": "Sets read only region of RAM.",
+    "usage": "ro <start address> <end address> [true/false] or read_only <start address> <end address> [true/false]",
+    "examples": "\\n    ro 0x1000 0x2000\\n    read_only 0x1000 0x2000\\n    ro 0x1000 0x2000 true\\n    read_only 0x1000 0x2000 false\\n Note: When read only flag is set to false, the memory becomes writable again."
   },
   {
     "command": "run",

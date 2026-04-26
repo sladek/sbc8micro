@@ -3,9 +3,10 @@
 //! This is an emulation of single side single density 8" floppy disk as used by Intellec MDS-800 system 
 //! which then can be used for running disk operating system like CP/M 80 in sbc8micro emulator
 use std::fs::File;
-use std::io::{ErrorKind, Write};
+use std::io::{ErrorKind, Read, Write};
+use std::io;
 use crate::io::ErrorIndicators;
-use crate::disk::Result;
+use crate::disk::{DATA_SIZE, Result, Sector};
 use crate::disk::Disk;
 
 // Floppy disk file
@@ -80,6 +81,39 @@ impl Floppy {
     pub fn is_read_only(&self) -> bool {
         self.read_only
     }
+    /// Create a disk from image file
+    /// 
+    /// Creates a disk from disk image file that contains direct sector by sector copy of the disk
+    pub fn img2dsk(&mut self, path: String) -> io::Result<()> {
+        match File::open(path) {
+            Ok(mut file) => {
+                let mut buff = [0u8; DATA_SIZE];
+                let mut completed = false;
+                for track_address in 0..Floppy::NUM_OF_TRACKS {
+                    for sector_address in 1..=Floppy::NUM_OF_SECTORS_PER_TRACK {
+                        match file.read(&mut buff) {
+                            Ok(size) => {
+                                let sector = Sector::new(track_address, sector_address, &buff);
+                                if size != DATA_SIZE {
+                                    completed = true;
+                                    break;
+                                }
+                                self.write_sector_to_disk(sector)?
+                            }
+                            Err(_err) => {
+
+                            }
+                        };
+                    }
+                    if completed { break }
+                }
+            }
+            Err(err) => {
+                return Err(err);
+            }
+        };
+        Ok(())
+    }
 }
 
 impl Disk for Floppy {
@@ -106,6 +140,22 @@ mod tests {
     }    
     fn remove_disk(file_name: &str) {
         _ = fs::remove_file(file_name);
+    }
+
+    #[test]
+    fn test_img2dsk() {
+        let file_name = "disks/isis_ii.img";
+        init_disk(file_name);
+        let mut floppy = Floppy::new(file_name, false).unwrap();
+        match Floppy::format(&mut floppy) {
+            Ok(()) => {
+                _ = floppy.seek(0);
+                _ = floppy.img2dsk("disks/isisII43.logdisk".to_string());
+            }
+            Err(err) => {
+                println!("Error - ({:?})", err);
+            }
+        }
     }
 
     #[test]

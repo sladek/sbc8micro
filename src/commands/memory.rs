@@ -8,6 +8,64 @@ use crate::ui::app::AppState;
 pub struct Memory {}
 
 impl Memory {
+    /// Set read only flag command
+    ///
+    /// Parses "read_only" command
+    /// Usage:
+    ///   ro <start> <end> [true/false]
+    pub fn set_read_only(app: &mut App, command: Vec<&str>) -> Result<AppState, String> {
+        app.is_cpu_set()?;
+        let cpu = &mut app.cpu_ui.as_mut().unwrap();
+        let start_addr: u16;
+        let end_addr: u16;
+        let read_only = true;
+        match command.len() {
+            3 => {
+                start_addr = Self::from_hex_string(command[1].to_string())?;
+                end_addr = Self::from_hex_string(command[2].to_string())?;
+                if start_addr > end_addr {
+                    return Err("ERROR - Start address must be lower than end address.".to_string());
+                }
+                let mut memory = cpu.get_memory();
+                for address in start_addr..=end_addr {
+                    memory.set_read_only(address, read_only);
+                }
+            }
+            4 => {
+                start_addr = Self::from_hex_string(command[1].to_string())?;
+                end_addr = Self::from_hex_string(command[2].to_string())?;
+                if start_addr > end_addr {
+                    return Err("ERROR - Start address must be lower than end address.".to_string());
+                }
+                let ro_flag: bool = match command[3].to_ascii_uppercase().as_str() {
+                    "TRUE" => {
+                        true
+                    }
+                    "FALSE" => {
+                        false
+                    }
+                    _ => {
+                        return Err(
+                            "ERROR - Read only flag can only be true or false."
+                                .to_string(),);
+                    }
+                };
+
+                let mut memory = cpu.get_memory();
+                for address in start_addr..=end_addr {
+                    memory.set_read_only(address, ro_flag);
+                }
+            }
+            _ => {
+                return Err(
+                    "ERROR - Wrong number of parameters. Usage: ro <start_addr> <end_addr> [true/false]"
+                        .to_string(),);
+            }
+        }
+        Ok(AppState::Home)
+
+//        }
+    }
     /// Dump command
     ///
     /// Parses "dump" command

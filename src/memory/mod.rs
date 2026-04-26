@@ -42,7 +42,9 @@ impl PartialEq<u8> for MemCell {
 /// Memory that can be assigned to specific CPU
 pub struct Memory {
     /// Data of the memory
-    data: [MemCell; CAPACITY], // 64KB
+    data: [MemCell; CAPACITY], // 64kB
+    /// Read only segments flag
+    read_only: [bool; CAPACITY], //64kB
     ports: HashMap<u16, Box<dyn IoPort>>,
 }
 
@@ -56,6 +58,7 @@ impl Memory {
     pub fn new() -> Self {
         Self {
             data: [MemCell::Memory(0); CAPACITY],
+            read_only: [false; CAPACITY],
             ports: HashMap::new(),
         }
     }
@@ -133,6 +136,8 @@ impl Memory {
     pub fn write_byte(&mut self, address: u16, value: u8) {
         match self.data[address as usize] {
             MemCell::Memory(_) => {
+                // If read only just return
+                if self.read_only[address as usize] { return};
                 self.data[address as usize] = MemCell::Memory(value);
             }
             MemCell::Io(addr) => {
@@ -144,6 +149,10 @@ impl Memory {
                 }
             }
         }
+    }
+    /// Set read only address
+    pub fn set_read_only(&mut self, address: u16, read_only: bool) {
+        self.read_only[address as usize] = read_only;
     }
     /// Reads a word from specific address
     pub fn read_word(&mut self, addr: u16) -> u16 {
@@ -341,7 +350,6 @@ pub enum Reg {
 mod tests {
     use crate::memory::{self, MemCell, Memory};
     #[test]
-    ///
     /// Writes and reads back byte from memory
     ///
     fn write_read_byte() {
@@ -349,6 +357,20 @@ mod tests {
         let addr = 0x0100u16;
         let value = 0x55u8;
         let _ = memory.write_byte(addr, value);
+        let result = memory.read_byte(addr);
+        assert_eq! {result, value};
+    }
+    #[test]
+    ///
+    /// Writes and reads back byte from read only memory
+    ///
+    fn set_read_only() {
+        let mut memory = Memory::new();
+        let addr = 0x0100u16;
+        let value = 0x55u8;
+        let _ = memory.write_byte(addr, value);
+        memory.set_read_only(addr, true);
+        let _ = memory.write_byte(addr, value + 55);
         let result = memory.read_byte(addr);
         assert_eq! {result, value};
     }
