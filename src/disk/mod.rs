@@ -2,11 +2,14 @@ pub mod sssd8fd;
 pub mod hdd8m;
 
 use crc::CRC_16_IBM_3740;
+use qsort_rs::qsort;
 use std::fs::File;
-use crate::io::ErrorIndicators;
 use std::io::Seek;
 use std::io::Write;
+use std::io::Read;
+use std::io;
 use std::os::windows::fs::FileExt;
+use crate::io::ErrorIndicators;
 
 pub const DATA_SIZE: usize = 128;
 const ID_ADDRESS_MARK: u8 = 0xFE; // ID Address Mark identifier byte
@@ -276,5 +279,213 @@ pub trait Disk {
             return Err(ErrorIndicators::CrcError);
         }
         Ok(sector)
+    }
+    /// Create a disk from raw image file
+    /// 
+    /// Creates a disk from disk image file that contains raw sector by sector copy of the disk
+    fn raw2dsk(&mut self, path: String) -> io::Result<()> {
+        match File::open(path) {
+            Ok(mut file) => {
+                let mut buff = [0u8; DATA_SIZE];
+                let mut completed = false;
+                for track_address in 0..Self::NUM_OF_TRACKS {
+                    for sector_address in 1..=Self::NUM_OF_SECTORS_PER_TRACK {
+                        match file.read(&mut buff) {
+                            Ok(size) => {
+                                let sector = Sector::new(track_address, sector_address, &buff);
+                                if size != DATA_SIZE {
+                                    completed = true;
+                                    break;
+                                }
+                                self.write_sector_to_disk(sector)?
+                            }
+                            Err(_err) => {
+
+                            }
+                        };
+                    }
+                    if completed { break }
+                }
+            }
+            Err(err) => {
+                return Err(err);
+            }
+        };
+        Ok(())
+    }
+
+}
+
+pub struct Utils;
+impl Utils {
+
+    const MODE:[&str;6] = ["500K FM", "300K FM", "250K FM", "500K MFM", "300K MFM", "250K MFM"];
+
+    /// Transfor .imd file to RAW file
+    /// 
+    /// Transforms .imd file to RAW format. It is almost one to one copy of original work of 
+    /// Dave Dunfield as can be seen at https://bitsavers.trailing-edge.com/bits/Convergent/ngen/imd2raw/
+    /// or also derivate published at https://github.com/RetroFloppy/imd2raw.
+    /// No changes have been done to data structures or process flow so it can be a bit "out of standards"
+    /// but it works so no need to touch it.
+    pub fn imd2raw(input: String, output: String) -> io::Result<String> {
+        let input_file = match File::open(&input) {
+            Ok(file) => {
+                file
+            }
+            Err(err) =>{
+                let inp = input.replace("\\", "/");
+                return Err(std::io::Error::new(io::ErrorKind::PermissionDenied, format!("{}, file: {inp}", err)));
+            }
+        };
+        let mut output_file = match File::create(&output) {
+            Ok(file) => {
+                file
+            }
+            Err(err) => {
+                let out = output.replace("\\", "/");
+                return Err(std::io::Error::new(io::ErrorKind::PermissionDenied, format!("{}, file: {out}", err)));
+            }
+        };
+        let mut secsize: u16;
+        let mut report = String::new();
+        let mut secdisp: [u8; 32] = [0; 32];
+        let mut secdata: [[u8; 8192]; 64] = [[0; 8192]; 64];
+
+        // loop through initial comment
+        loop {
+            let c = Self::fgetc(&input_file)?;
+            if c == 0x1a { break }
+        }
+        loop {
+            let mut c = match Self::fgetc(&input_file) {
+                Ok(byte) => {
+                    byte
+                }
+                Err(err) => {
+                    match err.kind() {
+                        io::ErrorKind::UnexpectedEof => {
+                            // In this case this is expected. :)
+                            return Ok(report);
+                        }
+                        _ => {
+                            return Err(io::Error::new(err.kind(), err.to_string()));
+                        }
+                    };
+                }
+            };
+            let mode = c;
+            if mode > 6 {
+                let error = io::Error::new(io::ErrorKind::Interrupted, format!("Stream out of sync at mode, got 0x{:02x}", mode));
+                return Err(error);
+            }
+            let cyl = Self::fgetc(&input_file)?;
+            if cyl > 80 {
+            let error = io::Error::new(io::ErrorKind::Interrupted, format!("Stream out of sync at cyl, got 0x{:02x}", cyl));
+                return Err(error);
+            }
+            c = Self::fgetc(&input_file)?;
+            let hd = c & 0x0f;
+            let headflags = c & 0xf0;
+            if hd > 1 {
+            let error = io::Error::new(io::ErrorKind::Interrupted, format!("Stream out of sync at hd, got 0x{:02x}", hd));
+                return Err(error);
+            }
+            let seccnt = Self::fgetc(&input_file)?;
+            c = Self::fgetc(&input_file)?;
+            match c {
+                0 => secsize = 128,
+                1 => secsize = 256, 
+                2 => secsize = 512,
+                3 => secsize = 1024,
+                4 => secsize = 2048,
+                5 => secsize = 4096,
+                6 => secsize = 8192,
+                _ => {
+                    let error = io::Error::new(io::ErrorKind::Interrupted, format!("Unknown sector size indicator {}", c));
+                    return Err(error);
+                }
+            }
+            // As geometry is in every track, we record it only once.
+            if report.is_empty() {
+                report.push_str(format!("Input disk geometry: mode: {:?}, number of sectors: {seccnt}, sector size: {secsize}", Self::MODE[mode as usize]).as_str());
+            }
+            let mut sectors: Vec<u8> = Vec::new();        
+            // copy sector numbering/interleave map
+            for _i in 0..seccnt {
+                c = Self::fgetc(&input_file)?;
+                sectors.push(c);
+            }
+            let sec = sectors.clone();
+            let sectormap = sec.as_slice();
+            let mut secm_s = sectors.clone();
+            let sectormap_sorted = secm_s.as_mut_slice();
+            qsort::sort(sectormap_sorted, |low, high| low <= high);
+            if (headflags & 0x80) == 0x80 {
+                // Pull out "optional" sector cylinder map, discard
+                for _i in 0..seccnt {
+                    _ = Self::fgetc(&input_file)?;
+                }
+            }
+            if (headflags & 0x40) == 0x40 {
+                // Pull out "optional" head map, discard
+                for _i in 0..seccnt{
+                    _ = Self::fgetc(&input_file);
+                }
+            }
+            // copy sector information indexed by the sector number
+            for i in 0..seccnt {
+                c = Self::fgetc(&input_file)?;
+                match c {
+                    0 | 5 | 7 => {
+                        secdisp[i as usize] = b'X';
+                        let mut fill = 0xe5u8;
+                        for j in 0..secsize {
+                            if c > 0 { 
+                                fill = Self::fgetc(&input_file)?; // Grab whatever IMD wrote
+                            }
+                            secdata[sectormap[i as usize] as usize][j as usize] = fill;
+                        }
+                    }
+                    1 => { // normal data 'secsiz' bytes follow
+                        secdisp[i as usize] = b'.';
+                        for j in 0..secsize {
+                            secdata[sectormap[i as usize] as usize][j as usize] = Self::fgetc(&input_file)?;
+                        }
+                    }
+                    3 => { // data with 'deleted data' address mark
+                        secdisp[i as usize] = b'd'; 
+                        for j in 0..secsize {
+                            secdata[sectormap[i as usize] as usize][j as usize] = Self::fgetc(&input_file)?;
+                        }
+                    }
+                    //  2 | 4 | 6 | 8 => {
+                    _ => {
+                        secdisp[i as usize] = b'C';
+                        let value = Self::fgetc(&input_file)?;
+                        for j in 0..secsize {
+                            secdata[sectormap[i as usize] as usize][j as usize] = value;
+                        }
+                    }
+                }
+            }
+            for i in 0..seccnt {
+                for j in 0..secsize {
+                    let val = secdata[sectormap_sorted[i as usize] as usize][j as usize];
+                    output_file.write_all(&[val;1])?;
+                }
+            }
+            
+        }
+    }
+    /// Read byte from file
+    /// 
+    /// Reads one byte from file
+    pub fn fgetc( mut file: &File) -> io::Result<u8> {
+        let mut buf = [0u8; 1];
+        match file.read_exact(&mut buf) {
+            Ok(()) => Ok(buf[0]),
+            Err(err) => Err(err)
+        }
     }
 }

@@ -1149,6 +1149,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "qsort-rs"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2bd2fd5ffbb7ba4d93963e1e9dbf605b425b9b39e1436b4bce27b30ee58b49b7"
+
+[[package]]
 name = "quote"
 version = "1.0.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1359,6 +1365,7 @@ dependencies = [
  "intelhex",
  "lazy_static",
  "log",
+ "qsort-rs",
  "ratatui",
  "regex",
  "serde",

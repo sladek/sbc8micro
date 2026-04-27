@@ -3,10 +3,9 @@
 //! This is an emulation of single side single density 8" floppy disk as used by Intellec MDS-800 system 
 //! which then can be used for running disk operating system like CP/M 80 in sbc8micro emulator
 use std::fs::File;
-use std::io::{ErrorKind, Read, Write};
-use std::io;
+use std::io::{ErrorKind, Write};
 use crate::io::ErrorIndicators;
-use crate::disk::{DATA_SIZE, Result, Sector};
+use crate::disk::Result;
 use crate::disk::Disk;
 
 // Floppy disk file
@@ -81,6 +80,7 @@ impl Floppy {
     pub fn is_read_only(&self) -> bool {
         self.read_only
     }
+/*
     /// Create a disk from image file
     /// 
     /// Creates a disk from disk image file that contains direct sector by sector copy of the disk
@@ -114,6 +114,7 @@ impl Floppy {
         };
         Ok(())
     }
+*/
 }
 
 impl Disk for Floppy {
@@ -141,23 +142,6 @@ mod tests {
     fn remove_disk(file_name: &str) {
         _ = fs::remove_file(file_name);
     }
-
-    #[test]
-    fn test_img2dsk() {
-        let file_name = "disks/isis_ii.img";
-        init_disk(file_name);
-        let mut floppy = Floppy::new(file_name, false).unwrap();
-        match Floppy::format(&mut floppy) {
-            Ok(()) => {
-                _ = floppy.seek(0);
-                _ = floppy.img2dsk("disks/isisII43.logdisk".to_string());
-            }
-            Err(err) => {
-                println!("Error - ({:?})", err);
-            }
-        }
-    }
-
     #[test]
     fn test_format() {
         let file_name = "disks/test.img";

@@ -171,6 +171,12 @@ pub static HELP: &str = r#"
     "examples": "\\n    ihex 0x100 asm.com asm.hex\\n    ih 0x100 asm.com\\n Note: If output file name is not defined it is created with .hex suffix.\\n       If output file name is 'data.rdr' no suffix is added. File name 'data.rdr' is a special file name for CP/M 2.2 pip transfer."
   },
   {
+    "command": "i2r | imd2raw",
+    "description": "Converts the .imd file to raw binary file",
+    "usage": "i2r <input file> [output file] or imd2raw <input file> [output file]",
+    "examples": "\\n    i2r diskd.imd disk.raw\\n    i2r diskd.imd\\n    imd2raw diskd.imd disk.raw\\n    imd2raw diskd.imd\\n Note: If output file name is not defined it is created with .raw suffix."
+  },
+  {
     "command": "l | load",
     "description": "Loads a content of specified binary file into memory.",
     "usage": "load <start address> <file name> or l <start address> <file name>",

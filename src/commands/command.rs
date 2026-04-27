@@ -20,6 +20,7 @@ use crate::commands::io::Io;
 use crate::commands::ihex::Ihex;
 use crate::commands::hex_bin::HexBin;
 use crate::commands::{MIN_COMMAND_HISTORY_LENGTH, MIN_OUTPUT_HISTORY_LENGTH};
+use crate::commands::imd2raw::Imd2Raw;
 use crate::help;
 use crate::ui::app::{App, AppState};
 use crate::commands::bootloader::Bootloader;
@@ -61,6 +62,7 @@ impl Command {
             "hb" | "hex_bin" => HexBin::hex_bin(app, command),
             "io" => Io::io(app, command),
             "ih" | "ihex" => Ihex::ihex(app, command),
+            "i2r" | "imd2raw" => Imd2Raw::imd2raw(app, command),
             "l" | "load" => Load::load_file(app, command),
             "la" | "loada" => Load::load_acme_file(app, command),
             "lh" | "loadh" => Load::load_hex_file(app, command),
