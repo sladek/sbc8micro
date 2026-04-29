@@ -747,12 +747,12 @@ mod tests {
     fn init_floppy_disk(name: &str) {
         _ = fs::remove_file(name);
         // Let's create new floppy image and format
-        _ = Hdd::new(name, false).unwrap().format();
+        _ = Floppy::new(name, false).unwrap().format();
     }    
     fn init_hard_disk(name: &str) {
         _ = fs::remove_file(name);
         // Let's create new floppy image and format
-        _ = hdd8m::Hdd::new(name, false).unwrap().format();
+        _ = Hdd::new(name, false).unwrap().format();
     }    
     fn remove_disk(name: &str) {
         _ = fs::remove_file(name);
@@ -923,7 +923,7 @@ mod tests {
     }
     #[test]
     fn test_iopb_read_multiple_floppy_sectors() {
-        let file_name = "disks/iopb_test_read_multisector.dsk";
+        let file_name = "disks/iopb_test_fdd_read_multisector.dsk";
         init_floppy_disk(file_name);
         // let's use that freshly created disk image and write some data
         let mut floppy = Floppy::new(file_name, false).unwrap();
@@ -1006,8 +1006,8 @@ mod tests {
     }
     #[test]
     fn test_iopb_read_multiple_hdd_sectors() {
-        let file_name = "disks/iopb_test_read_multisector.dsk";
-        init_floppy_disk(file_name);
+        let file_name = "disks/iopb_test_hdd_read_multisector.dsk";
+        init_hard_disk(file_name);
         // let's use that freshly created disk image and write some data
         let mut hdd = Hdd::new(file_name, false).unwrap();
         let mut data = [0; 128];
@@ -1091,7 +1091,7 @@ mod tests {
     // Reads 2 sectors where last sector is out of sector range. The last requested sector is 27 which is out of range.
     // Number of sectors for thatdisk is 26
     fn test_iopb_read_fdd_multiple_sectors_error() {
-        let file_name = "disks/iopb_test_read_multisector_error.dsk";
+        let file_name = "disks/iopb_test_fdd_read_multisector_error.dsk";
         init_floppy_disk(file_name);
         let sector_num = 25;
         // let's use that freshly created disk image and write some data
@@ -1166,8 +1166,8 @@ mod tests {
     // Reads 2 sectors where last sector is out of sector range. The last requested sector 255 is out of range.
     // Number of sectors for thatdisk is 255
     fn test_iopb_read_hdd_multiple_sectors_error() {
-        let file_name = "disks/iopb_test_read_multisector_error.dsk";
-        init_floppy_disk(file_name);
+        let file_name = "disks/iopb_test_hdd_read_multisector_error.dsk";
+        init_hard_disk(file_name);
         let sector_num = hdd8m::Hdd::NUM_OF_SECTORS_PER_TRACK - 1;
         // let's use that freshly created disk image and write some data
         let mut hdd = Hdd::new(file_name, false).unwrap();
@@ -1202,7 +1202,7 @@ mod tests {
             0b0000_0100, // Diskette operation (read data)
             0x02, // Number of records. Read 2 sectors
             0x00, // Track address
-            sector_num, // Sector address 
+            hdd8m::Hdd::NUM_OF_SECTORS_PER_TRACK, // Sector address 
             0x00, // buffer address Lower. 0x3000 buffer address for read data from fdc
             0x30, // buffer address Upper.
         ];
@@ -1300,7 +1300,7 @@ mod tests {
     #[test]
     fn test_iopb_hdd_verify_crc() {
         let file_name = "disks/iopb_test_verify.dsk";
-        init_floppy_disk(file_name);
+        init_hard_disk(file_name);
         // let's use that freshly created disk image and write some data
         let mut hdd = Hdd::new(file_name, false).unwrap();
         let mut data = [0; disk::DATA_SIZE];
@@ -1422,7 +1422,7 @@ mod tests {
     #[test]
     fn test_iopb_hdd_seek() {
         let file_name = "disks/iopb_test_seek.dsk";
-        init_floppy_disk(file_name);
+        init_hard_disk(file_name);
         // let's use that freshly created disk image and write some data
         let mut hdd = Hdd::new(file_name, false).unwrap();
         let mut data = [0; disk::DATA_SIZE];
@@ -1546,7 +1546,7 @@ mod tests {
     #[test]
     fn test_iopb_hdd_recalibrate() {
         let file_name = "disks/iopb_test.dsk";
-        init_floppy_disk(file_name);
+        init_hard_disk(file_name);
         // let's use that freshly created disk image and write some data
         let mut hdd = Hdd::new(file_name, false).unwrap();
         let mut data = [0; disk::DATA_SIZE];
@@ -1670,7 +1670,7 @@ mod tests {
     #[test]
     fn test_iopb_hdd_format_track() {
         let file_name = "disks/iopb_test.dsk";
-        init_floppy_disk(file_name);
+        init_hard_disk(file_name);
         // let's use that freshly created disk image and write some data
         let mut hdd = Hdd::new(file_name, false).unwrap();
         let mut data = [0; disk::DATA_SIZE];
@@ -1802,7 +1802,7 @@ mod tests {
     #[test]
     fn test_iopb_hdd_read_sector_mem_mapped() {
         let file_name = "disks/iopb_test_read_sec_mem.dsk";
-        init_floppy_disk(file_name);
+        init_hard_disk(file_name);
         // let's use that freshly created disk image and write some data
         let mut hdd = Hdd::new(file_name, false).unwrap();
         let mut data = [0; disk::DATA_SIZE];
@@ -1947,7 +1947,7 @@ mod tests {
     #[test]
     fn test_iopb_hdd_read_sector_mem_mapped_6502() {
         let file_name = "disks/iopb_test_read_sec_mem_6502.dsk";
-        init_floppy_disk(file_name);
+        init_hard_disk(file_name);
         // let's use that freshly created disk image and write some data
         let mut hdd = Hdd::new(file_name, false).unwrap();
         let mut data = [0; 128];
@@ -2082,7 +2082,7 @@ mod tests {
             }
         }
         // Read back sector 1
-        let floppy = Hdd::new(file_name, true).unwrap();
+        let floppy = Floppy::new(file_name, true).unwrap();
         match floppy.read_sector(0, 1) {
             Ok(mut sector) => {
                 let data = sector.get_data();
@@ -2109,9 +2109,9 @@ mod tests {
     #[test]
     fn test_iopb_hdd_write_sector() {
         let file_name = "disks/iopb_test_write_sector.dsk";
-        init_floppy_disk(file_name);
+        init_hard_disk(file_name);
         // let's use that freshly created disk image and write some data
-        let floppy = Hdd::new(file_name, false).unwrap();
+        let hdd = Hdd::new(file_name, false).unwrap();
         let mut data = [0; disk::DATA_SIZE];
         for i in 0..data.len() {
             data[i] = i as u8;
@@ -2124,7 +2124,7 @@ mod tests {
         let ihigh = 0x7au8;
         let mut fdhdc = Box::new(FdHdC::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
-        let _ = fdhdc.set_disk(DiskTypes::Hdd(floppy), 0);
+        let _ = fdhdc.set_disk(DiskTypes::Hdd(hdd), 0);
         fdhdc.set_base_address(0x78);
         let io_memory = cpu.get_io_memory().unwrap();
         let res = io_memory.map_port(fdhdc);
@@ -2256,7 +2256,7 @@ mod tests {
             }
         }
         // Read back sector 1
-        let floppy = Hdd::new(file_name, true).unwrap();
+        let floppy = Floppy::new(file_name, true).unwrap();
         match floppy.read_sector(0, 1) {
             Ok(sector) => {
                 let data = sector.get_data();
@@ -2298,9 +2298,9 @@ mod tests {
     #[test]
     fn test_iopb_hdd_write_2_sectors() {
         let file_name = "disks/iopb_test_write_2_sectors.dsk";
-        init_floppy_disk(file_name);
+        init_hard_disk(file_name);
         // let's use that freshly created disk image and write some data
-        let floppy = Hdd::new(file_name, false).unwrap();
+        let hdd = Hdd::new(file_name, false).unwrap();
         let mut data = [0; disk::DATA_SIZE];
         for i in 0..data.len() {
             data[i] = i as u8;
@@ -2313,7 +2313,7 @@ mod tests {
         let ihigh = 0x7au8;
         let mut fdhdc = Box::new(FdHdC::new(cpu.get_memory_ref())); // Base address 0x78
         // Let's assign the floppy as floppy[0] to the controller
-        let _ = fdhdc.set_disk(DiskTypes::Hdd(floppy), 0);
+        let _ = fdhdc.set_disk(DiskTypes::Hdd(hdd), 0);
         fdhdc.set_base_address(0x78);
         let io_memory = cpu.get_io_memory().unwrap();
         let res = io_memory.map_port(fdhdc);
@@ -2469,7 +2469,7 @@ mod tests {
     #[test]
     fn test_iopb_hdd_write_2_sectors_error() {
         let file_name = "disks/iopb_test_write_2_sectors_error.dsk";
-        init_floppy_disk(file_name);
+        init_hard_disk(file_name);
         // let's use that freshly created disk image and write some data
         let hdd = Hdd::new(file_name, false).unwrap();
         let mut data = [0; disk::DATA_SIZE];
@@ -2596,7 +2596,7 @@ mod tests {
             }
         }
         // Read back sector 1
-        let floppy = Hdd::new(file_name, true).unwrap();
+        let floppy = Floppy::new(file_name, true).unwrap();
         match floppy.read_sector(0, 1) {
             Ok(mut sector) => {
                 let data = sector.get_data();
@@ -2623,7 +2623,7 @@ mod tests {
     #[test]
     fn test_iopb_hdd_write_sector_deleted_data() {
         let file_name = "disks/iopb_test_write_sector_deleted_data.dsk";
-        init_floppy_disk(file_name);
+        init_hard_disk(file_name);
         // let's use that freshly created disk image and write some data
         let hdd = Hdd::new(file_name, false).unwrap();
         let mut data = [0; 128];

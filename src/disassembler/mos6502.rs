@@ -28,11 +28,11 @@
 //! ```
 //!
 //! The result should be:
-//! 0600  A9 01       LDA #$01
-//! 0602  8D 00 02    STA $0200
-//! 0605  E8          INX
-//! 0606  F0 FC       BEQ $0604
-//! 0608  00 00       BRK
+//! 0600  A9 01       LDA #$01       ; ..
+//! 0602  8D 00 02    STA $0200      ; ...
+//! 0605  E8          INX            ; .
+//! 0606  F0 FC       BEQ $0604      ; ..
+//! 0608  00 00       BRK            ; .
 use serde::Deserialize;
 use std::collections::HashMap;
 
