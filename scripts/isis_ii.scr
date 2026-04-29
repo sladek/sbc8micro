@@ -2,9 +2,13 @@ cpu 8080
 ser 0xf4 com5
 ser 0xf6 com3
 # fdc 0x78  disks\isis_ii.dsk disks\disk_isis_empty.dsk
-fdc 0x68
-fdc 0x78 disks\isis_ii.dsk
-fdc 0x88
+# It requires 3 disc controllers so they have to be assigned
+# even without any disks attached to them
+fdc 0x68 disks\test.dsk
+# This is disk controller that is used during boot of OS.
+# fdc 0x78 disks\isis_ii.dsk disks\test.dsk
+fdhdc 0x78 disks\isis_ii.dsk disks\empty_disk_isis.dsk
+fdc 0x88 disks/test2.dsk
 cs 0xff 0x00 fpsw
 lh ISIS_II/mds800.hex
 ro 0xf800 0xffff

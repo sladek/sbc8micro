@@ -21,6 +21,7 @@ use crate::commands::ihex::Ihex;
 use crate::commands::hex_bin::HexBin;
 use crate::commands::{MIN_COMMAND_HISTORY_LENGTH, MIN_OUTPUT_HISTORY_LENGTH};
 use crate::commands::imd2raw::Imd2Raw;
+use crate::commands::raw2dsk::Raw2Dsk;
 use crate::help;
 use crate::ui::app::{App, AppState};
 use crate::commands::bootloader::Bootloader;
@@ -72,6 +73,7 @@ impl Command {
             "op" | "opcodes" => Opcodes::list_opcodes(app, command),
             "pwd" => Directory::pwd(app, command),
             "r" | "reg" => Registers::set_get_reg(app, command),
+            "r2d" | "raw2dsk" => Raw2Dsk::raw2dsk(app, command),
             "ro" | "read_only" => Memory::set_read_only(app, command),
             "rdr" | "pun" | "rdr_pun" => RdrPun::rdr_pun(app, command),
             "res" | "reset" => Cpu::reset(app, command),

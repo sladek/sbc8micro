@@ -21,3 +21,39 @@ pub trait DrawOpcode<T> {
     /// Find index of the opcode where mnemonic starts with character ch.
     fn find_index_by_char(&self, ch: char) -> Option<usize>;
 }
+
+pub struct AsciiDump {
+    codes: Vec<u8>,
+}
+
+impl AsciiDump {
+    pub fn new() -> Self {
+        Self {
+            codes: Vec::new(),
+        }
+    }
+    pub fn push(&mut self, value: u8) {
+        self.codes.push(value);
+    }
+    pub fn translate(&mut self) -> String {
+        let mut result = String::new();
+        result.push_str("; ");
+        for val in self.codes.clone() {
+            let ch: char = match val {
+                0x20..=0x7e => {
+                    val as char
+                } 
+                _ => {
+                    '.'
+                }
+            };
+            result.push(ch);
+        }
+        result
+    }
+}
+impl Default for AsciiDump {
+    fn default() -> Self {
+        Self::new()
+    }
+}

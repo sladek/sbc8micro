@@ -87,6 +87,12 @@ pub static HELP: &str = r#"
     "examples": "Multiple hexadecimal representations are allowed like decimal (1234), intel (0abcdh), mos6502 ($abcd) and modern (0xabcd)\\n    ch\\n    command_history_length\\n    ch 100\\n    ch 0ffh\\n    command_history_length 0x00ff\\n    command_history_length $00ff\\n Note: If only oh or command_history_length is used, then the command history length is displayed; otherwise, the length is set to the value provided as a parameter."
   },
   {
+    "command": "cpu",
+    "description": "Sets specific CPU.",
+    "usage": "cpu <CPU>",
+    "examples": "\\n    cpu 8080\\n    cpu 6502\\n    cpu i8080\\n    cpu mos6502"
+  },
+  {
     "command": "cs | conf_switch",
     "description": "Sets configuration switch at specific address.",
     "usage": "cs <address> <data> [name]",
@@ -174,7 +180,7 @@ pub static HELP: &str = r#"
     "command": "i2r | imd2raw",
     "description": "Converts the .imd file to raw binary file",
     "usage": "i2r <input file> [output file] or imd2raw <input file> [output file]",
-    "examples": "\\n    i2r diskd.imd disk.raw\\n    i2r diskd.imd\\n    imd2raw diskd.imd disk.raw\\n    imd2raw diskd.imd\\n Note: If output file name is not defined it is created with .raw suffix."
+    "examples": "\\n    i2r diskd.imd disk.raw\\n    i2r diskd.imd\\n    imd2raw diskd.imd disk.raw\\n    imd2raw diskd.imd\\n Note: If output file name is not defined it is created with the same name as input file, but with .raw suffix."
   },
   {
     "command": "l | load",
@@ -223,6 +229,12 @@ pub static HELP: &str = r#"
     "description": "Shows the name of current working directory.",
     "usage": "pwd",
     "examples": "\\n    pwd"
+  },
+  {
+    "command": "r2d | raw2dsk",
+    "description": "Converts the raw disk file to .dsk file that can be mounted in this simulator.",
+    "usage": "r2d <input file> <disk format>:[output file] or raw2dsk <input file> <disk format>:[output file]",
+    "examples": "\\n    r2d diska.raw sssd:\\n    r2d diska.raw sssd:diskb\\n    r2d diskc.raw sssd:diskd.dsk\\n    raw2dsk diska.raw sssd:\\n    raw2dsk diska.raw sssd:diskb\\n    raw2dsk diskc.raw sssd:diskd.dsk\\n Note: If output file name is not defined it is created with the same name as input file, but with .raw suffix."
   },
   {
     "command": "rdr | pun | rdr_pun",

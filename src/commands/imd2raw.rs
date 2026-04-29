@@ -12,7 +12,12 @@ impl Imd2Raw {
             2 => {
                 source_filename = command[1].to_string();
                 destination_filename = source_filename.clone();
-                destination_filename.push_str(".raw");
+                if destination_filename.to_ascii_uppercase().ends_with(".IMD") {
+                    destination_filename = destination_filename.replace(".imd", ".raw");
+                }
+                else {
+                    destination_filename.push_str(".raw");
+                }
             }
             3 => {
                 source_filename = command[1].to_string();

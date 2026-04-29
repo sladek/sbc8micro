@@ -1,4 +1,5 @@
 //! Disassembler for INTEL i8080 CPU
+use crate::disassembler::AsciiDump;
 use crate::disassembler::i8080_opcodes::OPCODES;
 use crate::memory::Memory;
 use serde::Deserialize;
@@ -37,6 +38,8 @@ pub fn disassemble(
             let addr_1 = addr_0.wrapping_add(1);
             let args_0 = memory.read_byte(addr_0);
             let args_1 = memory.read_byte(addr_1);
+            let mut ascii_dump = AsciiDump::new();
+            ascii_dump.push(opcode_byte);
             let operand_str = match def.mode.as_str() {
                 "immediate8" | "direct port" => {
                     mnemonic = &def.mnemonic;
@@ -79,30 +82,38 @@ pub fn disassemble(
             };
             let operand_bytes = match def.mode.as_str() {
                 "immediate8" | "direct port" => {
+                    ascii_dump.push(args_0);
                     format!("{:02X}", args_0)
                 }
                 "register indirect" => {
                     mnemonic = def.mnemonic.trim_end_matches("data");
                     if mnemonic.ends_with(",") {
+                        ascii_dump.push(args_0);
                         format!("{:02X}", args_0)
                     } else {
                         "".to_string()
                     }
                 }
                 "immediate16" | "direct" => {
+                    ascii_dump.push(args_0);
+                    ascii_dump.push(args_1);
                     format!("{:02X} {:02X}", args_0, args_1)
                 }
                 _ => "".to_string(),
             };
-            output.push(
-                format!(
+            let mut out = format!(
                     "{:04X}  {:02X} {:<8} {}{}",
                     pc, opcode_byte, operand_bytes, mnemonic, operand_str
                 )
                 .trim_end()
                 .to_string()
-                .replace(", ", ","),
-            );
+                .replace(", ", ",");
+                // Add some spaces untol the column 32
+                while out.len() <= 32 {
+                out.push(' ');
+            }
+            out.push_str(&ascii_dump.translate());
+            output.push(out);
             pc = pc.wrapping_add(def.bytes as u16);
         } else {
             output.push(

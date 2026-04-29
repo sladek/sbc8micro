@@ -283,8 +283,8 @@ pub trait Disk {
     /// Create a disk from raw image file
     /// 
     /// Creates a disk from disk image file that contains raw sector by sector copy of the disk
-    fn raw2dsk(&mut self, path: String) -> io::Result<()> {
-        match File::open(path) {
+    fn raw2dsk(&mut self, input_file: String) -> io::Result<()> {
+        match File::open(input_file) {
             Ok(mut file) => {
                 let mut buff = [0u8; DATA_SIZE];
                 let mut completed = false;
